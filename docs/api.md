@@ -145,3 +145,75 @@ Flow:
 3. Agent pays USDC via x402
 4. Agent retries request with payment proof
 5. Server returns data
+
+---
+
+## Error Format
+
+All errors return a consistent JSON structure:
+
+```json
+{
+  "error": {
+    "code": "INVALID_TOKEN",
+    "message": "Token USDCX is not supported. Use USDm, USDC, or USDT.",
+    "details": {}
+  }
+}
+```
+
+### Error codes
+
+| HTTP | Code | Description |
+|------|------|-------------|
+| 400 | `VALIDATION_ERROR` | Invalid request body or params |
+| 400 | `INVALID_TOKEN` | Token not in supported list |
+| 400 | `INVALID_AMOUNT` | Amount ≤ 0 or exceeds max |
+| 400 | `UNSUPPORTED_METHOD` | Payment method not accepted by link |
+| 401 | `UNAUTHORIZED` | Missing or invalid auth |
+| 403 | `FORBIDDEN` | Not the link owner |
+| 404 | `NOT_FOUND` | Link/agent/user not found |
+| 409 | `ALREADY_PAID` | Link already settled |
+| 410 | `EXPIRED` | Link past expiration |
+| 429 | `RATE_LIMITED` | Too many requests |
+| 500 | `INTERNAL_ERROR` | Unexpected server error |
+| 502 | `FONBNK_ERROR` | Fonbnk API unavailable |
+
+---
+
+## Pagination
+
+All list endpoints use cursor-based pagination:
+
+Query: `?cursor=<id>&limit=20`
+
+```json
+{
+  "data": [ ... ],
+  "pagination": {
+    "nextCursor": "link_xyz",
+    "hasMore": true
+  }
+}
+```
+
+---
+
+## Rate Limiting
+
+- 100 requests per minute per IP on public endpoints
+- 300 requests per minute for authenticated users
+- Webhook endpoints: provider-specific throttling (Fonbnk: up to 10/sec)
+- Headers: `X-RateLimit-Remaining`, `X-RateLimit-Reset`
+
+---
+
+## Webhook Retry Strategy (Fonbnk)
+
+Fonbnk webhooks are idempotent:
+
+1. Fonbnk POSTs to `/api/onramp/fonbnk/webhook`
+2. Paygrid acknowledges with 200 if `onrampTxId` is new
+3. If already processed (duplicate), return 200 (idempotent)
+4. If Fonbnk doesn't receive 200, it retries up to 3 times with 5s intervals
+5. Backend checks on-chain tx before marking session `completed`

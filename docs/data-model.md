@@ -109,3 +109,83 @@ AI agents registered on Paygrid — authenticated via ERC-8004.
 - `payment_status`: `pending`, `confirmed`, `failed`
 - `onramp_status`: `initiated`, `processing`, `completed`, `failed`
 - `creator_type`: `user`, `agent`
+
+---
+
+## Row Level Security (RLS)
+
+Supabase RLS policies for each table:
+
+### `payment_links`
+
+```sql
+-- Creator can read/write their own links
+CREATE POLICY "creator_access" ON payment_links
+  FOR ALL USING (creator_id = auth.uid());
+
+-- Anyone can read active links (needed for pay page)
+CREATE POLICY "read_active_links" ON payment_links
+  FOR SELECT USING (status = 'active');
+
+-- Backend service role bypasses RLS
+```
+
+### `payments`
+
+```sql
+-- Payer or link creator can read payments
+CREATE POLICY "read_own_payments" ON payments
+  FOR SELECT USING (
+    payer_address = auth.jwt()->>'address'
+    OR link_id IN (SELECT id FROM payment_links WHERE creator_id = auth.uid())
+  );
+
+-- Only backend creates payments (triggers + webhooks via service_role)
+CREATE POLICY "backend_insert" ON payments
+  FOR INSERT WITH CHECK (true);
+```
+
+### `onramp_sessions`
+
+```sql
+CREATE POLICY "read_own_sessions" ON onramp_sessions
+  FOR SELECT USING (
+    payment_link_id IN (SELECT id FROM payment_links WHERE creator_id = auth.uid())
+  );
+```
+
+### `agents`
+
+```sql
+-- Public read for agent metadata
+CREATE POLICY "read_agents" ON agents FOR SELECT USING (true);
+```
+
+---
+
+## Migration Strategy
+
+Use Supabase CLI for versioned migrations:
+
+```bash
+# Create migration
+supabase migration new add_onramp_sessions
+
+# Apply locally
+supabase db reset
+
+# Push to production
+supabase db push
+```
+
+### Migration files
+
+```
+supabase/
+└── migrations/
+    ├── 20260523000001_create_users.sql
+    ├── 20260523000002_create_agents.sql
+    ├── 20260523000003_create_payment_links.sql
+    ├── 20260523000004_create_payments.sql
+    └── 20260523000005_create_onramp_sessions.sql
+```
