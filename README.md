@@ -96,10 +96,18 @@ Read `SPEC.md` for the full project brief or `AGENTS.md` if you're an AI agent c
 
 ## Hackathon
 
-Built for the **Onchain Agents Hackathon — Celo** (May 22 – June 15, 2026).
+Built by [@PsyLabs_io](https://x.com/PsyLabs_io) for the **Onchain Agents Hackathon — Celo** (May 22 – June 15, 2026).
+
+| Registration | Link |
+|-------------|------|
+| ERC-8004 Agent ID | **#9113** |
+| 8004scan | https://8004scan.io/agents/celo/9113 |
+| Self Agent ID | ✅ Verified (proof-of-human) |
+| Owner | `0xD4683314A013792fe8840E4171dC4692E317617B` |
 
 - [ERC-8004 Agent Trust Protocol](https://www.8004.org)
 - [x402 Payment Protocol](https://www.x402.org)
 - [MiniPay Documentation](https://docs.minipay.xyz)
 - [Celo Documentation](https://docs.celo.org)
 - [Fonbnk Onramp](https://fonbnk.com)
+- [Self Protocol](https://self.xyz)

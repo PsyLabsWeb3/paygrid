@@ -10,6 +10,9 @@ Paygrid is a MiniApp for MiniPay that enables agent-to-agent, agent-to-human, an
 - Network: Celo Mainnet (chainId: 42220)
 - Users: freelancers, developers, AI agents, businesses
 - Hackathon: Onchain Agents Hackathon — Celo (May 22 – June 15, 2026)
+- Team: @PsyLabs_io
+- Agent ID: #9113 (ERC-8004 Mainnet)
+- 8004scan: https://8004scan.io/agents/celo/9113
 
 ## Problem
 
@@ -126,5 +129,5 @@ paygrid/
 - x402 Protocol: https://www.x402.org
 - MiniPay Docs: https://docs.minipay.xyz
 - Celo Docs: https://docs.celo.org
-- 8004scan: https://8004scan.com
+- 8004scan: https://8004scan.io/agents/celo/9113
 - Fonbnk: https://fonbnk.com

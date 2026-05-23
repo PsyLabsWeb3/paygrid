@@ -90,6 +90,10 @@ Payers without crypto can settle payment links with local currency via Fonbnk.
 ## Hackathon Context
 
 - Event: Onchain Agents Hackathon — Celo (May 22 – June 15, 2026)
+- Team: @PsyLabs_io
+- ERC-8004 Agent ID: #9113 (Mainnet)
+- 8004scan: https://8004scan.io/agents/celo/9113
+- Self Agent ID: Verified (proof-of-human)
 - The agent must generate real on-chain transactions to qualify
 - Registration requires an ERC-8004 agentId and a Karma project link
 - Tracks: Best Agent on Celo ($2,500), Most On-chain Activity ($500), Highest Rank in 8004scan ($500)
