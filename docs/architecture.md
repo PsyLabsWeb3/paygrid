@@ -1,0 +1,3 @@
+# Architecture
+
+> WIP — pending documentation.
