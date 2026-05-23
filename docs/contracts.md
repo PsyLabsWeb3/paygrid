@@ -79,3 +79,23 @@ enum PaymentMethod { Crypto, Fonbnk }
 - Deploy script: `script/Deploy.s.sol`
 - Network: Celo Mainnet (chainId: 42220)
 - Test via fork: `forge test --fork-url https://forno.celo.org`
+
+
+### Demo deploy (Sepolia)
+
+We performed a demo deployment to Celo Sepolia for development and demonstration purposes. The Sepolia deployment is recorded in `contracts/deployments.sepolia.json` and the raw broadcast is available under `contracts/broadcast/*/run-latest.json`.
+
+To reproduce the demo deploy locally (requires a local `contracts/.env` with `PRIVATE_KEY=0x...`, which must not be committed):
+
+```bash
+cd contracts
+forge script script/DeployHex.s.sol:DeployHex --rpc-url https://forno.celo-sepolia.celo-testnet.org --broadcast
+```
+
+After running, generate the canonical deployments JSON:
+
+```bash
+./script/generate_deployments.sh
+```
+
+Security: remove `.env` after use and rotate keys if needed. See `contracts/ENV_REMOVED_NOTICE.txt`.

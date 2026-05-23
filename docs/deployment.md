@@ -278,3 +278,28 @@ jobs:
 - Supabase: Dashboard query performance
 - Celoscan: On-chain activity verification
 - 8004scan: Agent reputation tracking
+
+## Sepolia Deploy (Demo)
+
+We performed a demo deployment to the Celo Sepolia testnet. The canonical deployment record and the raw broadcast receipts are stored in the repository for auditability and reproducibility.
+
+- Network: Celo Sepolia (chainId: 11142220)
+- Deployer: 0xd4683314a013792fe8840e4171dc4692e317617b
+- Timestamp: recorded in the broadcast JSON at contracts/broadcast/*/run-latest.json
+
+Deployed contracts (Sepolia):
+
+- PaygridLink: 0xd2dC71C47803b0939944Ec29fF3B644C48bAE7De
+  - tx: 0xb74e33a3134b7374e2898fb8b019b1759b8c6128c52e6e8ccb4b9ca6e99fb53f
+- PaygridRouter: 0xe75027fF07931EF97248402f4DF63a4D3287020d
+  - tx: 0xdc5c82292f2260dffa497b8ba1749ae011f481dc00142b728de2af22f1129643
+
+Repository artifacts:
+
+- Broadcast JSON (raw): `contracts/broadcast/DeployHex.s.sol/11142220/run-latest.json`
+- Canonical deployments record: `contracts/deployments.sepolia.json`
+
+Security notes:
+
+- Any private keys used for the deploy were removed from the workspace immediately after the run. See `contracts/ENV_REMOVED_NOTICE.txt` and `agent/ENV_REMOVED_NOTICE.txt` for details and rotation recommendations.
+- Do not commit any `.env` files or private keys. The repository `.gitignore` was updated to exclude `contracts/.env` and `agent/.env`.

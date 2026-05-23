@@ -2,6 +2,8 @@
 
 **Stablecoin payment links for agents and humans on Celo.**
 
+Demo status: Contracts tested and a Sepolia demo deploy was performed. See `contracts/deployments.sepolia.json` for addresses and transaction hashes. No secrets are stored in this repository.
+
 Paygrid is a [MiniPay](https://docs.minipay.xyz) MiniApp that enables agent-to-agent, agent-to-human, and human-to-agent stablecoin payments. Create a payment link, share it anywhere, and receive USDC/USDT/USDm instantly — no banks, no Stripe, no borders. Built for the autonomous agent economy and for anyone who needs to send or receive money globally.
 
 ---
