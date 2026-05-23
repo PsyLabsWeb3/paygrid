@@ -6,7 +6,7 @@ Read this file if you are an AI agent working on this repo. It contains all the 
 
 ## What is Paygrid?
 
-Paygrid is a MiniApp for MiniPay (Celo) that provides global stablecoin payment links for agent-to-human and human-to-human settlement. It enables AI agents and humans to create payment links, receive stablecoin payments, automate payouts, and coordinate cross-border transactions — instantly, without banks or traditional payment rails.
+Paygrid is a MiniApp for MiniPay (Celo) that provides global stablecoin payment links for agent-to-agent, agent-to-human, and human-to-agent settlement. It enables AI agents and humans to create payment links, receive stablecoin payments, automate payouts, and coordinate cross-border transactions — instantly, without banks or traditional payment rails.
 
 Built for the autonomous agent economy and emerging markets where traditional platforms like Stripe or PayPal are limited or inaccessible.
 
@@ -14,14 +14,17 @@ Built for the autonomous agent economy and emerging markets where traditional pl
 
 ## Use Cases (in priority order)
 
-1. Pay-per-Task API Monetization
-   Developers and companies protect APIs or services with x402. An AI agent sends a request, receives a 402 Payment Required response, automatically pays in USDC, and gets the result. No account setup, no manual invoicing. Fee: 0.5% per transaction charged to the recipient.
+### 1. Agent-to-Agent — Pay-per-Task API Monetization
+Developers and companies protect APIs or services with x402. An AI agent sends a request, receives a 402 Payment Required, automatically pays in USDC, and gets the result. No account setup, no manual invoicing. Fee: 0.5% per transaction charged to the recipient.
 
-2. AI Agent as Treasurer
-   An autonomous agent manages payments for a team or protocol. It generates invoices, creates payment links, executes payouts, and reports on-chain activity. The agent operates with its own dedicated wallet registered on-chain via ERC-8004.
+### 2. Agent-to-Human — Agent as Payer / Treasurer
+An autonomous agent manages payments for a team or protocol. It generates invoices, creates payment links, executes payouts, and reports on-chain activity. The agent operates with its own dedicated wallet registered on-chain via ERC-8004.
 
-3. Global Freelancer
-   Any person creates a payment link from MiniPay and shares it via WhatsApp, email, or social media. The client pays from any compatible wallet. The freelancer receives cUSD/USDC/USDT instantly, without a bank account.
+### 3. Human-to-Agent — Monetizing Agent Services
+A human pays an AI agent for services (research, automation, data processing) via payment link or x402 endpoint. Payment methods: crypto (MiniPay wallet) or fiat (Fonbnk airtime onramp). The agent receives USDC and delivers results.
+
+### 4. Human-to-Human — Global Freelancer
+Any person creates a payment link from MiniPay and shares it via WhatsApp, email, or social media. The client pays from any compatible wallet — or with local currency via Fonbnk. The freelancer receives cUSD/USDC/USDT instantly, without a bank account.
 
 ---
 
@@ -53,9 +56,9 @@ paygrid/
 ## System Modules
 
 - contracts/ — Smart contracts: PaygridRouter.sol (receives payment, splits 0.5% fee to treasury, sends remainder to recipient) and PaygridLink.sol (creates and manages payment links on-chain). Built with Foundry.
-- backend/ — REST API for payment link generation and management, webhook system for payment confirmation, on-chain event indexer via Viem watchContractEvent, x402 protected endpoints for pay-per-task. Uses Supabase for data persistence and Privy for authentication.
+- backend/ — REST API for payment link generation and management, webhook system for payment confirmation (including Fonbnk onramp webhooks), on-chain event indexer via Viem watchContractEvent, x402 protected endpoints for pay-per-task. Uses Supabase for data persistence and Privy for authentication.
 - agent/ — Autonomous AI agent with dedicated ERC-8004 wallet, Vercel AI SDK for reasoning and tools, thirdweb/x402 for autonomous payments, @chaoschain/sdk for on-chain identity registration.
-- minipay/ — Next.js MiniApp: MiniPay auto-connect, create payment link UI, pay a received link UI, payment history, MiniPay deeplinks for receipts and deposits.
+- minipay/ — Next.js MiniApp: MiniPay auto-connect, create payment link UI, pay a received link UI (crypto + Fonbnk fiat), payment history, MiniPay deeplinks for receipts and deposits.
 - docs/ — Technical specifications (architecture, contracts, API, data model). Read-only reference for agents and devs.
 - tasks/ — Active work items per module. Check these before starting any work.
 
@@ -68,6 +71,19 @@ The agent has a dedicated wallet (not a user wallet). It is:
 - Private key stored in .env as AGENT_PRIVATE_KEY — never committed
 - Registered on-chain in ERC-8004 Identity Registry with its address in the metadata endpoints
 - Funded with USDC or USDm on Celo Mainnet to pay for x402 requests and gas
+
+---
+
+## Fiat Onramp (Fonbnk)
+
+Payers without crypto can settle payment links with local currency via Fonbnk.
+
+- Provider: Fonbnk (https://fonbnk.com)
+- No KYC: the mobile carrier handles identity verification
+- Coverage: 150+ countries (Africa, LATAM, Asia, Middle East)
+- Flow: payer picks "Pay with mobile" → selects carrier → tops up airtime → Fonbnk converts to stablecoin → Paygrid receives the payment
+- Backend endpoints: `GET /api/onramp/fonbnk/config` (carriers + rates), `POST /api/onramp/fonbnk/webhook` (payment confirmation)
+- Env: `FONBNK_API_KEY` required
 
 ---
 
@@ -93,6 +109,7 @@ The agent has a dedicated wallet (not a user wallet). It is:
 - Agent identity: @chaoschain/sdk (ERC-8004)
 - Database: Supabase (PostgreSQL)
 - Auth: Privy
+- Onramper: Fonbnk
 - Deploy: Vercel
 - Main network: Celo Mainnet (chainId: 42220)
 - Test network: Celo Sepolia (chainId: 11142220)
@@ -109,6 +126,8 @@ The agent has a dedicated wallet (not a user wallet). It is:
 - Never hardcode amounts without checking decimals — USDC/USDT are 6 decimals, USDm is 18
 - Never show 0x addresses as primary user identifier — use phone number via ODIS
 - Never commit AGENT_PRIVATE_KEY or any private key to the repo
+- Never assume all payers have a wallet — always offer fiat option via Fonbnk
+- Never hardcode Fonbnk carriers — use the availability API by country
 
 ---
 

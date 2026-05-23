@@ -1,19 +1,24 @@
 # Paygrid
 
-**Stablecoin payment links for humans and AI agents on Celo.**
+**Stablecoin payment links for agents and humans on Celo.**
 
-Paygrid is a [MiniPay](https://docs.minipay.xyz) MiniApp that lets anyone create a payment link, share it anywhere, and receive USDC/USDT/USDm instantly — no banks, no Stripe, no borders. Built for freelancers, developers, and the autonomous agent economy.
+Paygrid is a [MiniPay](https://docs.minipay.xyz) MiniApp that enables agent-to-agent, agent-to-human, and human-to-agent stablecoin payments. Create a payment link, share it anywhere, and receive USDC/USDT/USDm instantly — no banks, no Stripe, no borders. Built for the autonomous agent economy and for anyone who needs to send or receive money globally.
 
 ---
 
 ## How it works
 
-1. **Create** — generate a payment link from MiniPay with amount, token, and optional description
-2. **Share** — send it via WhatsApp, email, or social media
-3. **Pay** — the payer opens the link and pays in stablecoins from any compatible wallet
-4. **Settle** — funds arrive instantly on Celo. Paygrid takes 0.5% fee
+1. **Create** — generate a payment link from MiniPay with amount, token, and optional description. Accepts crypto, fiat, or both.
+2. **Share** — send it via WhatsApp, email, or social media.
+3. **Pay with crypto** — the payer opens the link, connects their wallet, and pays in stablecoins.
+4. **Pay with fiat** — no crypto? The payer uses the Fonbnk onramp to pay with mobile airtime or card, converted to stablecoin automatically.
+5. **Settle** — funds arrive instantly on Celo. Paygrid takes 0.5% fee.
 
-For AI agents: protected APIs return HTTP 402 Payment Required, the agent pays via x402, gets the response. No API keys, no manual billing.
+### For AI agents
+
+- **Agent-to-Agent**: Protected APIs return HTTP 402 Payment Required. The agent pays via x402, gets the response. No API keys, no manual billing.
+- **Agent-to-Human**: An agent creates payment links and pays humans (freelancers, team members) automatically.
+- **Human-to-Agent**: A human pays an agent for services — via crypto or fiat (Fonbnk).
 
 ---
 
@@ -27,6 +32,7 @@ For AI agents: protected APIs return HTTP 402 Payment Required, the agent pays v
 | Backend | REST API + webhooks + Supabase (PostgreSQL) |
 | Agent | Vercel AI SDK + thirdweb/x402 + @chaoschain/sdk (ERC-8004) |
 | Auth | Privy |
+| Onramper | Fonbnk (airtime → crypto, no-KYC) |
 | Network | Celo Mainnet (chainId: 42220) |
 
 ---
@@ -60,6 +66,16 @@ cd contracts && forge build
 forge test --fork-url https://forno.celo.org
 ```
 
+### Environment variables
+
+```bash
+FONBNK_API_KEY=           # Fonbnk onramp integration
+NEXT_PUBLIC_PRIVY_APP_ID= # Privy auth
+SUPABASE_URL=             # Database
+SUPABASE_ANON_KEY=        # Database
+AGENT_PRIVATE_KEY=        # ERC-8004 agent wallet (never commit)
+```
+
 ---
 
 ## Repo structure
@@ -86,3 +102,4 @@ Built for the **Onchain Agents Hackathon — Celo** (May 22 – June 15, 2026).
 - [x402 Payment Protocol](https://www.x402.org)
 - [MiniPay Documentation](https://docs.minipay.xyz)
 - [Celo Documentation](https://docs.celo.org)
+- [Fonbnk Onramp](https://fonbnk.com)

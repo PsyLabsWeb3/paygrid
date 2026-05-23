@@ -54,6 +54,7 @@ supabase/.temp/
 
 # Agent skills (reinstall via: npx skills add celo-org/celopedia-skills)
 .agents/
+.commandcode/
 
 # Skill lockfile
 skills-lock.json

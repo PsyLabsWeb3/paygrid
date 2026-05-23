@@ -1,3 +1,21 @@
 # Tasks: Backend
 
-> WIP — pending tasks.
+- [ ] Initialize Node.js project with TypeScript + Express (or Hono)
+- [ ] Supabase client setup (connection, migrations)
+- [ ] POST /api/links — create payment link (amount, token, description, acceptedMethods, recipientAddress)
+- [ ] GET /api/links/[id] — link detail with payment methods and status
+- [ ] GET /api/links — list links for authenticated user/agent
+- [ ] POST /api/links/[id]/pay — initiate payment (returns tx params for crypto, session for Fonbnk)
+- [ ] GET /api/payments — payment history with filtering by date/token/status
+- [ ] GET /api/onramp/fonbnk/config — available carriers and rates by country
+- [ ] POST /api/onramp/fonbnk/webhook — process Fonbnk payment confirmation
+- [ ] Event indexer — Viem watchContractEvent on PaygridRouter PaymentReceived
+- [ ] Webhook notifier — notify link creator on payment received
+- [ ] x402 middleware — return 402 Payment Required for protected endpoints
+- [ ] GET /api/x402/data — example pay-per-task endpoint
+- [ ] Privy auth middleware for user endpoints
+- [ ] ERC-8004 signature verification middleware for agent endpoints
+- [ ] API key middleware for Fonbnk webhooks
+- [ ] Database migrations for all tables (payment_links, payments, onramp_sessions, users, agents)
+- [ ] Error handling and input validation (Zod)
+- [ ] Rate limiting on public endpoints

@@ -1,3 +1,23 @@
-# Tasks: MiniApp Frontend
+# Tasks: MiniApp Frontend (Next.js 14 + MiniPay)
 
-> WIP — pending tasks.
+- [ ] Initialize Next.js 14 App Router project with Tailwind
+- [ ] Wagmi + Viem config for Celo Mainnet (legacy tx, feeCurrency)
+- [ ] MiniPay auto-connect on app launch
+- [ ] Home screen — create link CTA, payment history preview
+- [ ] Create link UI — amount, token selector, description, accepted methods toggle (crypto/fiat)
+- [ ] Create link — generate and show shareable link URL
+- [ ] Share sheet — WhatsApp, email, copy link, social media
+- [ ] Pay link screen (GET /pay/[id]) — shows link details
+- [ ] Pay link — "Crypto" tab: approve token + confirm transaction
+- [ ] Pay link — "Fiat" tab: Fonbnk widget (country detect → carrier select → pay)
+- [ ] Pay link — loading states during tx confirmation
+- [ ] Pay link — success screen with tx hash and receipt
+- [ ] Payment history — sent and received tabs with filtering
+- [ ] Payment detail — tx hash link to celoscan, amount, status, timestamp
+- [ ] Deeplinks for MiniPay receipts and deposits
+- [ ] Validate Fonbnk availability by payer country before showing fiat tab
+- [ ] Display carrier-specific limits in Fonbnk flow
+- [ ] Responsive design: 360x640 viewport, bundle < 2MB
+- [ ] Error states: insufficient balance, rejected tx, Fonbnk unavailable
+- [ ] Empty states: no links yet, no payments yet
+- [ ] Loading skeletons for all data-fetching views
