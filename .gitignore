@@ -56,6 +56,20 @@ supabase/.temp/
 .agents/
 .commandcode/
 .mcp.json
+broadcast/
+cache/
 
 # Skill lockfile
 skills-lock.json
+
+
+# Ensure local env files for contracts and agent are ignored explicitly
+contracts/.env
+agent/.env
+
+# Ignore per-run broadcast artifacts under contracts
+contracts/broadcast/
+
+# Contracts build artifacts
+contracts/out/
+contracts/cache/
