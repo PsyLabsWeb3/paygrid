@@ -80,9 +80,9 @@ Crear `backend/.env` (gitignored) y `backend/.env.example` (sin secretos).
 
 ## Fase 2 — Auth (Privy)
 
-- [ ] Privy auth middleware for user endpoints
-- [ ] `GET /api/links` — list links for authenticated user
-- [ ] `GET /api/payments` — payment history with filtering by date/token/status
+- [x] Privy auth middleware for user endpoints
+- [x] `GET /api/links` — list links for authenticated user
+- [x] `GET /api/payments` — payment history with filtering by date/token/status
 
 ## Fase 3 — Fonbnk fiat
 

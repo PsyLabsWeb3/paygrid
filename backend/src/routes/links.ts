@@ -3,10 +3,12 @@ import { z } from "zod";
 import type { Env } from "../config/env.js";
 import { ApiError } from "../lib/errors.js";
 import { TOKEN_ADDRESSES, type Stablecoin } from "../lib/tokens.js";
+import { createPrivyAuthMiddleware, getAuthUser } from "../middleware/privy-auth.js";
 import {
   buildCryptoPayTx,
   createPaymentLink,
   getPaymentLink,
+  listUserLinks,
 } from "../services/links.js";
 
 const stablecoins = ["USDm", "USDC", "USDT"] as const;
@@ -27,18 +29,46 @@ const paySchema = z.object({
   method: z.enum(["crypto", "fonbnk"]),
 });
 
+const listQuerySchema = z.object({
+  cursor: z.string().datetime().optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  status: z.enum(["active", "paid", "expired", "cancelled"]).optional(),
+  token: z.enum(stablecoins).optional(),
+});
+
 export function linksRoutes(env: Env) {
   const app = new Hono();
+  const optionalPrivyAuth = createPrivyAuthMiddleware(env, { required: false });
+  const requiredPrivyAuth = createPrivyAuthMiddleware(env, { required: true });
 
-  app.post("/", async (c) => {
+  app.get("/", requiredPrivyAuth, async (c) => {
+    const auth = getAuthUser(c);
+    if (!auth) {
+      throw new ApiError(401, "UNAUTHORIZED", "Missing authenticated user");
+    }
+
+    const query = listQuerySchema.parse(c.req.query());
+    const result = await listUserLinks(env, auth.user.id, query);
+    return c.json(result);
+  });
+
+  app.post("/", optionalPrivyAuth, async (c) => {
     const body = createLinkSchema.parse(await c.req.json());
     if (!Object.keys(TOKEN_ADDRESSES).includes(body.token)) {
       throw new ApiError(400, "INVALID_TOKEN", `Token ${body.token} is not supported`);
     }
+
+    const auth = getAuthUser(c);
     const result = await createPaymentLink(env, {
       ...body,
       recipientAddress: body.recipientAddress as `0x${string}`,
       token: body.token as Stablecoin,
+      creator: auth
+        ? {
+            id: auth.user.id,
+            type: "user",
+          }
+        : undefined,
     });
     return c.json(result, 201);
   });

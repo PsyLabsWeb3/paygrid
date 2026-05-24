@@ -22,7 +22,36 @@ export type CreateLinkInput = {
   acceptedMethods: ("crypto" | "fonbnk")[];
   recipientAddress: `0x${string}`;
   expiresAt?: string;
+  creator?: {
+    id: string;
+    type: "user" | "agent";
+  };
 };
+
+export type ListLinksOptions = {
+  cursor?: string;
+  limit?: number;
+  status?: PaymentLinkRow["status"];
+  token?: Stablecoin;
+};
+
+function serializeLink(row: PaymentLinkRow) {
+  return {
+    id: row.id,
+    onChainLinkId: row.on_chain_link_id,
+    creatorId: row.creator_id,
+    creatorType: row.creator_type,
+    recipientAddress: row.recipient_address,
+    amount: row.amount,
+    token: row.token,
+    description: row.description,
+    acceptedMethods: row.accepted_methods,
+    status: row.status,
+    txHash: row.tx_hash,
+    createdAt: row.created_at,
+    expiresAt: row.expires_at,
+  };
+}
 
 export async function createPaymentLink(env: Env, input: CreateLinkInput) {
   if (parseFloat(input.amount) <= 0) {
@@ -89,8 +118,8 @@ export async function createPaymentLink(env: Env, input: CreateLinkInput) {
       accepted_methods: input.acceptedMethods,
       status: "active",
       expires_at: input.expiresAt ?? null,
-      creator_id: null,
-      creator_type: null,
+      creator_id: input.creator?.id ?? null,
+      creator_type: input.creator?.type ?? null,
     })
     .select()
     .single();
@@ -188,6 +217,45 @@ export async function buildCryptoPayTx(env: Env, linkId: string) {
       onChainLinkId: String(paymentLink.on_chain_link_id),
       amount: paymentLink.amount,
       token: paymentLink.token,
+    },
+  };
+}
+
+export async function listUserLinks(env: Env, userId: string, options: ListLinksOptions = {}) {
+  const supabase = getSupabase(env);
+  const limit = Math.max(1, Math.min(options.limit ?? 20, 100));
+
+  let query = supabase
+    .from("payment_links")
+    .select("*")
+    .eq("creator_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit + 1);
+
+  if (options.status) {
+    query = query.eq("status", options.status);
+  }
+  if (options.token) {
+    query = query.eq("token", options.token);
+  }
+  if (options.cursor) {
+    query = query.lt("created_at", options.cursor);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    throw new ApiError(500, "INTERNAL_ERROR", error.message);
+  }
+
+  const rows = (data ?? []) as PaymentLinkRow[];
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+
+  return {
+    data: page.map(serializeLink),
+    pagination: {
+      hasMore,
+      nextCursor: hasMore ? page[page.length - 1]?.created_at ?? null : null,
     },
   };
 }

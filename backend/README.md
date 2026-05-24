@@ -7,7 +7,7 @@ REST API + on-chain event indexer for payment links on Celo Sepolia.
 ```bash
 cd backend
 cp .env.example .env
-# Fill Supabase keys, BACKEND_WALLET_PRIVATE_KEY, CELO_SEPOLIA_RPC
+# Fill Supabase keys, Privy keys, BACKEND_WALLET_PRIVATE_KEY, CELO_SEPOLIA_RPC
 npm install
 ```
 
@@ -41,6 +41,13 @@ npm run indexer
 ```bash
 npm test
 ```
+
+## Fase 2 endpoints
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/links` | Privy | List links for authenticated user |
+| GET | `/api/payments` | Privy | Payment history for authenticated user |
 
 ## Fase 1 endpoints
 
