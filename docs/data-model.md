@@ -13,6 +13,7 @@ Stores payment links created by users or agents.
 | Column | Type | Description |
 |--------|------|-------------|
 | id | uuid (PK) | Link unique identifier |
+| on_chain_link_id | bigint (UNIQUE) | PaygridLink `linkId` on Celo |
 | creator_id | uuid (FK → users.id) | Creator of the link |
 | creator_type | enum('user', 'agent') | Creator type |
 | recipient_address | text | On-chain address that receives funds |
@@ -94,6 +95,7 @@ AI agents registered on Paygrid — authenticated via ERC-8004.
 
 ## Indexes
 
+- `payment_links(on_chain_link_id)` — indexer event lookup
 - `payment_links(creator_id)` — user/agent history
 - `payment_links(status)` — active link queries
 - `payments(link_id)` — link payment history
