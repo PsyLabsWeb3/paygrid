@@ -79,104 +79,48 @@ forge test --gas-report
 
 ---
 
-## Backend API (Vitest + Supertest)
+## Backend API
 
-```typescript
-// backend/src/__tests__/links.test.ts
-import { describe, it, expect, beforeAll } from "vitest";
-import request from "supertest";
-import { createApp } from "../app";
+The backend currently uses Node's built-in test runner with `tsx`.
 
-const app = createApp();
+### Current tests
 
-describe("POST /api/links", () => {
-  it("creates a crypto-only link", async () => {
-    const res = await request(app)
-      .post("/api/links")
-      .send({
-        amount: "10.00",
-        token: "USDC",
-        description: "Test link",
-        acceptedMethods: ["crypto"],
-        recipientAddress: "0x...",
-      });
-    expect(res.status).toBe(201);
-    expect(res.body.id).toBeDefined();
-    expect(res.body.status).toBe("active");
-  });
+- token formatting / parsing utilities
+- Privy auth middleware
+- notifier hook emission
 
-  it("creates a link accepting fiat", async () => { ... });
-  it("rejects invalid token", async () => { ... });
-  it("rejects negative amount", async () => { ... });
-});
+### Run
 
-describe("POST /api/links/[id]/pay", () => {
-  it("returns crypto tx params for crypto method", async () => { ... });
-  it("returns Fonbnk session for fonbnk method", async () => { ... });
-  it("rejects unsupported method for link", async () => { ... });
-});
-
-describe("GET /api/onramp/fonbnk/config", () => {
-  it("returns carriers for valid country", async () => { ... });
-  it("returns 404 for unsupported country", async () => { ... });
-});
-
-describe("POST /api/onramp/fonbnk/webhook", () => {
-  it("confirms payment and updates status", async () => { ... });
-  it("rejects invalid API key", async () => { ... });
-});
+```bash
+cd backend
+npm test
+npm run build
 ```
 
-### Mock strategy
+### Suggested coverage next
 
-- Supabase: mock client or use Supabase local dev
-- Fonbnk API: wiremock or nock
-- Celo RPC: mock viem publicClient
+- `POST /api/links` happy path + validation failures
+- `GET /api/links` auth filtering
+- `GET /api/payments` auth filtering
+- on-chain event handler idempotency
+- Fonbnk config/webhook handlers once Fase 3 lands
 
 ---
 
-## Agent (Unit + Integration)
+## Agent
 
-### Tool unit tests
+### Suggested unit tests
 
-```typescript
-// agent/src/tools/__tests__/create-link.test.ts
-import { describe, it, expect, vi } from "vitest";
+- wallet bootstrap
+- backend API tool wrappers
+- balance / history formatters
+- x402 payer wrapper
 
-describe("createPaymentLink tool", () => {
-  it("calls backend API with correct params", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      json: () => ({ id: "link_123", url: "https://..." }),
-    });
+### Suggested integration tests
 
-    const result = await createPaymentLink.handle({
-      amount: "10.00",
-      token: "USDC",
-      description: "Test",
-      recipientAddress: "0x...",
-      acceptedMethods: ["crypto"],
-    }, { fetch: mockFetch });
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/links"),
-      expect.objectContaining({ method: "POST" })
-    );
-  });
-});
-```
-
-### x402 integration test
-
-```typescript
-// agent/src/__tests__/x402.integration.test.ts
-describe("x402 payer", () => {
-  it("pays a test endpoint on Sepolia", async () => {
-    const payer = createX402Payer(TEST_PRIVATE_KEY);
-    const response = await payer("https://test-x402.example.com/data");
-    expect(response.status).toBe(200);
-  });
-});
-```
+- x402 payment flow against a test endpoint
+- create link tool against backend staging
+- payment status lookup against Sepolia backend
 
 ---
 
@@ -196,7 +140,7 @@ Manual verification on Sepolia before Mainnet:
 
 ## Test Environment
 
-```
+```text
 Blockchain: Celo Sepolia (chainId: 11142220)
 RPC: https://forno.celo-sepolia.celo-testnet.org
 Faucet: https://faucet.celo.org/celo-sepolia
@@ -229,7 +173,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
-      - run: cd backend && npm ci && npm test
+      - run: cd backend && npm ci && npm test && npm run build
 
   agent:
     runs-on: ubuntu-latest

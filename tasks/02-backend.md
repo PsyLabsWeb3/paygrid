@@ -3,6 +3,12 @@
 Módulo standalone en `backend/` (Express o Hono + indexer long-running en VPS/PM2).
 Specs: [docs/api.md](../docs/api.md), [docs/data-model.md](../docs/data-model.md), [docs/architecture.md](../docs/architecture.md).
 
+## Estado actual
+
+- Fase 1 completada
+- Fase 2 completada
+- Fases 3 y 4 pendientes
+
 **Red de desarrollo:** Celo Sepolia (chainId `11142220`). Mainnet TBD.
 
 **Contratos Sepolia** (fuente de verdad: [contracts/deployments.sepolia.json](../contracts/deployments.sepolia.json)):
