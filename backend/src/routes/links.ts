@@ -10,24 +10,36 @@ import {
   getPaymentLink,
   listUserLinks,
 } from "../services/links.js";
+import { createFonbnkPaySession } from "../services/fonbnk.js";
 
 const stablecoins = ["USDm", "USDC", "USDT"] as const;
+const fonbnkPaymentChannels = ["bank", "mobile_money", "airtime"] as const;
 
 const createLinkSchema = z.object({
   amount: z.string(),
   token: z.enum(stablecoins),
   description: z.string().optional(),
-  acceptedMethods: z
-    .array(z.enum(["crypto", "fonbnk"]))
-    .min(1)
-    .default(["crypto"]),
+  acceptedMethods: z.array(z.enum(["crypto", "fonbnk"])).min(1).default(["crypto"]),
   recipientAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   expiresAt: z.string().datetime().optional(),
 });
 
-const paySchema = z.object({
-  method: z.enum(["crypto", "fonbnk"]),
+const cryptoPaySchema = z.object({
+  method: z.literal("crypto"),
 });
+
+const fonbnkPaySchema = z.object({
+  method: z.literal("fonbnk"),
+  countryIsoCode: z.string().min(2).max(3),
+  paymentChannel: z.enum(fonbnkPaymentChannels).optional(),
+  carrierCode: z.string().min(1).optional(),
+  email: z.string().email(),
+  userIp: z.string().ip().optional(),
+  redirectUrl: z.string().url().optional(),
+  extraFields: z.record(z.string(), z.unknown()).optional(),
+});
+
+const paySchema = z.discriminatedUnion("method", [cryptoPaySchema, fonbnkPaySchema]);
 
 const listQuerySchema = z.object({
   cursor: z.string().datetime().optional(),
@@ -92,11 +104,21 @@ export function linksRoutes(env: Env) {
   });
 
   app.post("/:id/pay", async (c) => {
-    const { method } = paySchema.parse(await c.req.json());
-    if (method === "fonbnk") {
-      throw new ApiError(400, "UNSUPPORTED_METHOD", "Fonbnk payments are not enabled yet");
+    const body = paySchema.parse(await c.req.json());
+    if (body.method === "crypto") {
+      const result = await buildCryptoPayTx(env, c.req.param("id"));
+      return c.json(result);
     }
-    const result = await buildCryptoPayTx(env, c.req.param("id"));
+
+    const result = await createFonbnkPaySession(env, c.req.param("id"), {
+      countryIsoCode: body.countryIsoCode,
+      paymentChannel: body.paymentChannel,
+      carrierCode: body.carrierCode,
+      email: body.email,
+      userIp: body.userIp,
+      redirectUrl: body.redirectUrl,
+      extraFields: body.extraFields,
+    });
     return c.json(result);
   });
 

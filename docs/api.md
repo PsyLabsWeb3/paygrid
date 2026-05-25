@@ -79,8 +79,23 @@ Fonbnk response:
   "session": {
     "id": "onramp_xyz",
     "provider": "fonbnk",
-    "redirectUrl": "https://fonbnk.com/pay/..."
+    "redirectUrl": "https://fonbnk.com/pay/...",
+    "orderId": "fonbnk_order_123",
+    "countryIsoCode": "KE",
+    "paymentChannel": "mobile_money",
+    "carrierCode": "safaricom"
   }
+}
+```
+
+Fonbnk request body:
+```json
+{
+  "method": "fonbnk",
+  "countryIsoCode": "KE",
+  "paymentChannel": "mobile_money",
+  "carrierCode": "safaricom",
+  "email": "payer@example.com"
 }
 ```
 

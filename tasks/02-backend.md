@@ -7,7 +7,8 @@ Specs: [docs/api.md](../docs/api.md), [docs/data-model.md](../docs/data-model.md
 
 - Fase 1 completada
 - Fase 2 completada
-- Fases 3 y 4 pendientes
+- Fase 3 completada
+- Fase 4 pendiente
 
 **Red de desarrollo:** Celo Sepolia (chainId `11142220`). Mainnet TBD.
 
@@ -92,10 +93,10 @@ Crear `backend/.env` (gitignored) y `backend/.env.example` (sin secretos).
 
 ## Fase 3 — Fonbnk fiat
 
-- [ ] `GET /api/onramp/fonbnk/config` — available carriers and rates by country (via Fonbnk API, no hardcode)
-- [ ] `POST /api/links/[id]/pay` — fonbnk path: return onramp session data
-- [ ] API key middleware for Fonbnk webhooks (`x-api-key`)
-- [ ] `POST /api/onramp/fonbnk/webhook` — verify Fonbnk payment, confirm on-chain tx, call `PaygridRouter.payWithFiat`
+- [x] `GET /api/onramp/fonbnk/config` — available carriers and rates by country (via Fonbnk API, no hardcode)
+- [x] `POST /api/links/[id]/pay` — fonbnk path: return onramp session data
+- [x] API key middleware for Fonbnk webhooks (`x-api-key`)
+- [x] `POST /api/onramp/fonbnk/webhook` — verify Fonbnk payment, confirm on-chain tx, call `PaygridRouter.payWithFiat`
 
 ## Fase 4 — x402 + agentes
 

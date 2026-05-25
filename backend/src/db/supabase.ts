@@ -41,6 +41,21 @@ export type PaymentRow = {
   confirmed_at: string | null;
 };
 
+export type OnrampSessionRow = {
+  id: string;
+  payment_link_id: string;
+  provider: string;
+  amount: string;
+  token: "USDm" | "USDC" | "USDT";
+  fiat_amount: string | null;
+  fiat_currency: string | null;
+  carrier: string | null;
+  status: "initiated" | "processing" | "completed" | "failed";
+  tx_hash: string | null;
+  created_at: string;
+  confirmed_at: string | null;
+};
+
 let client: SupabaseClient | null = null;
 
 export function getSupabase(env: Env): SupabaseClient {

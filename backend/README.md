@@ -7,7 +7,7 @@ REST API + on-chain event indexer for payment links on Celo Sepolia.
 ```bash
 cd backend
 cp .env.example .env
-# Fill Supabase keys, Privy keys, BACKEND_WALLET_PRIVATE_KEY, CELO_SEPOLIA_RPC
+# Fill Supabase keys, Privy keys, Fonbnk keys, BACKEND_WALLET_PRIVATE_KEY, CELO_SEPOLIA_RPC
 npm install
 ```
 
@@ -42,6 +42,13 @@ npm run indexer
 npm test
 ```
 
+## Fase 3 endpoints
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/onramp/fonbnk/config` | Public | Fonbnk carriers and indicative rates by country |
+| POST | `/api/onramp/fonbnk/webhook` | `x-api-key` / `x-signature` | Fonbnk settlement webhook |
+
 ## Fase 2 endpoints
 
 | Method | Path | Auth | Description |
@@ -57,6 +64,7 @@ npm test
 | POST | `/api/links` | Create link on-chain + DB |
 | GET | `/api/links/:id` | Link detail + payments |
 | POST | `/api/links/:id/pay` | Crypto tx params (`method: "crypto"`) |
+| POST | `/api/links/:id/pay` | Fonbnk session (`method: "fonbnk"`) |
 
 ## Contracts (Sepolia)
 

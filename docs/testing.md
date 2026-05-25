@@ -88,6 +88,7 @@ The backend currently uses Node's built-in test runner with `tsx`.
 - token formatting / parsing utilities
 - Privy auth middleware
 - notifier hook emission
+- Fonbnk config normalization + webhook auth
 
 ### Run
 
@@ -103,7 +104,7 @@ npm run build
 - `GET /api/links` auth filtering
 - `GET /api/payments` auth filtering
 - on-chain event handler idempotency
-- Fonbnk config/webhook handlers once Fase 3 lands
+- Fonbnk settlement webhook happy path with mocked chain
 
 ---
 

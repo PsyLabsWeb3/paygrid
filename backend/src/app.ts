@@ -6,6 +6,7 @@ import { ApiError, errorResponse } from "./lib/errors.js";
 import { rateLimit } from "./middleware/rate-limit.js";
 import { linksRoutes } from "./routes/links.js";
 import { paymentsRoutes } from "./routes/payments.js";
+import { fonbnkRoutes } from "./routes/onramp/fonbnk.js";
 
 export function createApp(env: Env) {
   const app = new Hono();
@@ -30,6 +31,7 @@ export function createApp(env: Env) {
   app.use("/api/*", rateLimit);
   app.route("/api/links", linksRoutes(env));
   app.route("/api/payments", paymentsRoutes(env));
+  app.route("/api/onramp/fonbnk", fonbnkRoutes(env));
 
   return app;
 }
