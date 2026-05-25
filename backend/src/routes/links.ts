@@ -3,12 +3,14 @@ import { z } from "zod";
 import type { Env } from "../config/env.js";
 import { ApiError } from "../lib/errors.js";
 import { TOKEN_ADDRESSES, type Stablecoin } from "../lib/tokens.js";
-import { createPrivyAuthMiddleware, getAuthUser } from "../middleware/privy-auth.js";
+import { createOwnershipAuthMiddleware } from "../middleware/ownership-auth.js";
+import { getAuthAgent } from "../middleware/erc8004-auth.js";
+import { getAuthUser } from "../middleware/privy-auth.js";
 import {
   buildCryptoPayTx,
   createPaymentLink,
   getPaymentLink,
-  listUserLinks,
+  listOwnedLinks,
 } from "../services/links.js";
 import { createFonbnkPaySession } from "../services/fonbnk.js";
 
@@ -48,39 +50,47 @@ const listQuerySchema = z.object({
   token: z.enum(stablecoins).optional(),
 });
 
+function resolveOwner(c: any) {
+  const authUser = getAuthUser(c);
+  if (authUser) {
+    return { id: authUser.user.id, type: "user" as const };
+  }
+
+  const authAgent = getAuthAgent(c);
+  if (authAgent) {
+    return { id: authAgent.agent.id, type: "agent" as const };
+  }
+
+  return null;
+}
+
 export function linksRoutes(env: Env) {
   const app = new Hono();
-  const optionalPrivyAuth = createPrivyAuthMiddleware(env, { required: false });
-  const requiredPrivyAuth = createPrivyAuthMiddleware(env, { required: true });
+  const requireOwnershipAuth = createOwnershipAuthMiddleware(env);
 
-  app.get("/", requiredPrivyAuth, async (c) => {
-    const auth = getAuthUser(c);
-    if (!auth) {
-      throw new ApiError(401, "UNAUTHORIZED", "Missing authenticated user");
+  app.get("/", requireOwnershipAuth, async (c) => {
+    const owner = resolveOwner(c);
+    if (!owner) {
+      throw new ApiError(401, "UNAUTHORIZED", "Missing authenticated user or agent");
     }
 
     const query = listQuerySchema.parse(c.req.query());
-    const result = await listUserLinks(env, auth.user.id, query);
+    const result = await listOwnedLinks(env, owner, query);
     return c.json(result);
   });
 
-  app.post("/", optionalPrivyAuth, async (c) => {
+  app.post("/", requireOwnershipAuth, async (c) => {
     const body = createLinkSchema.parse(await c.req.json());
     if (!Object.keys(TOKEN_ADDRESSES).includes(body.token)) {
       throw new ApiError(400, "INVALID_TOKEN", `Token ${body.token} is not supported`);
     }
 
-    const auth = getAuthUser(c);
+    const owner = resolveOwner(c);
     const result = await createPaymentLink(env, {
       ...body,
       recipientAddress: body.recipientAddress as `0x${string}`,
       token: body.token as Stablecoin,
-      creator: auth
-        ? {
-            id: auth.user.id,
-            type: "user",
-          }
-        : undefined,
+      creator: owner ?? undefined,
     });
     return c.json(result, 201);
   });

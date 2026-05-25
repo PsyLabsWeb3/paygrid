@@ -35,6 +35,11 @@ export type ListLinksOptions = {
   token?: Stablecoin;
 };
 
+export type LinkOwner = {
+  id: string;
+  type: "user" | "agent";
+};
+
 function serializeLink(row: PaymentLinkRow) {
   return {
     id: row.id,
@@ -222,13 +227,18 @@ export async function buildCryptoPayTx(env: Env, linkId: string) {
 }
 
 export async function listUserLinks(env: Env, userId: string, options: ListLinksOptions = {}) {
+  return listOwnedLinks(env, { id: userId, type: "user" }, options);
+}
+
+export async function listOwnedLinks(env: Env, owner: LinkOwner, options: ListLinksOptions = {}) {
   const supabase = getSupabase(env);
   const limit = Math.max(1, Math.min(options.limit ?? 20, 100));
 
   let query = supabase
     .from("payment_links")
     .select("*")
-    .eq("creator_id", userId)
+    .eq("creator_id", owner.id)
+    .eq("creator_type", owner.type)
     .order("created_at", { ascending: false })
     .limit(limit + 1);
 

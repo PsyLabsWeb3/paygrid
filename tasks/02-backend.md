@@ -8,7 +8,7 @@ Specs: [docs/api.md](../docs/api.md), [docs/data-model.md](../docs/data-model.md
 - Fase 1 completada
 - Fase 2 completada
 - Fase 3 completada
-- Fase 4 pendiente
+- Fase 4 completada
 
 **Red de desarrollo:** Celo Sepolia (chainId `11142220`). Mainnet TBD.
 
@@ -28,7 +28,7 @@ Specs: [docs/api.md](../docs/api.md), [docs/data-model.md](../docs/data-model.md
 - **Relayer vs client-signed:** Fase 1 usa **relayer wallet** del backend (`BACKEND_WALLET_PRIVATE_KEY`) para `createLink` con gas en Sepolia. Evaluar client-signed desde MiniPay en fase posterior.
 - **Fonbnk `payWithFiat`:** solo el **owner** de `PaygridRouter` puede ejecutar la tx. El webhook Fonbnk debe verificar el pago, confirmar tokens en el router y llamar `payWithFiat` con `ROUTER_OWNER_PRIVATE_KEY`.
 - **Webhook notifier (Fase 1):** log estructurado + hook interno; canal externo (email/push/webhook URL) TBD.
-- **ERC-8004 auth:** spec pendiente en [docs/erc8004-integration.md](../docs/erc8004-integration.md) — stub en Fase 4 hasta completar doc.
+- **ERC-8004 auth:** backend-first ya usa payload firmado con `viem.verifyMessage` y auto-registro de agentes.
 
 ---
 
@@ -100,15 +100,15 @@ Crear `backend/.env` (gitignored) y `backend/.env.example` (sin secretos).
 
 ## Fase 4 — x402 + agentes
 
-- [ ] x402 middleware — return 402 Payment Required for protected endpoints
-- [ ] `GET /api/x402/data` — example pay-per-task endpoint
-- [ ] ERC-8004 signature verification middleware for agent endpoints (blocked on [docs/erc8004-integration.md](../docs/erc8004-integration.md))
-- [ ] `GET /api/links` — list links for authenticated agent
+- [x] x402 middleware — return 402 Payment Required for protected endpoints
+- [x] `GET /api/x402/data` — example pay-per-task endpoint
+- [x] ERC-8004 signature verification middleware for agent endpoints
+- [x] `GET /api/links` — list links for authenticated agent
 
 ---
 
-## Pendientes de docs (no bloquean Fase 1)
+## Pendientes de docs
 
 - [x] Actualizar [docs/data-model.md](../docs/data-model.md) con columna `on_chain_link_id`
-- [ ] Completar [docs/erc8004-integration.md](../docs/erc8004-integration.md) (formato signed payload)
-- [ ] Alinear [docs/deployment.md](../docs/deployment.md) con módulo `backend/` standalone (hoy menciona API en `minipay/`)
+- [x] Completar [docs/erc8004-integration.md](../docs/erc8004-integration.md) con el formato signed payload
+- [x] Alinear [docs/deployment.md](../docs/deployment.md) con módulo `backend/` standalone

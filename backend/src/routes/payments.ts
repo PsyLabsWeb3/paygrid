@@ -2,8 +2,10 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { Env } from "../config/env.js";
 import { ApiError } from "../lib/errors.js";
-import { createPrivyAuthMiddleware, getAuthUser } from "../middleware/privy-auth.js";
-import { listUserPayments } from "../services/payments.js";
+import { createOwnershipAuthMiddleware } from "../middleware/ownership-auth.js";
+import { getAuthAgent } from "../middleware/erc8004-auth.js";
+import { getAuthUser } from "../middleware/privy-auth.js";
+import { listOwnedPayments } from "../services/payments.js";
 
 const paymentsQuerySchema = z.object({
   cursor: z.string().datetime().optional(),
@@ -14,18 +16,32 @@ const paymentsQuerySchema = z.object({
   to: z.string().datetime().optional(),
 });
 
+function resolveOwner(c: any) {
+  const authUser = getAuthUser(c);
+  if (authUser) {
+    return { id: authUser.user.id, type: "user" as const };
+  }
+
+  const authAgent = getAuthAgent(c);
+  if (authAgent) {
+    return { id: authAgent.agent.id, type: "agent" as const };
+  }
+
+  return null;
+}
+
 export function paymentsRoutes(env: Env) {
   const app = new Hono();
-  const requiredPrivyAuth = createPrivyAuthMiddleware(env, { required: true });
+  const requireOwnershipAuth = createOwnershipAuthMiddleware(env);
 
-  app.get("/", requiredPrivyAuth, async (c) => {
-    const auth = getAuthUser(c);
-    if (!auth) {
-      throw new ApiError(401, "UNAUTHORIZED", "Missing authenticated user");
+  app.get("/", requireOwnershipAuth, async (c) => {
+    const owner = resolveOwner(c);
+    if (!owner) {
+      throw new ApiError(401, "UNAUTHORIZED", "Missing authenticated user or agent");
     }
 
     const query = paymentsQuerySchema.parse(c.req.query());
-    const result = await listUserPayments(env, auth.user.id, query);
+    const result = await listOwnedPayments(env, owner, query);
     return c.json(result);
   });
 

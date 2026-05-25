@@ -159,7 +159,10 @@ import { wrapFetchWithPayment } from "thirdweb/x402";
 
 ### Agent as payee
 
-The agent can expose its own x402 endpoint once the Fase 4 backend/agent contract is finalized. Until then, the x402 server shape is a stub and should not be treated as production-ready.
+The backend already exposes a pay-per-task example endpoint at `GET /api/x402/data` with x402 challenge + proof handling.
+The agent runtime can consume that endpoint today.
+
+The agent can expose its own x402 endpoint once the agent runtime is implemented. Until then, the agent-side x402 server shape remains a future task and should not be treated as production-ready.
 
 ---
 
@@ -230,11 +233,13 @@ The agent spec is intentionally ahead of implementation. Current backend support
 - creating payment links,
 - checking link/payment state,
 - generating crypto payment txs,
-- and indexing on-chain payment confirmations.
+- indexing on-chain payment confirmations,
+- authenticating agent requests with ERC-8004 signed payloads,
+- serving a backend x402 challenge endpoint for pay-per-task flows,
+- listing links and payments for authenticated agents.
 
 Still pending:
 
 - full agent runtime implementation,
-- x402 server/payer code,
-- ERC-8004 auth middleware for agent endpoints,
+- x402 server/payer code inside `agent/`,
 - agent treasury report tooling.

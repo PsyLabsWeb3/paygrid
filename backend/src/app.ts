@@ -7,6 +7,7 @@ import { rateLimit } from "./middleware/rate-limit.js";
 import { linksRoutes } from "./routes/links.js";
 import { paymentsRoutes } from "./routes/payments.js";
 import { fonbnkRoutes } from "./routes/onramp/fonbnk.js";
+import { x402Routes } from "./routes/x402.js";
 
 export function createApp(env: Env) {
   const app = new Hono();
@@ -32,6 +33,7 @@ export function createApp(env: Env) {
   app.route("/api/links", linksRoutes(env));
   app.route("/api/payments", paymentsRoutes(env));
   app.route("/api/onramp/fonbnk", fonbnkRoutes(env));
+  app.route("/api/x402", x402Routes(env));
 
   return app;
 }

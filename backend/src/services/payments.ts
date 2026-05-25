@@ -12,6 +12,11 @@ export type ListPaymentsOptions = {
   to?: string;
 };
 
+export type PaymentsOwner = {
+  id: string;
+  type: "user" | "agent";
+};
+
 function serializePayment(row: PaymentRow) {
   return {
     id: row.id,
@@ -35,13 +40,22 @@ export async function listUserPayments(
   userId: string,
   options: ListPaymentsOptions = {},
 ) {
+  return listOwnedPayments(env, { id: userId, type: "user" }, options);
+}
+
+export async function listOwnedPayments(
+  env: Env,
+  owner: PaymentsOwner,
+  options: ListPaymentsOptions = {},
+) {
   const supabase = getSupabase(env);
   const limit = Math.max(1, Math.min(options.limit ?? 20, 100));
 
   const { data: ownedLinks, error: linksError } = await supabase
     .from("payment_links")
     .select("id")
-    .eq("creator_id", userId);
+    .eq("creator_id", owner.id)
+    .eq("creator_type", owner.type);
 
   if (linksError) {
     throw new ApiError(500, "INTERNAL_ERROR", linksError.message);

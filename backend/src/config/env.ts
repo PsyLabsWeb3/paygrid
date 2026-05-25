@@ -23,6 +23,11 @@ const envSchema = z.object({
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/)
     .transform((v) => v as `0x${string}`),
+  PAYGRID_TREASURY_ADDRESS: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/)
+    .optional()
+    .transform((v) => (v ? (v as `0x${string}`) : undefined)),
   BACKEND_WALLET_PRIVATE_KEY: z
     .string()
     .min(1)

@@ -7,7 +7,7 @@ REST API + on-chain event indexer for payment links on Celo Sepolia.
 ```bash
 cd backend
 cp .env.example .env
-# Fill Supabase keys, Privy keys, Fonbnk keys, BACKEND_WALLET_PRIVATE_KEY, CELO_SEPOLIA_RPC
+# Fill Supabase keys, Privy keys, Fonbnk keys, x402 treasury address, BACKEND_WALLET_PRIVATE_KEY, CELO_SEPOLIA_RPC
 npm install
 ```
 
@@ -42,6 +42,17 @@ npm run indexer
 npm test
 ```
 
+## Fase 4 endpoints
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/x402/data` | x402 proof | Example pay-per-task endpoint |
+
+### x402 proof headers
+
+- `x-paygrid-x402-proof` with JSON proof payload
+- The backend validates `resource`, `chainId`, `token`, `amount`, `txHash`, and `payer`
+
 ## Fase 3 endpoints
 
 | Method | Path | Auth | Description |
@@ -53,8 +64,8 @@ npm test
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/api/links` | Privy | List links for authenticated user |
-| GET | `/api/payments` | Privy | Payment history for authenticated user |
+| GET | `/api/links` | Privy or ERC-8004 | List links for authenticated user or agent |
+| GET | `/api/payments` | Privy or ERC-8004 | Payment history for authenticated user or agent |
 
 ## Fase 1 endpoints
 

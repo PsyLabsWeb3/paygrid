@@ -25,6 +25,17 @@ export type PaymentLinkRow = {
   expires_at: string | null;
 };
 
+
+export type AgentRow = {
+  id: string;
+  agent_id: string;
+  address: string;
+  name: string | null;
+  metadata_uri: string | null;
+  reputation_score: number | null;
+  created_at: string;
+};
+
 export type PaymentRow = {
   id: string;
   link_id: string;
