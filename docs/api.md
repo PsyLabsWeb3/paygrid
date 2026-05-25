@@ -4,9 +4,10 @@ Base URL: `https://api.paygrid.xyz` (TBD)
 
 ## Authentication
 
-- User endpoints: Privy JWT in Authorization header
-- Agent endpoints: ERC-8004 signed payload
+- User endpoints: Privy JWT in `Authorization: Bearer <token>`
+- Agent endpoints: ERC-8004 signed payload headers
 - Webhook endpoints: API key in `x-api-key` header
+- x402 protected endpoints: `x-paygrid-x402-proof` header with JSON proof payload
 
 ---
 
@@ -15,6 +16,8 @@ Base URL: `https://api.paygrid.xyz` (TBD)
 ### `POST /api/links`
 
 Create a new payment link.
+
+Auth: Privy user or ERC-8004 agent.
 
 ```json
 {
@@ -45,6 +48,10 @@ Get link details. Returns accepted methods, status, and payment history.
 ### `GET /api/links`
 
 List links for the authenticated user or agent.
+
+Auth: Privy user or ERC-8004 agent.
+
+Query params: `?cursor=<iso-timestamp>&limit=20&status=active&token=USDC`
 
 ---
 
@@ -79,14 +86,33 @@ Fonbnk response:
   "session": {
     "id": "onramp_xyz",
     "provider": "fonbnk",
-    "redirectUrl": "https://fonbnk.com/pay/..."
+    "redirectUrl": "https://fonbnk.com/pay/...",
+    "orderId": "fonbnk_order_123",
+    "countryIsoCode": "KE",
+    "paymentChannel": "mobile_money",
+    "carrierCode": "safaricom"
   }
+}
+```
+
+Fonbnk request body:
+```json
+{
+  "method": "fonbnk",
+  "countryIsoCode": "KE",
+  "paymentChannel": "mobile_money",
+  "carrierCode": "safaricom",
+  "email": "payer@example.com"
 }
 ```
 
 ### `GET /api/payments`
 
 Payment history for the authenticated user or agent.
+
+Auth: Privy user or ERC-8004 agent.
+
+Query params: `?cursor=<iso-timestamp>&limit=20&status=confirmed&token=USDC`
 
 ---
 
@@ -139,12 +165,48 @@ Protected API endpoints that return HTTP 402 Payment Required.
 
 Example pay-per-task endpoint. Returns data after payment.
 
+Auth: `x-paygrid-x402-proof` header.
+
+Example proof:
+```json
+{
+  "resource": "/api/x402/data",
+  "chainId": 11142220,
+  "token": "USDC",
+  "amount": "0.10",
+  "txHash": "0x...",
+  "payer": "0x..."
+}
+```
+
 Flow:
 1. Agent requests `/api/x402/data`
-2. Server returns `402 Payment Required` with payment details
+2. Server returns `402 Payment Required` with payment challenge
 3. Agent pays USDC via x402
 4. Agent retries request with payment proof
 5. Server returns data
+
+---
+
+## ERC-8004 Auth
+
+Agent-authenticated endpoints use signed headers rather than a session cookie.
+
+Required headers:
+
+- `x-erc8004-agent-id`
+- `x-erc8004-address`
+- `x-erc8004-timestamp`
+- `x-erc8004-nonce`
+- `x-erc8004-signature`
+
+Signed message format:
+
+```text
+paygrid:erc8004:<agentId>:<address>:<METHOD>:<path>:<timestamp>:<nonce>
+```
+
+The backend lowercases the address, uppercases the method, verifies the signature with `viem.verifyMessage`, and rejects stale timestamps older than 5 minutes.
 
 ---
 
@@ -178,6 +240,7 @@ All errors return a consistent JSON structure:
 | 429 | `RATE_LIMITED` | Too many requests |
 | 500 | `INTERNAL_ERROR` | Unexpected server error |
 | 502 | `FONBNK_ERROR` | Fonbnk API unavailable |
+| 402 | `PAYMENT_REQUIRED` | x402 payment challenge |
 
 ---
 

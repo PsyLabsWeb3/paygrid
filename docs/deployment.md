@@ -4,17 +4,17 @@
 
 ```
                     ┌─────────────┐
-                    │    DNS       │
-                    │ paygrid.xyz  │
+                    │    DNS      │
+                    │ paygrid.xyz │
                     └──────┬──────┘
                            │
-           ┌───────────────┼───────────────┐
-           ▼               ▼               ▼
+           ┌───────────────┼────────────────┐
+           ▼               ▼                ▼
    ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-   │   Vercel     │ │   Vercel     │ │   VPS         │
-   │   Frontend   │ │   API Routes │ │   Agent +      │
-   │   (Next.js)  │ │   /api/*     │ │   Indexer      │
-   └──────┬───────┘ └──────┬───────┘ └──────┬────────┘
+   │   Vercel     │ │   VPS        │ │   VPS        │
+   │  Frontend    │ │ Backend API  │ │ Agent +      │
+   │ (minipay/)   │ │ + Indexer    │ │ Indexer      │
+   └──────┬───────┘ └──────┬───────┘ └──────┬───────┘
           │                │                │
           └────────────────┼────────────────┘
                            ▼
@@ -33,16 +33,16 @@
 | Service | Target | Why |
 |---------|--------|-----|
 | Frontend (minipay/) | **Vercel** | Next.js, edge-optimized, free tier |
-| Backend API | **Vercel** (API Routes) | Same repo, serverless, auto-scale |
+| Backend API | **VPS** (Ubuntu + PM2) | Standalone `backend/` service, persistent auth + chain access |
+| Event Indexer | **VPS** (Ubuntu + PM2) | Long-running, Viem `watchContractEvent` |
 | Agent Runtime | **VPS** (Ubuntu + PM2) | Long-running, persistent wallet, x402 server |
-| Event Indexer | **VPS** (Ubuntu + PM2) | Long-running, Viem watchContractEvent |
 | Database | **Supabase** | Managed PostgreSQL, free tier |
 | Blockchain | **Celo Mainnet** | Production |
 | Blockchain test | **Celo Sepolia** | Development |
 
 ---
 
-## VPS Setup (Agent + Indexer)
+## VPS Setup (Backend + Agent + Indexer)
 
 ### Specs
 
@@ -74,15 +74,18 @@ git clone https://github.com/PsyLabs/paygrid.git /opt/paygrid
 cd /opt/paygrid
 
 # 5. Install deps
-cd agent && npm install
+cd backend && npm install && npm run build
+cd ../agent && npm install && npm run build
 
 # 6. Environment
+cp backend/.env.example backend/.env
 cp agent/.env.example agent/.env
-# Edit agent/.env with real keys
+# Edit backend/.env and agent/.env with real keys
 
 # 7. Start services
-pm2 start agent/src/index.js --name paygrid-agent
-pm2 start backend/src/indexer.js --name paygrid-indexer
+pm2 start backend/dist/index.js --name paygrid-backend
+pm2 start backend/dist/indexer.js --name paygrid-indexer
+pm2 start agent/dist/index.js --name paygrid-agent
 pm2 save
 pm2 startup
 ```
@@ -93,18 +96,25 @@ pm2 startup
 module.exports = {
   apps: [
     {
-      name: "paygrid-agent",
-      script: "agent/src/index.js",
-      env: { NODE_ENV: "production" },
-      max_restarts: 5,
-      restart_delay: 10000,
-    },
-    {
-      name: "paygrid-indexer",
-      script: "backend/src/indexer.js",
+      name: "paygrid-backend",
+      script: "backend/dist/index.js",
       env: { NODE_ENV: "production" },
       max_restarts: 5,
       restart_delay: 5000,
+    },
+    {
+      name: "paygrid-indexer",
+      script: "backend/dist/indexer.js",
+      env: { NODE_ENV: "production" },
+      max_restarts: 5,
+      restart_delay: 5000,
+    },
+    {
+      name: "paygrid-agent",
+      script: "agent/dist/index.js",
+      env: { NODE_ENV: "production" },
+      max_restarts: 5,
+      restart_delay: 10000,
     },
   ],
 };
@@ -115,10 +125,26 @@ module.exports = {
 ```nginx
 server {
     listen 80;
+    server_name api.paygrid.xyz;
+
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+```nginx
+server {
+    listen 80;
     server_name agent.paygrid.xyz;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3002;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -130,12 +156,13 @@ server {
 
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d api.paygrid.xyz
 sudo certbot --nginx -d agent.paygrid.xyz
 ```
 
 ---
 
-## Vercel Setup (Frontend + API)
+## Vercel Setup (Frontend)
 
 ### Frontend (minipay/)
 
@@ -147,63 +174,56 @@ Output directory: .next
 Deploy: git push main → Vercel auto-deploy
 ```
 
-### API Routes (co-located in minipay/)
-
-```
-minipay/src/app/api/links/route.ts
-minipay/src/app/api/links/[id]/route.ts
-minipay/src/app/api/links/[id]/pay/route.ts
-minipay/src/app/api/payments/route.ts
-minipay/src/app/api/onramp/fonbnk/config/route.ts
-minipay/src/app/api/onramp/fonbnk/webhook/route.ts
-minipay/src/app/api/x402/[...path]/route.ts
-```
-
-Single Vercel deploy handles frontend + API. Less ops complexity.
+Single Vercel deploy handles the frontend only. API traffic goes to `backend/` on the VPS.
 
 ---
 
 ## Environment Variables
 
-### Vercel (Frontend + API Routes)
+### Vercel (Frontend)
 
 ```bash
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=...     # Server-side only
 
-# Privy Auth
+# Privy
 NEXT_PUBLIC_PRIVY_APP_ID=...
 
-# Fonbnk
-FONBNK_API_KEY=...
+# Backend
+BACKEND_URL=https://api.paygrid.xyz
 
 # Celo
 NEXT_PUBLIC_CELO_RPC=https://forno.celo.org
-CELO_SEPOLIA_RPC=https://forno.celo-sepolia.celo-testnet.org
 ```
 
-### VPS (Agent + Indexer)
+### VPS (Backend API + Indexer)
 
 ```bash
+# Backend API
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=...
+CELO_SEPOLIA_RPC=https://forno.celo-sepolia.celo-testnet.org
+CHAIN_ID=11142220
+PAYGRID_LINK_ADDRESS=0xd2dc71c47803b0939944ec29ff3b644c48bae7de
+PAYGRID_ROUTER_ADDRESS=0xe75027ff07931ef97248402f4df63a4d3287020d
+BACKEND_WALLET_PRIVATE_KEY=0x...
+PRIVY_APP_ID=...
+PRIVY_APP_SECRET=...
+PRIVY_JWT_VERIFICATION_KEY=...
+PORT=3001
+
 # Agent
 AGENT_PRIVATE_KEY=0x...         # Payment wallet
 AGENT_OWNER_PRIVATE_KEY=0x...   # Owner wallet (#9113)
-BACKEND_URL=https://api.paygrid.xyz
 AGENT_API_KEY=sk_...
 ERC8004_AGENT_ID=9113
 THIRDWEB_SECRET_KEY=...
 
-# Indexer
-SUPABASE_URL=https://xxx.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=...
-CELO_RPC_URL=https://forno.celo.org
-PAYGRID_ROUTER_ADDRESS=0x...    # After contract deploy
-PAYGRID_LINK_ADDRESS=0x...      # After contract deploy
-
 # Fonbnk
 FONBNK_API_KEY=...
+ROUTER_OWNER_PRIVATE_KEY=0x...
+FONBNK_WEBHOOK_SECRET=...
 ```
 
 ---
@@ -212,9 +232,9 @@ FONBNK_API_KEY=...
 
 | Contract | Sepolia | Mainnet |
 |----------|---------|---------|
-| PaygridRouter | TBD (after deploy) | TBD (after deploy) |
-| PaygridLink | TBD (after deploy) | TBD (after deploy) |
-| Paygrid Treasury | TBD | TBD |
+| PaygridRouter | `0xe75027ff07931ef97248402f4df63a4d3287020d` | TBD (after deploy) |
+| PaygridLink | `0xd2dc71c47803b0939944ec29ff3b644c48bae7de` | TBD (after deploy) |
+| Paygrid Treasury | `0xd4683314a013792fe8840e4171dc4692e317617b` | TBD |
 | USDm | same as mainnet | `0x765DE816845861e75A25fCA122bb6898B8B1282a` |
 | USDC | same as mainnet | `0xcebA9300f2b948710d2653dD7B07f33A8B32118C` |
 | USDT | same as mainnet | `0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e` |
@@ -225,11 +245,13 @@ FONBNK_API_KEY=...
 ## CI/CD
 
 ### Vercel (auto)
-```
-git push main → Vercel auto-builds minipay/ → deploys to paygrid.xyz
+
+```text
+git push main → Vercel auto-builds minipay/ → deploys paygrid.xyz frontend
 ```
 
 ### VPS (GitHub Actions)
+
 ```yaml
 # .github/workflows/deploy-vps.yml
 name: Deploy to VPS
@@ -238,8 +260,8 @@ on:
   push:
     branches: [main]
     paths:
+      - "backend/**"
       - "agent/**"
-      - "backend/src/indexer.js"
 
 jobs:
   deploy:
@@ -255,7 +277,8 @@ jobs:
           script: |
             cd /opt/paygrid
             git pull origin main
-            cd agent && npm install --production
+            cd backend && npm install --production && npm run build
+            cd ../agent && npm install --production && npm run build
             pm2 reload all
 ```
 
@@ -267,6 +290,7 @@ jobs:
 |-----------|------|--------|
 | `paygrid.xyz` | A/CNAME | Vercel |
 | `www.paygrid.xyz` | CNAME | `paygrid.xyz` |
+| `api.paygrid.xyz` | A | VPS IP |
 | `agent.paygrid.xyz` | A | VPS IP |
 
 ---

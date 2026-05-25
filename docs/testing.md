@@ -1,184 +1,48 @@
 # Testing Strategy
 
-## Approach
-
 Test critical paths first. Priority: contracts > backend > agent > frontend.
 
----
+## What to test
 
-## Contracts (Foundry)
+### Contracts
 
-### Unit tests
+- `PaygridLink.createLink` emits correct `LinkCreated`
+- `PaygridRouter.pay` splits fee to treasury
+- `payWithFiat` only owner can call
+- invalid token/amount reverts
 
-```solidity
-// test/PaygridLink.t.sol
-contract PaygridLinkTest is Test {
-    PaygridLink link;
+### Backend
 
-    function setUp() public {
-        link = new PaygridLink();
-    }
+- link creation roundtrip: API → contract → DB
+- payment indexer updates DB on `PaymentReceived`
+- Privy auth middleware
+- ERC-8004 auth middleware
+- Fonbnk webhook verification
+- x402 challenge + proof acceptance
 
-    function test_createLink() public { ... }
-    function test_createLink_withFiat() public { ... }
-    function test_cancelLink_onlyCreator() public { ... }
-    function test_cancelLink_revertsNotCreator() public { ... }
-    function test_getLink_returnsCorrectData() public { ... }
-}
-```
+### Agent
 
-```solidity
-// test/PaygridRouter.t.sol
-contract PaygridRouterTest is Test {
-    PaygridRouter router;
-    MockERC20 usdc;
+- wallet bootstrap
+- backend API tool wrappers
+- balance / history formatters
+- x402 payer wrapper
 
-    function setUp() public {
-        usdc = new MockERC20("USDC", "USDC", 6);
-        router = new PaygridRouter(address(link), treasury);
-    }
+### Frontend
 
-    function test_pay_splitsFeeCorrectly() public { ... }
-    function test_pay_emitsPaymentReceived() public { ... }
-    function test_payWithFiat_emitsPaymentReceivedWithOnrampTxId() public { ... }
-    function test_pay_revertsWhenLinkNotActive() public { ... }
-    function test_setFeeBps_revertsAboveMax() public { ... }
-}
-```
+- payment link creation flow
+- payment method selection
+- MiniPay deeplink handling
+- receipt / status updates
 
-### Integration tests (fork)
+## Suggested coverage next
 
-```solidity
-// test/fork/PaygridRouter.fork.t.sol
-contract PaygridRouterForkTest is Test {
-    uint256 constant CELO_FORK_BLOCK = 67600000;
-
-    function setUp() public {
-        vm.createSelectFork("https://forno.celo.org", CELO_FORK_BLOCK);
-    }
-
-    function test_pay_withUSDC_onMainnet() public {
-        // Impersonate a USDC holder, pay through router
-        // Verify treasury + recipient balances
-    }
-}
-```
-
-### Run
-
-```bash
-# Unit tests
-forge test
-
-# Fork tests
-forge test --fork-url https://forno.celo.org
-
-# Gas report
-forge test --gas-report
-```
-
----
-
-## Backend API (Vitest + Supertest)
-
-```typescript
-// backend/src/__tests__/links.test.ts
-import { describe, it, expect, beforeAll } from "vitest";
-import request from "supertest";
-import { createApp } from "../app";
-
-const app = createApp();
-
-describe("POST /api/links", () => {
-  it("creates a crypto-only link", async () => {
-    const res = await request(app)
-      .post("/api/links")
-      .send({
-        amount: "10.00",
-        token: "USDC",
-        description: "Test link",
-        acceptedMethods: ["crypto"],
-        recipientAddress: "0x...",
-      });
-    expect(res.status).toBe(201);
-    expect(res.body.id).toBeDefined();
-    expect(res.body.status).toBe("active");
-  });
-
-  it("creates a link accepting fiat", async () => { ... });
-  it("rejects invalid token", async () => { ... });
-  it("rejects negative amount", async () => { ... });
-});
-
-describe("POST /api/links/[id]/pay", () => {
-  it("returns crypto tx params for crypto method", async () => { ... });
-  it("returns Fonbnk session for fonbnk method", async () => { ... });
-  it("rejects unsupported method for link", async () => { ... });
-});
-
-describe("GET /api/onramp/fonbnk/config", () => {
-  it("returns carriers for valid country", async () => { ... });
-  it("returns 404 for unsupported country", async () => { ... });
-});
-
-describe("POST /api/onramp/fonbnk/webhook", () => {
-  it("confirms payment and updates status", async () => { ... });
-  it("rejects invalid API key", async () => { ... });
-});
-```
-
-### Mock strategy
-
-- Supabase: mock client or use Supabase local dev
-- Fonbnk API: wiremock or nock
-- Celo RPC: mock viem publicClient
-
----
-
-## Agent (Unit + Integration)
-
-### Tool unit tests
-
-```typescript
-// agent/src/tools/__tests__/create-link.test.ts
-import { describe, it, expect, vi } from "vitest";
-
-describe("createPaymentLink tool", () => {
-  it("calls backend API with correct params", async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      json: () => ({ id: "link_123", url: "https://..." }),
-    });
-
-    const result = await createPaymentLink.handle({
-      amount: "10.00",
-      token: "USDC",
-      description: "Test",
-      recipientAddress: "0x...",
-      acceptedMethods: ["crypto"],
-    }, { fetch: mockFetch });
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/links"),
-      expect.objectContaining({ method: "POST" })
-    );
-  });
-});
-```
-
-### x402 integration test
-
-```typescript
-// agent/src/__tests__/x402.integration.test.ts
-describe("x402 payer", () => {
-  it("pays a test endpoint on Sepolia", async () => {
-    const payer = createX402Payer(TEST_PRIVATE_KEY);
-    const response = await payer("https://test-x402.example.com/data");
-    expect(response.status).toBe(200);
-  });
-});
-```
-
----
+- `POST /api/links` happy path + validation failures
+- `GET /api/links` auth filtering
+- `GET /api/payments` auth filtering
+- on-chain event handler idempotency
+- Fonbnk settlement webhook happy path with mocked chain
+- ERC-8004 signed payload acceptance/rejection
+- x402 payment flow against a test endpoint
 
 ## E2E (Critical flows)
 
@@ -192,11 +56,9 @@ Manual verification on Sepolia before Mainnet:
 | H2H | Human creates link → another human pays | Funds arrive |
 | Fiat | Human pays via Fonbnk → webhook confirms → funds settle | onramp_sessions confirmed |
 
----
-
 ## Test Environment
 
-```
+```text
 Blockchain: Celo Sepolia (chainId: 11142220)
 RPC: https://forno.celo-sepolia.celo-testnet.org
 Faucet: https://faucet.celo.org/celo-sepolia
@@ -204,8 +66,6 @@ Tokens: use real Sepolia token addresses (same as mainnet)
 Supabase: local dev or separate test project
 Fonbnk: mock or sandbox API
 ```
-
----
 
 ## CI
 
@@ -229,7 +89,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
-      - run: cd backend && npm ci && npm test
+      - run: cd backend && npm ci && npm test && npm run build
 
   agent:
     runs-on: ubuntu-latest
@@ -238,4 +98,3 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: cd agent && npm ci && npm test
-```
