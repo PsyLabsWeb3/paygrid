@@ -1,4 +1,4 @@
-import { account, ERC8004_AGENT_ID, BACKEND_URL } from "./wallet";
+import { account, ERC8004_AGENT_ID, BACKEND_URL } from "../wallet";
 import crypto from "crypto";
 
 export async function fetchWithAgentAuth(path: string, options: RequestInit = {}) {
