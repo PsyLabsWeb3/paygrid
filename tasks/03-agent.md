@@ -191,7 +191,7 @@ Construir un runtime de agente que:
 
 - [ ] Test de generación/registro de wallet.
 - [ ] Test de tools contra backend mockeado.
-- [ ] Test de x402 payer con endpoint de prueba.
+- [x] Test de x402 payer con endpoint de prueba.
 - [ ] Test de reportes de tesorería.
 - [ ] Validación manual de:
   - crear payment link,
