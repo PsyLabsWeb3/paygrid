@@ -27,7 +27,7 @@ out/
 cache/
 cache_forge/
 out/
-lib/
+contracts/lib/
 
 # Ngrok
 ngrok.yml
