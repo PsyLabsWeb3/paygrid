@@ -1,17 +1,25 @@
 {
   "name": "agent",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Paygrid Agent Runtime",
+  "main": "src/index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "ts-node src/index.ts",
+    "dev": "ts-node src/index.ts",
+    "test": "node --test -r ts-node/register src/__tests__/*.test.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.65",
     "@selfxyz/agent-sdk": "^0.2.1",
-    "viem": "^2.50.4"
+    "ai": "^6.0.191",
+    "dotenv": "^16.4.5",
+    "thirdweb": "^5.120.0",
+    "viem": "^2.50.4",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
   }
 }
