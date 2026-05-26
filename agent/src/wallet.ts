@@ -23,6 +23,8 @@ export const walletClient = createWalletClient({
   transport: http(process.env.CELO_RPC_URL),
 });
 
+export const CHAIN_ID = Number(process.env.CHAIN_ID ?? process.env.CELO_CHAIN_ID ?? celoSepolia.id);
+
 export const ERC8004_AGENT_ID = process.env.ERC8004_AGENT_ID;
 if (!ERC8004_AGENT_ID) {
   throw new Error("ERC8004_AGENT_ID is missing in .env");

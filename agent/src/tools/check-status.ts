@@ -4,7 +4,7 @@ import { fetchWithAgentAuth } from "../utils/auth";
 
 export const checkPaymentStatus = tool({
   description: "Checks the status of a specific payment link by its ID.",
-  parameters: z.object({
+  inputSchema: z.object({
     linkId: z.string().describe("The unique ID of the payment link"),
   }),
   execute: async ({ linkId }) => {

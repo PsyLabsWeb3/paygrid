@@ -5,6 +5,7 @@ import { createPaymentLink } from "./tools/create-link";
 import { checkPaymentStatus } from "./tools/check-status";
 import { getBalance } from "./tools/get-balance";
 import { getPaymentHistory } from "./tools/get-history";
+import { payX402Endpoint } from "./tools/pay-x402-endpoint";
 import { executeTreasuryReport } from "./tools/treasury-report";
 
 const agentTools = {
@@ -13,6 +14,7 @@ const agentTools = {
   getBalance,
   getPaymentHistory,
   executeTreasuryReport,
+  payX402Endpoint,
 };
 
 export async function runAgent(prompt: string) {

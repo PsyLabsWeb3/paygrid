@@ -21,7 +21,7 @@ const TOKENS: Record<string, `0x${string}`> = {
 
 export const getBalance = tool({
   description: "Gets the balance of the agent's payment wallet for a specific token.",
-  parameters: z.object({
+  inputSchema: z.object({
     token: z.enum(["USDC", "USDT", "USDm"]).optional().describe("The token to check. If omitted, checks all."),
   }),
   execute: async ({ token }) => {
@@ -39,7 +39,7 @@ export const getBalance = tool({
           abi: ERC20_ABI,
           functionName: "balanceOf",
           args: [account.address],
-        });
+        } as any);
 
         // USDC/USDT have 6 decimals, USDm has 18
         const decimals = t === "USDm" ? 18 : 6;

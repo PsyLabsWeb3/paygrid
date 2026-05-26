@@ -4,7 +4,7 @@ import { fetchWithAgentAuth } from "../utils/auth";
 
 export const getPaymentHistory = tool({
   description: "Gets the payment history for the agent.",
-  parameters: z.object({
+  inputSchema: z.object({
     limit: z.number().optional().describe("Number of records to fetch"),
     status: z.enum(["active", "paid", "all"]).optional(),
   }),

@@ -4,7 +4,7 @@ import { fetchWithAgentAuth } from "../utils/auth";
 
 export const createPaymentLink = tool({
   description: "Creates a new stablecoin payment link for the given amount and recipient.",
-  parameters: z.object({
+  inputSchema: z.object({
     amount: z.string().describe("The payment amount as a string (e.g. '10.50')"),
     token: z.enum(["USDC", "USDT", "USDm"]).describe("The token to receive payment in"),
     description: z.string().describe("Description for the payment link"),

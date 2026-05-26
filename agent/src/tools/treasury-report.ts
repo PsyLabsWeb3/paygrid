@@ -4,7 +4,7 @@ import { fetchWithAgentAuth } from "../utils/auth";
 
 export const executeTreasuryReport = tool({
   description: "Executes a treasury report, aggregating data from payments and active links.",
-  parameters: z.object({
+  inputSchema: z.object({
     period: z.enum(["7d", "30d", "all"]).optional().describe("The time period for the report"),
   }),
   execute: async ({ period = "all" }) => {
