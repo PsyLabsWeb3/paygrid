@@ -1,6 +1,6 @@
 import { createWalletClient, http, createPublicClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { celoSepolia } from "viem/chains";
+import { celo, celoSepolia } from "viem/chains";
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -12,18 +12,20 @@ if (!privateKey) {
 
 export const account = privateKeyToAccount(privateKey);
 
+export const CHAIN_ID = Number(process.env.CHAIN_ID ?? process.env.CELO_CHAIN_ID ?? celoSepolia.id);
+const chain = CHAIN_ID === celo.id ? celo : { ...celoSepolia, id: CHAIN_ID };
+const transport = http(process.env.CELO_RPC_URL);
+
 export const publicClient = createPublicClient({
-  chain: celoSepolia,
-  transport: http(process.env.CELO_RPC_URL),
+  chain,
+  transport,
 });
 
 export const walletClient = createWalletClient({
   account,
-  chain: celoSepolia,
-  transport: http(process.env.CELO_RPC_URL),
+  chain,
+  transport,
 });
-
-export const CHAIN_ID = Number(process.env.CHAIN_ID ?? process.env.CELO_CHAIN_ID ?? celoSepolia.id);
 
 export const ERC8004_AGENT_ID = process.env.ERC8004_AGENT_ID;
 if (!ERC8004_AGENT_ID) {

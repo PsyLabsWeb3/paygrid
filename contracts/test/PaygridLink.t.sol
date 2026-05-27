@@ -125,6 +125,30 @@ contract PaygridLinkTest is Test {
         assertFalse(link.isActive(id));
     }
 
+    function test_CreateLink_RevertsInvalidInput() public {
+        vm.startPrank(creator);
+
+        vm.expectRevert("Recipient required");
+        link.createLink(address(0), amount, token, "bad recipient", false, expiresAt);
+
+        vm.expectRevert("Amount required");
+        link.createLink(recipient, 0, token, "bad amount", false, expiresAt);
+
+        vm.expectRevert("Token required");
+        link.createLink(recipient, amount, address(0), "bad token", false, expiresAt);
+
+        vm.expectRevert("Invalid expiration");
+        link.createLink(recipient, amount, token, "bad expiry", false, block.timestamp);
+
+        vm.stopPrank();
+    }
+
+    function test_IsActive_NoExpiration() public {
+        vm.prank(creator);
+        uint256 id = link.createLink(recipient, amount, token, "no expiry", false, 0);
+        assertTrue(link.isActive(id));
+    }
+
     function test_LinkIdsIncrement() public {
         vm.startPrank(creator);
         uint256 id1 = link.createLink(recipient, amount, token, "first", false, expiresAt);

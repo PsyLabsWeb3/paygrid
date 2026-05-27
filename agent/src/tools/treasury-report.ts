@@ -31,7 +31,7 @@ export const executeTreasuryReport = tool({
     for (const p of payments) {
       const t = p.token || "UNKNOWN";
       totalReceived[t] = (totalReceived[t] || 0) + Number(p.amount || 0);
-      totalFees[t] = (totalFees[t] || 0) + Number(p.fee || 0); // Assuming fee is available
+      totalFees[t] = (totalFees[t] || 0) + Number(p.feeAmount || 0);
     }
 
     const activeLinks = links.filter((l: any) => l.status === "active").length;

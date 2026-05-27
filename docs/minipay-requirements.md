@@ -4,6 +4,8 @@ This document defines the implementation requirements for the MiniPay frontend i
 
 The app is a separate frontend from the backend API. It consumes `BACKEND_URL` and should not host API routes itself.
 
+The frontend can be built now against the current backend APIs and the current Celo Sepolia deployment. Backend and frontend envs should use the latest Sepolia addresses from `contracts/deployments.sepolia.json`.
+
 ---
 
 ## Product Goals
@@ -71,10 +73,13 @@ The app is a separate frontend from the backend API. It consumes `BACKEND_URL` a
 
 ### Payment history
 
-- Sent and received tabs
+- Received payments tab
+- Active links tab
 - Filters by status / token / date
 - Empty state
 - Link-out to Celoscan for tx hashes
+
+Backend currently exposes received-link history for the authenticated owner. Do not treat payer-side sent history as an MVP dependency unless the backend adds a dedicated endpoint for it.
 
 ---
 
@@ -83,6 +88,7 @@ The app is a separate frontend from the backend API. It consumes `BACKEND_URL` a
 Frontend must read from the backend only:
 
 - `POST {BACKEND_URL}/api/links`
+- `GET {BACKEND_URL}/api/links`
 - `GET {BACKEND_URL}/api/links/{id}`
 - `POST {BACKEND_URL}/api/links/{id}/pay`
 - `GET {BACKEND_URL}/api/payments`
@@ -90,6 +96,12 @@ Frontend must read from the backend only:
 
 Frontend must not assume API routes co-located in `minipay/`.
 Webhook handling for Fonbnk is backend-only and should never be called directly by the frontend.
+
+Frontend constraints from the current backend contract/API shape:
+- `GET /api/payments` is owner-scoped received history, not payer-side sent history.
+- Fonbnk currently supports `USDC` and `USDT` only; hide fiat for `USDm` links.
+- The Fonbnk payment init flow requires an `email` field.
+- MiniPay fee abstraction must use fee adapter addresses only for `feeCurrency`; token reads, balances and approvals must still use the canonical token addresses.
 
 ---
 
@@ -101,6 +113,7 @@ Webhook handling for Fonbnk is backend-only and should never be called directly 
 - Clear states for loading, pending confirmation, success, and error.
 - Never show CELO as the primary user-facing asset in flows; surface USDm, USDC, and USDT.
 - When fiat is available, show carrier-specific limits before the user proceeds.
+- Use MiniPay-safe copy in user-facing strings: `Network fee`, `Deposit`, and `Withdraw`; never `Gas`, `Onramp`, `Offramp`, `Buy crypto`, or `Sell crypto`.
 
 ---
 

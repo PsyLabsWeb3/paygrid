@@ -74,3 +74,4 @@ contracts/broadcast/
 # Contracts build artifacts
 contracts/out/
 contracts/cache/
+contracts/deploy_output.txt

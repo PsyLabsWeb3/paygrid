@@ -2,22 +2,17 @@
   "chainId": 11142220,
   "network": "celo-sepolia",
   "deployer": "0xd4683314a013792fe8840e4171dc4692e317617b",
-  "timestamp": 1779531895044,
+  "timestamp": 1779839564422,
   "contracts": [
     {
       "name": "PaygridLink",
-      "address": "0xd2dc71c47803b0939944ec29ff3b644c48bae7de",
-      "tx": "0xb74e33a3134b7374e2898fb8b019b1759b8c6128c52e6e8ccb4b9ca6e99fb53f"
+      "address": "0x58b7125e0bed4d082985c76b772bf84808e5a474",
+      "tx": "0x5cdd12d7f398937c7a2915088dd58147106c6428457d29b4ebfd9ae06d0a947d"
     },
     {
       "name": "PaygridRouter",
-      "address": "0xe75027ff07931ef97248402f4df63a4d3287020d",
-      "tx": "0xdc5c82292f2260dffa497b8ba1749ae011f481dc00142b728de2af22f1129643"
-    },
-    {
-      "name": "PaygridLink",
-      "address": "0xd2dc71c47803b0939944ec29ff3b644c48bae7de",
-      "tx": "0x3361dec1603d8ea29eb8300e35d7ac99b9d8913834f599dbc2835ecd56301211"
+      "address": "0xb3fe724934de14afd56157bacb8ed6907a3d091b",
+      "tx": "0x97621473662b2c2a9a19bb50e2c75ac354789ee96d52502aeed0aa7903bb25e1"
     }
   ]
 }

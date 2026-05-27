@@ -3,6 +3,7 @@ import crypto from "crypto";
 
 export async function fetchWithAgentAuth(path: string, options: RequestInit = {}) {
   const url = new URL(path, BACKEND_URL);
+  const signedPath = url.pathname;
   
   const method = (options.method || "GET").toUpperCase();
   const timestamp = Date.now().toString();
@@ -10,8 +11,8 @@ export async function fetchWithAgentAuth(path: string, options: RequestInit = {}
   const agentId = ERC8004_AGENT_ID;
   const address = account.address.toLowerCase();
   
-  // Format: paygrid:erc8004:<agentId>:<address>:<METHOD>:<path>:<timestamp>:<nonce>
-  const message = `paygrid:erc8004:${agentId}:${address}:${method}:${path}:${timestamp}:${nonce}`;
+  // Backend signs Hono's c.req.path, which excludes query parameters.
+  const message = `paygrid:erc8004:${agentId}:${address}:${method}:${signedPath}:${timestamp}:${nonce}`;
   
   const signature = await account.signMessage({ message });
 

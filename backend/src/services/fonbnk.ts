@@ -604,7 +604,7 @@ async function settlePaymentOnChain(
 
   const now = new Date().toISOString();
   const fee = formatHumanAmount((amountWei * 50n) / 10000n, args.token);
-  const { error: paymentError } = await supabase.from("payments").insert({
+  const paymentInsert = {
     link_id: link.id,
     payer_address: env.PAYGRID_ROUTER_ADDRESS.toLowerCase(),
     amount: args.amount,
@@ -616,10 +616,44 @@ async function settlePaymentOnChain(
     tx_hash: txHash,
     status: "confirmed",
     confirmed_at: now,
-  });
+  };
+
+  const { error: paymentError } = await supabase.from("payments").insert(paymentInsert);
 
   if (paymentError) {
-    throw new ApiError(500, "INTERNAL_ERROR", paymentError.message);
+    if (paymentError.code !== "23505") {
+      throw new ApiError(500, "INTERNAL_ERROR", paymentError.message);
+    }
+
+    let existingPaymentId: string | null = null;
+    const { data: existingByTx } = await supabase
+      .from("payments")
+      .select("id")
+      .eq("tx_hash", txHash)
+      .maybeSingle();
+    existingPaymentId = existingByTx?.id ?? null;
+
+    if (!existingPaymentId) {
+      const { data: existingBySession } = await supabase
+        .from("payments")
+        .select("id")
+        .eq("onramp_session_id", args.sessionId)
+        .maybeSingle();
+      existingPaymentId = existingBySession?.id ?? null;
+    }
+
+    if (!existingPaymentId) {
+      throw new ApiError(500, "INTERNAL_ERROR", paymentError.message);
+    }
+
+    await supabase
+      .from("payments")
+      .update({
+        onramp_session_id: args.sessionId,
+        onramp_tx_id: args.onrampTxId,
+        payment_method: "fonbnk",
+      })
+      .eq("id", existingPaymentId);
   }
 
   await supabase

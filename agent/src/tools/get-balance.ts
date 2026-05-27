@@ -14,8 +14,8 @@ const ERC20_ABI = [
 
 // Address constants for Celo Mainnet / Sepolia
 const TOKENS: Record<string, `0x${string}`> = {
-  USDC: "0x2F25deB3848C207fc8E0c34035B3Ba7fC157602B", // Fee currency or token
-  USDT: "0x0e2a3e05bc9a16f5292a6170456a710cb89c6f72",
+  USDC: "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
+  USDT: "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
   USDm: "0x765DE816845861e75A25fCA122bb6898B8B1282a",
 };
 

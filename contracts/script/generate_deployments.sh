@@ -21,13 +21,13 @@ NETWORK=celo-sepolia
 DEPLOYER=$(jq -r '.transactions[0].transaction.from' "$RUN_JSON")
 TIMESTAMP=$(jq -r '.timestamp' "$RUN_JSON")
 
-CONTRACTS=$(jq -r '.transactions[] | select(.contractName != null) | {name: .contractName, address: .contractAddress, tx: .hash} ' "$RUN_JSON" | jq -s '.')
+CONTRACTS=$(jq '[.transactions[] | select(.contractName != null and .transactionType == "CREATE") | {name: .contractName, address: .contractAddress, tx: .hash}]' "$RUN_JSON")
 
 cat > "$ROOT_DIR/deployments.sepolia.json" <<EOF
 {
   "chainId": $CHAIN_ID,
   "network": "$NETWORK",
-  "deployer": $DEPLOYER,
+  "deployer": "$DEPLOYER",
   "timestamp": $TIMESTAMP,
   "contracts": $CONTRACTS
 }

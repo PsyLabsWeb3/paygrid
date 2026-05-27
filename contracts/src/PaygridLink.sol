@@ -58,6 +58,11 @@ contract PaygridLink is Ownable {
         bool acceptsFiat,
         uint256 expiresAt
     ) external returns (uint256 linkId) {
+        require(recipient != address(0), "Recipient required");
+        require(amount > 0, "Amount required");
+        require(token != address(0), "Token required");
+        require(expiresAt == 0 || expiresAt > block.timestamp, "Invalid expiration");
+
         linkId = _nextId++;
         _links[linkId] = PaymentLink({
             id: linkId,
@@ -129,6 +134,6 @@ contract PaygridLink is Ownable {
 
     function isActive(uint256 linkId) external view returns (bool) {
         PaymentLink storage link = _links[linkId];
-        return !link.paid && !link.cancelled && block.timestamp <= link.expiresAt;
+        return !link.paid && !link.cancelled && (link.expiresAt == 0 || block.timestamp <= link.expiresAt);
     }
 }

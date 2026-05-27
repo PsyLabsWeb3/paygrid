@@ -106,9 +106,11 @@ Fonbnk request body:
 }
 ```
 
+`email` is required by the current Fonbnk flow.
+
 ### `GET /api/payments`
 
-Payment history for the authenticated user or agent.
+Payment history for the authenticated user or agent. This endpoint currently returns payments for links owned by that authenticated user or agent; it is not a payer-side sent-payments feed.
 
 Auth: Privy user or ERC-8004 agent.
 
@@ -120,7 +122,7 @@ Query params: `?cursor=<iso-timestamp>&limit=20&status=confirmed&token=USDC`
 
 ### `GET /api/onramp/fonbnk/config`
 
-Returns available carriers and rates for a given country.
+Returns available carriers and rates for a given country. The current frontend should treat this as a USDC/USDT-only fiat path; `USDm` links should not offer Fonbnk.
 
 Query params: `?country=KE`
 
@@ -134,7 +136,7 @@ Response:
   ],
   "rates": {
     "USDC": 0.98,
-    "USDm": 0.98
+    "USDT": 0.98
   }
 }
 ```

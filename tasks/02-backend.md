@@ -16,8 +16,8 @@ Specs: [docs/api.md](../docs/api.md), [docs/data-model.md](../docs/data-model.md
 
 | Contract | Address |
 |----------|---------|
-| PaygridLink | `0xd2dc71c47803b0939944ec29ff3b644c48bae7de` |
-| PaygridRouter | `0xe75027ff07931ef97248402f4df63a4d3287020d` |
+| PaygridLink | `0x58b7125e0bed4d082985c76b772bf84808e5a474` |
+| PaygridRouter | `0xb3fe724934de14afd56157bacb8ed6907a3d091b` |
 | Treasury | `0xd4683314a013792fe8840e4171dc4692e317617b` |
 
 ---

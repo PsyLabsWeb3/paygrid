@@ -27,7 +27,7 @@ CREATE TABLE agents (
 
 CREATE TABLE payment_links (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  creator_id uuid REFERENCES users(id),
+  creator_id uuid,
   creator_type creator_type,
   on_chain_link_id bigint UNIQUE NOT NULL,
   recipient_address text NOT NULL,
@@ -38,7 +38,11 @@ CREATE TABLE payment_links (
   status link_status NOT NULL DEFAULT 'active',
   tx_hash text,
   created_at timestamptz NOT NULL DEFAULT now(),
-  expires_at timestamptz
+  expires_at timestamptz,
+  CONSTRAINT payment_links_creator_pair CHECK (
+    (creator_id IS NULL AND creator_type IS NULL) OR
+    (creator_id IS NOT NULL AND creator_type IS NOT NULL)
+  )
 );
 
 CREATE TABLE onramp_sessions (
@@ -77,6 +81,9 @@ CREATE INDEX idx_payment_links_status ON payment_links(status);
 CREATE INDEX idx_payment_links_on_chain ON payment_links(on_chain_link_id);
 CREATE INDEX idx_payments_link ON payments(link_id);
 CREATE INDEX idx_payments_payer ON payments(payer_address);
+CREATE UNIQUE INDEX idx_payments_onramp_session_unique
+  ON payments(onramp_session_id)
+  WHERE onramp_session_id IS NOT NULL;
 CREATE INDEX idx_onramp_link ON onramp_sessions(payment_link_id);
 CREATE INDEX idx_onramp_status ON onramp_sessions(status);
 

@@ -83,6 +83,50 @@ test("erc8004 auth middleware accepts a signed agent request", async () => {
   assert.equal(body.agentId, fakeAgent.agent_id);
 });
 
+
+test("erc8004 auth middleware accepts signed path when request has query params", async () => {
+  const app = makeApp();
+  const account = privateKeyToAccount(("0x" + "4".repeat(64)) as `0x${string}`);
+  const timestamp = Date.now();
+  const message = createErc8004SignedMessage({
+    agentId: fakeAgent.agent_id,
+    address: account.address,
+    method: "GET",
+    path: "/agent",
+    timestamp,
+    nonce: "nonce-query",
+  });
+  const signature = await account.signMessage({ message });
+
+  app.get(
+    "/agent",
+    createErc8004AuthMiddleware(env, {
+      required: true,
+      resolveAgent: async (_env, input) => ({
+        ...fakeAgent,
+        agent_id: input.agentId,
+        address: input.address,
+      }),
+    }),
+    (c) => c.json({ agentId: getAuthAgent(c)?.agent.agent_id, limit: c.req.query("limit") }),
+  );
+
+  const res = await app.request("http://localhost/agent?limit=20", {
+    headers: {
+      "x-erc8004-agent-id": fakeAgent.agent_id,
+      "x-erc8004-address": account.address,
+      "x-erc8004-timestamp": String(timestamp),
+      "x-erc8004-nonce": "nonce-query",
+      "x-erc8004-signature": signature,
+    },
+  });
+
+  assert.equal(res.status, 200);
+  const body = (await res.json()) as { agentId: string; limit: string };
+  assert.equal(body.agentId, fakeAgent.agent_id);
+  assert.equal(body.limit, "20");
+});
+
 test("x402 middleware returns a payment challenge without proof", async () => {
   const app = makeApp();
   app.get("/api/x402/data", createX402Middleware(env), (c) => c.json({ ok: true }));

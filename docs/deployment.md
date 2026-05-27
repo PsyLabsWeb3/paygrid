@@ -205,8 +205,8 @@ SUPABASE_URL=https://xxx.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=...
 CELO_SEPOLIA_RPC=https://forno.celo-sepolia.celo-testnet.org
 CHAIN_ID=11142220
-PAYGRID_LINK_ADDRESS=0xd2dc71c47803b0939944ec29ff3b644c48bae7de
-PAYGRID_ROUTER_ADDRESS=0xe75027ff07931ef97248402f4df63a4d3287020d
+PAYGRID_LINK_ADDRESS=0x58b7125e0bed4d082985c76b772bf84808e5a474
+PAYGRID_ROUTER_ADDRESS=0xb3fe724934de14afd56157bacb8ed6907a3d091b
 BACKEND_WALLET_PRIVATE_KEY=0x...
 PRIVY_APP_ID=...
 PRIVY_APP_SECRET=...
@@ -232,8 +232,8 @@ FONBNK_WEBHOOK_SECRET=...
 
 | Contract | Sepolia | Mainnet |
 |----------|---------|---------|
-| PaygridRouter | `0xe75027ff07931ef97248402f4df63a4d3287020d` | TBD (after deploy) |
-| PaygridLink | `0xd2dc71c47803b0939944ec29ff3b644c48bae7de` | TBD (after deploy) |
+| PaygridRouter | `0xb3fe724934de14afd56157bacb8ed6907a3d091b` | deployed |
+| PaygridLink | `0x58b7125e0bed4d082985c76b772bf84808e5a474` | deployed |
 | Paygrid Treasury | `0xd4683314a013792fe8840e4171dc4692e317617b` | TBD |
 | USDm | same as mainnet | `0x765DE816845861e75A25fCA122bb6898B8B1282a` |
 | USDC | same as mainnet | `0xcebA9300f2b948710d2653dD7B07f33A8B32118C` |
@@ -313,10 +313,10 @@ We performed a demo deployment to the Celo Sepolia testnet. The canonical deploy
 
 Deployed contracts (Sepolia):
 
-- PaygridLink: 0xd2dC71C47803b0939944Ec29fF3B644C48bAE7De
-  - tx: 0xb74e33a3134b7374e2898fb8b019b1759b8c6128c52e6e8ccb4b9ca6e99fb53f
-- PaygridRouter: 0xe75027fF07931EF97248402f4DF63a4D3287020d
-  - tx: 0xdc5c82292f2260dffa497b8ba1749ae011f481dc00142b728de2af22f1129643
+- PaygridLink: 0x58B7125E0bed4d082985C76b772BF84808e5a474
+  - tx: 0x5cdd12d7f398937c7a2915088dd58147106c6428457d29b4ebfd9ae06d0a947d
+- PaygridRouter: 0xb3fE724934DE14Afd56157BaCB8ed6907A3D091B
+  - tx: 0x97621473662b2c2a9a19bb50e2c75ac354789ee96d52502aeed0aa7903bb25e1
 
 Repository artifacts:
 

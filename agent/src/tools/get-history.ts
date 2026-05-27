@@ -6,10 +6,15 @@ export const getPaymentHistory = tool({
   description: "Gets the payment history for the agent.",
   inputSchema: z.object({
     limit: z.number().optional().describe("Number of records to fetch"),
-    status: z.enum(["active", "paid", "all"]).optional(),
+    status: z.enum(["pending", "confirmed", "failed", "all"]).optional(),
   }),
   execute: async ({ limit = 20, status = "all" }) => {
-    const response = await fetchWithAgentAuth(`/api/payments?limit=${limit}&status=${status}`);
+    const query = new URLSearchParams({ limit: String(limit) });
+    if (status !== "all") {
+      query.set("status", status);
+    }
+
+    const response = await fetchWithAgentAuth(`/api/payments?${query.toString()}`);
 
     if (!response.ok) {
       const errorData = await response.text();
