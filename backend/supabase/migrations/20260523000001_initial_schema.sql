@@ -49,6 +49,8 @@ CREATE TABLE onramp_sessions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   payment_link_id uuid NOT NULL REFERENCES payment_links(id),
   provider text NOT NULL DEFAULT 'fonbnk',
+  provider_order_id text,
+  provider_metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
   amount numeric(36, 18) NOT NULL,
   token token NOT NULL,
   fiat_amount numeric(36, 18),
@@ -85,6 +87,7 @@ CREATE UNIQUE INDEX idx_payments_onramp_session_unique
   ON payments(onramp_session_id)
   WHERE onramp_session_id IS NOT NULL;
 CREATE INDEX idx_onramp_link ON onramp_sessions(payment_link_id);
+CREATE INDEX idx_onramp_provider_order ON onramp_sessions(provider, provider_order_id);
 CREATE INDEX idx_onramp_status ON onramp_sessions(status);
 
 ALTER TABLE payment_links ENABLE ROW LEVEL SECURITY;

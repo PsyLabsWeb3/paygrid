@@ -223,6 +223,7 @@ Minimum sandbox acceptance:
 
 - [ ] `GET /api/onramp/fonbnk/config?country=<ISO>` returns supported carriers/channels.
 - [ ] `POST /api/links/:id/pay` with `method: fonbnk` creates an `onramp_sessions` row.
+- [ ] Session stores `provider = fonbnk`, `provider_order_id`, and provider metadata.
 - [ ] Webhook authentication accepts valid `x-api-key` or `x-signature`.
 - [ ] Webhook rejects invalid auth.
 
@@ -242,6 +243,7 @@ Record:
 | Payment channel | |
 | Carrier | |
 | Onramp session ID | |
+| Provider order ID | |
 | Fonbnk order ID | |
 | Settlement transfer tx | |
 | `payWithFiat` tx | |

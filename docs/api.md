@@ -95,6 +95,8 @@ Fonbnk response:
 }
 ```
 
+Onramp sessions are stored with a provider-agnostic shape. Fonbnk is the only active provider today, while future card or MiniPay card providers can use the same `onramp_sessions.provider`, `provider_order_id`, and `provider_metadata` fields.
+
 Fonbnk request body:
 ```json
 {

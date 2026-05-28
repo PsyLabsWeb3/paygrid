@@ -14,8 +14,10 @@ import { getSupabase, type OnrampSessionRow, type PaymentLinkRow } from "../db/s
 import { ApiError } from "../lib/errors.js";
 import { paygridRouterAbiConst } from "../lib/chain.js";
 import { TOKEN_ADDRESSES, formatHumanAmount, parseHumanAmount, type Stablecoin } from "../lib/tokens.js";
+import { ONRAMP_PROVIDERS } from "./onramp/providers.js";
 
 const FONBNK_NETWORK = "CELO";
+const FONBNK_PROVIDER = ONRAMP_PROVIDERS.fonbnk;
 const FONBNK_DEFAULT_API_BASE_URL = "https://sandbox-api.fonbnk.com";
 const FONBNK_DEFAULT_PAY_BASE_URL = "https://sandbox-pay.fonbnk.com";
 const FONBNK_SUPPORTED_ASSETS: Stablecoin[] = ["USDC", "USDT"];
@@ -528,7 +530,18 @@ function extractWebhookTxHash(payload: FonbnkWebhookPayload) {
 async function findSessionByWebhookOrderKey(env: Env, orderKey: string) {
   const supabase = getSupabase(env);
   const { data } = await supabase.from("onramp_sessions").select("*").eq("id", orderKey).maybeSingle();
-  return data ?? null;
+  if (data) {
+    return data;
+  }
+
+  const { data: byProviderOrderId } = await supabase
+    .from("onramp_sessions")
+    .select("*")
+    .eq("provider", FONBNK_PROVIDER)
+    .eq("provider_order_id", orderKey)
+    .maybeSingle();
+
+  return byProviderOrderId ?? null;
 }
 
 async function resolveWebhookSession(env: Env, payload: FonbnkWebhookPayload) {
@@ -811,7 +824,12 @@ export async function createFonbnkPaySession(
     .from("onramp_sessions")
     .insert({
       payment_link_id: link.id,
-      provider: "fonbnk",
+      provider: FONBNK_PROVIDER,
+      provider_metadata: {
+        countryIsoCode: input.countryIsoCode.toUpperCase(),
+        paymentChannel,
+        carrierCode: carrierCode ?? null,
+      },
       amount: link.amount,
       token,
       fiat_amount: null,
@@ -872,9 +890,20 @@ export async function createFonbnkPaySession(
   const { error: updateError } = await supabase
     .from("onramp_sessions")
     .update({
+      provider_order_id: orderId,
       fiat_amount: fiatAmount,
       fiat_currency: toStringValue(order.fiatCurrency ?? order.fiat_currency ?? countryConfig.currencyIsoCode) ?? countryConfig.currencyIsoCode,
       carrier: carrierCode ?? paymentChannel,
+      provider_metadata: {
+        countryIsoCode: input.countryIsoCode.toUpperCase(),
+        paymentChannel,
+        carrierCode: carrierCode ?? null,
+        quoteId,
+        orderId,
+        orderParams: session.id,
+        rawOrder: order,
+        quote,
+      },
     })
     .eq("id", session.id);
 
@@ -886,7 +915,7 @@ export async function createFonbnkPaySession(
     method: "fonbnk",
     session: {
       id: session.id,
-      provider: "fonbnk",
+      provider: FONBNK_PROVIDER,
       redirectUrl,
       orderId,
       countryIsoCode: input.countryIsoCode.toUpperCase(),

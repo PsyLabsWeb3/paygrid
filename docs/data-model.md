@@ -48,13 +48,15 @@ Records each payment made through a link.
 
 ### `onramp_sessions`
 
-Tracks Fonbnk onramp sessions from initiation to confirmation.
+Tracks onramp sessions from initiation to confirmation. Fonbnk is the first active provider, but the table is provider-agnostic so card or MiniPay card integrations can be added later without changing the core payment model.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | id | uuid (PK) | Session unique identifier |
 | payment_link_id | uuid (FK → payment_links.id) | Associated link |
-| provider | text | Always 'fonbnk' |
+| provider | text | Onramp provider (`fonbnk`, future `card`, future `minipay_card`) |
+| provider_order_id | text | Provider-side order/session identifier |
+| provider_metadata | jsonb | Provider-specific metadata, quote data, raw order references, or required fields |
 | amount | numeric(36,18) | Crypto amount to receive |
 | token | enum('USDm', 'USDC', 'USDT') | Target token |
 | fiat_amount | numeric(36,18) | Fiat amount being paid |
@@ -101,6 +103,7 @@ AI agents registered on Paygrid — authenticated via ERC-8004.
 - `payments(link_id)` — link payment history
 - `payments(payer_address)` — payer history
 - `onramp_sessions(payment_link_id)` — link onramp status
+- `onramp_sessions(provider, provider_order_id)` — provider webhook lookup
 - `onramp_sessions(status)` — pending onramp monitoring
 
 ## Enums

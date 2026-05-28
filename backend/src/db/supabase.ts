@@ -56,6 +56,8 @@ export type OnrampSessionRow = {
   id: string;
   payment_link_id: string;
   provider: string;
+  provider_order_id: string | null;
+  provider_metadata: Record<string, unknown>;
   amount: string;
   token: "USDm" | "USDC" | "USDT";
   fiat_amount: string | null;
