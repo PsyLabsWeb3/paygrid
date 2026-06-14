@@ -10,8 +10,8 @@ import {
 import { ApiError } from "../lib/errors.js";
 import {
   formatHumanAmount,
+  getTokenAddress,
   parseHumanAmount,
-  TOKEN_ADDRESSES,
   type Stablecoin,
 } from "../lib/tokens.js";
 
@@ -47,7 +47,7 @@ function serializeLink(row: PaymentLinkRow) {
     creatorId: row.creator_id,
     creatorType: row.creator_type,
     recipientAddress: row.recipient_address,
-    amount: row.amount,
+    amount: String(row.amount),
     token: row.token,
     description: row.description,
     acceptedMethods: row.accepted_methods,
@@ -64,7 +64,7 @@ export async function createPaymentLink(env: Env, input: CreateLinkInput) {
   }
 
   const amountWei = parseHumanAmount(input.amount, input.token);
-  const tokenAddress = TOKEN_ADDRESSES[input.token];
+  const tokenAddress = getTokenAddress(env, input.token);
   const acceptsFiat = input.acceptedMethods.includes("fonbnk");
   const expiresAtUnix = input.expiresAt
     ? BigInt(Math.floor(new Date(input.expiresAt).getTime() / 1000))
@@ -140,7 +140,7 @@ export async function createPaymentLink(env: Env, input: CreateLinkInput) {
     id: row.id,
     onChainLinkId: onChainLinkId.toString(),
     url: `https://paygrid.xyz/pay/${row.id}`,
-    amount: input.amount,
+    amount: String(input.amount),
     token: input.token,
     status: row.status,
     createdAt: row.created_at,
@@ -202,7 +202,7 @@ export async function buildCryptoPayTx(env: Env, linkId: string) {
 
   const token = paymentLink.token as Stablecoin;
   const amountWei = parseHumanAmount(paymentLink.amount, token);
-  const tokenAddress = TOKEN_ADDRESSES[token];
+  const tokenAddress = getTokenAddress(env, token);
 
   const data = encodeFunctionData({
     abi: paygridRouterAbiConst,
@@ -220,7 +220,7 @@ export async function buildCryptoPayTx(env: Env, linkId: string) {
     link: {
       id: paymentLink.id,
       onChainLinkId: String(paymentLink.on_chain_link_id),
-      amount: paymentLink.amount,
+      amount: String(paymentLink.amount),
       token: paymentLink.token,
     },
   };

@@ -7,7 +7,7 @@ REST API + on-chain event indexer for payment links on Celo Sepolia.
 ```bash
 cd backend
 cp .env.example .env
-# Fill Supabase keys, Privy keys, Fonbnk keys, x402 treasury address, BACKEND_WALLET_PRIVATE_KEY, CELO_SEPOLIA_RPC
+# Fill Supabase keys, Privy keys, Fonbnk keys, x402 treasury address, BACKEND_WALLET_PRIVATE_KEY, CELO_RPC_URL
 npm install
 ```
 

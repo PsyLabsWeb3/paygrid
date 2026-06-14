@@ -1,19 +1,41 @@
 import "dotenv/config";
 import { z } from "zod";
 
-const envSchema = z.object({
+const optionalString = () =>
+  z.preprocess((value) => (value === "" ? undefined : value), z.string().min(1).optional());
+
+const optionalUrl = () =>
+  z.preprocess((value) => (value === "" ? undefined : value), z.string().url().optional());
+
+const optionalAddress = () =>
+  z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/)
+      .optional()
+      .transform((v) => (v ? (v as `0x${string}`) : undefined)),
+  );
+
+const requiredString = () => z.string().trim().min(1);
+
+const rawEnvSchema = z.object({
   SUPABASE_URL: z.string().url(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  SUPABASE_ANON_KEY: z.string().optional(),
-  PRIVY_APP_ID: z.string().min(1).optional(),
-  PRIVY_APP_SECRET: z.string().min(1).optional(),
-  PRIVY_JWT_VERIFICATION_KEY: z.string().min(1).optional(),
-  FONBNK_API_KEY: z.string().min(1).optional(),
-  FONBNK_API_BASE_URL: z.string().url().optional(),
-  FONBNK_PAY_BASE_URL: z.string().url().optional(),
-  FONBNK_WEBHOOK_SECRET: z.string().min(1).optional(),
-  ROUTER_OWNER_PRIVATE_KEY: z.string().min(1).optional(),
-  CELO_SEPOLIA_RPC: z.string().url(),
+  SUPABASE_SERVICE_ROLE_KEY: requiredString(),
+  SUPABASE_ANON_KEY: optionalString(),
+  PRIVY_APP_ID: optionalString(),
+  PRIVY_APP_SECRET: optionalString(),
+  PRIVY_JWT_VERIFICATION_KEY: optionalString(),
+  FONBNK_API_KEY: optionalString(),
+  FONBNK_API_BASE_URL: optionalUrl(),
+  FONBNK_PAY_BASE_URL: optionalUrl(),
+  FONBNK_WEBHOOK_SECRET: optionalString(),
+  ROUTER_OWNER_PRIVATE_KEY: optionalString(),
+  CELO_RPC_URL: optionalUrl(),
+  CELO_SEPOLIA_RPC: optionalUrl(),
+  USDC_ADDRESS: optionalAddress(),
+  USDT_ADDRESS: optionalAddress(),
+  USDM_ADDRESS: optionalAddress(),
   CHAIN_ID: z.coerce.number().default(11142220),
   PAYGRID_LINK_ADDRESS: z
     .string()
@@ -40,6 +62,23 @@ const envSchema = z.object({
       return hex as `0x${string}`;
     }),
   PORT: z.coerce.number().default(3001),
+});
+
+const envSchema = rawEnvSchema.transform((env, ctx) => {
+  const rpcUrl = env.CELO_RPC_URL ?? env.CELO_SEPOLIA_RPC;
+  if (!rpcUrl) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["CELO_RPC_URL"],
+      message: "CELO_RPC_URL is required",
+    });
+    return z.NEVER;
+  }
+
+  return {
+    ...env,
+    CELO_RPC_URL: rpcUrl,
+  };
 });
 
 export type Env = z.infer<typeof envSchema>;

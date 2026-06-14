@@ -17,10 +17,10 @@ export function createChainClients(env: Env) {
   const chain = {
     ...celoSepolia,
     id: env.CHAIN_ID,
-    rpcUrls: { default: { http: [env.CELO_SEPOLIA_RPC] } },
+    rpcUrls: { default: { http: [env.CELO_RPC_URL] } },
   };
 
-  const transport = http(env.CELO_SEPOLIA_RPC);
+  const transport = http(env.CELO_RPC_URL);
   const publicClient = createPublicClient({ chain, transport });
   const walletClient = createWalletClient({ chain, transport, account });
 

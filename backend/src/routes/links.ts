@@ -101,7 +101,7 @@ export function linksRoutes(env: Env) {
       id: link.id,
       onChainLinkId: String(link.on_chain_link_id),
       recipientAddress: link.recipient_address,
-      amount: link.amount,
+      amount: String(link.amount),
       token: link.token,
       description: link.description,
       acceptedMethods: link.accepted_methods,
@@ -109,7 +109,11 @@ export function linksRoutes(env: Env) {
       txHash: link.tx_hash,
       createdAt: link.created_at,
       expiresAt: link.expires_at,
-      payments,
+      payments: payments.map((payment) => ({
+        ...payment,
+        amount: String(payment.amount),
+        fee_amount: String(payment.fee_amount),
+      })),
     });
   });
 

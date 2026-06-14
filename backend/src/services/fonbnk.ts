@@ -13,7 +13,7 @@ import type { Env } from "../config/env.js";
 import { getSupabase, type OnrampSessionRow, type PaymentLinkRow } from "../db/supabase.js";
 import { ApiError } from "../lib/errors.js";
 import { paygridRouterAbiConst } from "../lib/chain.js";
-import { TOKEN_ADDRESSES, formatHumanAmount, parseHumanAmount, type Stablecoin } from "../lib/tokens.js";
+import { formatHumanAmount, getTokenAddress, parseHumanAmount, type Stablecoin } from "../lib/tokens.js";
 import { ONRAMP_PROVIDERS } from "./onramp/providers.js";
 
 const FONBNK_NETWORK = "CELO";
@@ -493,9 +493,9 @@ function getRouterOwnerWalletClient(env: Env) {
   const chain = {
     ...celoSepolia,
     id: env.CHAIN_ID,
-    rpcUrls: { default: { http: [env.CELO_SEPOLIA_RPC] } },
+    rpcUrls: { default: { http: [env.CELO_RPC_URL] } },
   };
-  return createWalletClient({ chain, transport: http(env.CELO_SEPOLIA_RPC), account });
+  return createWalletClient({ chain, transport: http(env.CELO_RPC_URL), account });
 }
 
 function isSuccessWebhookStatus(status: string) {
@@ -596,13 +596,13 @@ async function settlePaymentOnChain(
     throw new ApiError(404, "NOT_FOUND", "Payment link not found");
   }
 
-  const tokenAddress = TOKEN_ADDRESSES[args.token];
+  const tokenAddress = getTokenAddress(env, args.token);
   const amountWei = parseHumanAmount(args.amount, args.token);
   const onrampTxId = keccak256(toBytes(args.onrampTxId));
   const walletClient = getRouterOwnerWalletClient(env);
   const publicClient = createPublicClient({
-    chain: { ...celoSepolia, id: env.CHAIN_ID, rpcUrls: { default: { http: [env.CELO_SEPOLIA_RPC] } } },
-    transport: http(env.CELO_SEPOLIA_RPC),
+    chain: { ...celoSepolia, id: env.CHAIN_ID, rpcUrls: { default: { http: [env.CELO_RPC_URL] } } },
+    transport: http(env.CELO_RPC_URL),
   });
   const { request } = await publicClient.simulateContract({
     address: env.PAYGRID_ROUTER_ADDRESS,
@@ -1008,12 +1008,12 @@ export async function handleFonbnkWebhook(
   }
 
   const publicClient = createPublicClient({
-    chain: { ...celoSepolia, id: env.CHAIN_ID, rpcUrls: { default: { http: [env.CELO_SEPOLIA_RPC] } } },
-    transport: http(env.CELO_SEPOLIA_RPC),
+    chain: { ...celoSepolia, id: env.CHAIN_ID, rpcUrls: { default: { http: [env.CELO_RPC_URL] } } },
+    transport: http(env.CELO_RPC_URL),
   });
   const receipt = await publicClient.getTransactionReceipt({ hash: resolvedTxHash as `0x${string}` });
   const routerAddress = env.PAYGRID_ROUTER_ADDRESS.toLowerCase();
-  const tokenAddress = TOKEN_ADDRESSES[token];
+  const tokenAddress = getTokenAddress(env, token);
   const amountWei = parseHumanAmount(amount, token);
   const transferFound = receipt.logs.some((log) => {
     if (log.address.toLowerCase() !== tokenAddress.toLowerCase()) {

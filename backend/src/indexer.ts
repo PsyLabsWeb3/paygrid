@@ -7,11 +7,26 @@ const { publicClient } = createChainClients(env);
 
 console.log("[indexer] watching PaymentReceived on", env.PAYGRID_ROUTER_ADDRESS);
 
-publicClient.watchContractEvent({
-  address: env.PAYGRID_ROUTER_ADDRESS,
-  abi: paygridRouterAbiConst,
-  eventName: "PaymentReceived",
-  onLogs: async (logs) => {
+let lastScannedBlock = await publicClient.getBlockNumber();
+let scanning = false;
+
+console.log("[indexer] starting from block", lastScannedBlock.toString());
+
+async function scanPaymentReceived() {
+  if (scanning) return;
+  scanning = true;
+  try {
+    const latestBlock = await publicClient.getBlockNumber();
+    if (latestBlock <= lastScannedBlock) return;
+
+    const logs = await publicClient.getContractEvents({
+      address: env.PAYGRID_ROUTER_ADDRESS,
+      abi: paygridRouterAbiConst,
+      eventName: "PaymentReceived",
+      fromBlock: lastScannedBlock + 1n,
+      toBlock: latestBlock,
+    });
+
     for (const log of logs) {
       if (!("args" in log) || !log.args || !log.transactionHash) continue;
       const args = log.args as {
@@ -32,8 +47,15 @@ publicClient.watchContractEvent({
         transactionHash: log.transactionHash,
       });
     }
-  },
-  onError: (error) => {
+
+    lastScannedBlock = latestBlock;
+  } catch (error) {
     console.error("[indexer] subscription error", error);
-  },
-});
+  } finally {
+    scanning = false;
+  }
+}
+
+setInterval(() => {
+  void scanPaymentReceived();
+}, 5_000);

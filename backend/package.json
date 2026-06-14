@@ -9,6 +9,7 @@
     "build": "tsc",
     "test": "node --test --import tsx src/__tests__/*.test.ts",
     "indexer": "tsx src/indexer.ts",
+    "indexer:start": "node dist/indexer.js",
     "db:migrate": "tsx scripts/migrate.ts"
   },
   "dependencies": {

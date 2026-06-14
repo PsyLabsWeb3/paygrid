@@ -1,13 +1,7 @@
 import type { Env } from "../config/env.js";
 import { getSupabase } from "../db/supabase.js";
-import { formatHumanAmount, type Stablecoin } from "../lib/tokens.js";
+import { formatHumanAmount, getStablecoinByAddress } from "../lib/tokens.js";
 import { notifyPaymentReceived } from "./notifier.js";
-
-const TOKEN_BY_ADDRESS: Record<string, Stablecoin> = {
-  "0x765de816845861e75a25fca122bb6898b8b1282a": "USDm",
-  "0xceba9300f2b948710d2653dd7b07f33a8b32118c": "USDC",
-  "0x48065fbbe25f71c9282ddf5e1cd6d6a887483d5e": "USDT",
-};
 
 export async function handlePaymentReceived(
   env: Env,
@@ -22,7 +16,7 @@ export async function handlePaymentReceived(
   },
 ) {
   const supabase = getSupabase(env);
-  const tokenSymbol = TOKEN_BY_ADDRESS[event.token.toLowerCase()];
+  const tokenSymbol = getStablecoinByAddress(env, event.token);
   if (!tokenSymbol) {
     console.warn("[indexer] unknown token address", event.token);
     return;

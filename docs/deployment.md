@@ -33,16 +33,16 @@
 | Service | Target | Why |
 |---------|--------|-----|
 | Frontend (minipay/) | **Vercel** | Next.js, edge-optimized, free tier |
-| Backend API | **VPS** (Ubuntu + PM2) | Standalone `backend/` service, persistent auth + chain access |
-| Event Indexer | **VPS** (Ubuntu + PM2) | Long-running, Viem `watchContractEvent` |
-| Agent Runtime | **VPS** (Ubuntu + PM2) | Long-running, persistent wallet, x402 server |
+| Backend API | **VPS** (Docker Compose) | Standalone `backend/` service, persistent auth + chain access |
+| Event Indexer | **VPS** (Docker Compose) | Long-running, Viem `watchContractEvent` |
+| Agent Runtime | **VPS** (Docker Compose, later phase) | Long-running, persistent wallet, x402 server |
 | Database | **Supabase** | Managed PostgreSQL, free tier |
 | Blockchain | **Celo Mainnet** | Production |
 | Blockchain test | **Celo Sepolia** | Development |
 
 ---
 
-## VPS Setup (Backend + Agent + Indexer)
+## VPS Setup (Backend API + Indexer)
 
 ### Specs
 
@@ -57,11 +57,18 @@
 ```bash
 # 1. System dependencies
 sudo apt update && sudo apt upgrade -y
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt install -y nodejs git nginx
+sudo apt install -y ca-certificates curl git nginx
 
-# 2. PM2 for process management
-npm install -g pm2
+# 2. Docker Engine
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 # 3. Firewall
 sudo ufw allow 22    # SSH
@@ -73,52 +80,30 @@ sudo ufw enable
 git clone https://github.com/PsyLabs/paygrid.git /opt/paygrid
 cd /opt/paygrid
 
-# 5. Install deps
-cd backend && npm install && npm run build
-cd ../agent && npm install && npm run build
-
-# 6. Environment
+# 5. Environment
 cp backend/.env.example backend/.env
-cp agent/.env.example agent/.env
-# Edit backend/.env and agent/.env with real keys
+# Edit backend/.env with production keys
 
-# 7. Start services
-pm2 start backend/dist/index.js --name paygrid-backend
-pm2 start backend/dist/indexer.js --name paygrid-indexer
-pm2 start agent/dist/index.js --name paygrid-agent
-pm2 save
-pm2 startup
+# 6. Build and start services
+sudo docker compose -f docker-compose.prod.yml up -d --build
+
+# 7. Check status
+sudo docker compose -f docker-compose.prod.yml ps
+sudo docker compose -f docker-compose.prod.yml logs -f backend
 ```
 
-### PM2 ecosystem file (`/opt/paygrid/ecosystem.config.js`)
+### Docker Compose services
 
-```javascript
-module.exports = {
-  apps: [
-    {
-      name: "paygrid-backend",
-      script: "backend/dist/index.js",
-      env: { NODE_ENV: "production" },
-      max_restarts: 5,
-      restart_delay: 5000,
-    },
-    {
-      name: "paygrid-indexer",
-      script: "backend/dist/indexer.js",
-      env: { NODE_ENV: "production" },
-      max_restarts: 5,
-      restart_delay: 5000,
-    },
-    {
-      name: "paygrid-agent",
-      script: "agent/dist/index.js",
-      env: { NODE_ENV: "production" },
-      max_restarts: 5,
-      restart_delay: 10000,
-    },
-  ],
-};
+`docker-compose.prod.yml` runs two backend containers from the same image:
+
+```bash
+sudo docker compose -f docker-compose.prod.yml up -d --build
+sudo docker compose -f docker-compose.prod.yml logs -f backend
+sudo docker compose -f docker-compose.prod.yml logs -f indexer
+sudo docker compose -f docker-compose.prod.yml restart backend indexer
 ```
+
+The API binds to `127.0.0.1:3001` so only Nginx can expose it publicly. The indexer has no public port.
 
 ### Nginx reverse proxy + SSL
 
@@ -138,26 +123,9 @@ server {
 }
 ```
 
-```nginx
-server {
-    listen 80;
-    server_name agent.paygrid.xyz;
-
-    location / {
-        proxy_pass http://localhost:3002;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
-
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
 sudo certbot --nginx -d api.paygrid.xyz
-sudo certbot --nginx -d agent.paygrid.xyz
 ```
 
 ---
@@ -203,7 +171,7 @@ NEXT_PUBLIC_CELO_RPC=https://forno.celo.org
 # Backend API
 SUPABASE_URL=https://xxx.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=...
-CELO_SEPOLIA_RPC=https://forno.celo-sepolia.celo-testnet.org
+CELO_RPC_URL=https://forno.celo-sepolia.celo-testnet.org
 CHAIN_ID=11142220
 PAYGRID_LINK_ADDRESS=0x58b7125e0bed4d082985c76b772bf84808e5a474
 PAYGRID_ROUTER_ADDRESS=0xb3fe724934de14afd56157bacb8ed6907a3d091b
