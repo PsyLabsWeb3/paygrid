@@ -10,6 +10,7 @@ export type ApiErrorCode =
   | "UNAUTHORIZED"
   | "FORBIDDEN"
   | "PAYMENT_REQUIRED"
+  | "ONRAMP_ERROR"
   | "FONBNK_ERROR"
   | "INTERNAL_ERROR";
 

@@ -13,6 +13,7 @@ import {
   listOwnedLinks,
 } from "../services/links.js";
 import { createFonbnkPaySession } from "../services/fonbnk.js";
+import { createRampPaySession } from "../services/ramp.js";
 
 const stablecoins = ["USDm", "USDC", "USDT"] as const;
 const fonbnkPaymentChannels = ["bank", "mobile_money", "airtime"] as const;
@@ -41,7 +42,14 @@ const fonbnkPaySchema = z.object({
   extraFields: z.record(z.string(), z.unknown()).optional(),
 });
 
-const paySchema = z.discriminatedUnion("method", [cryptoPaySchema, fonbnkPaySchema]);
+const rampPaySchema = z.object({
+  method: z.literal("ramp"),
+  finalUrl: z.string().url().optional(),
+  selectedCountryCode: z.string().min(2).max(2).optional(),
+  userEmailAddress: z.string().email().optional(),
+});
+
+const paySchema = z.discriminatedUnion("method", [cryptoPaySchema, fonbnkPaySchema, rampPaySchema]);
 
 const listQuerySchema = z.object({
   cursor: z.string().datetime().optional(),
@@ -95,6 +103,20 @@ export function linksRoutes(env: Env) {
     return c.json(result, 201);
   });
 
+  app.post("/minipay", async (c) => {
+    const body = createLinkSchema.parse(await c.req.json());
+    if (!Object.keys(TOKEN_ADDRESSES).includes(body.token)) {
+      throw new ApiError(400, "INVALID_TOKEN", `Token ${body.token} is not supported`);
+    }
+
+    const result = await createPaymentLink(env, {
+      ...body,
+      recipientAddress: body.recipientAddress as `0x${string}`,
+      token: body.token as Stablecoin,
+    });
+    return c.json(result, 201);
+  });
+
   app.get("/:id", async (c) => {
     const { link, payments } = await getPaymentLink(env, c.req.param("id"));
     return c.json({
@@ -121,6 +143,15 @@ export function linksRoutes(env: Env) {
     const body = paySchema.parse(await c.req.json());
     if (body.method === "crypto") {
       const result = await buildCryptoPayTx(env, c.req.param("id"));
+      return c.json(result);
+    }
+
+    if (body.method === "ramp") {
+      const result = await createRampPaySession(env, c.req.param("id"), {
+        finalUrl: body.finalUrl,
+        selectedCountryCode: body.selectedCountryCode,
+        userEmailAddress: body.userEmailAddress,
+      });
       return c.json(result);
     }
 

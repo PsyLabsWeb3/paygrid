@@ -14,6 +14,7 @@ const env = {
   BACKEND_WALLET_PRIVATE_KEY: ("0x" + "1".repeat(64)) as `0x${string}`,
   FONBNK_API_KEY: "fonbnk-key",
   FONBNK_WEBHOOK_SECRET: "webhook-secret",
+  RAMP_ENV: "demo",
   PORT: 3001,
 } satisfies Env;
 

@@ -43,7 +43,7 @@ export type PaymentRow = {
   amount: string;
   token: "USDm" | "USDC" | "USDT";
   fee_amount: string;
-  payment_method: "crypto" | "fonbnk";
+  payment_method: "crypto" | "fonbnk" | "card";
   onramp_session_id: string | null;
   onramp_tx_id: string | null;
   tx_hash: string | null;

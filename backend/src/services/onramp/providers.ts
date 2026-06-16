@@ -2,6 +2,7 @@ import type { Env } from "../../config/env.js";
 
 export const ONRAMP_PROVIDERS = {
   fonbnk: "fonbnk",
+  ramp: "ramp",
   card: "card",
   minipayCard: "minipay_card",
 } as const;
