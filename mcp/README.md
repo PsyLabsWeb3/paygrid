@@ -31,3 +31,13 @@ Remote write tools require `Authorization: Bearer <PAYGRID_MCP_API_KEY>` or `X-A
 
 Read-only tools can be called without a key.
 
+## Public metadata
+
+Hosted deployments expose:
+
+```text
+GET /health
+GET /metadata
+GET /.well-known/paygrid-agent.json
+POST /mcp
+```

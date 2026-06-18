@@ -1,8 +1,32 @@
 import http from "node:http";
 import { loadConfig, isWriteAuthorized } from "./config.js";
 import { handleRpc } from "./rpc.js";
+import { createAgentSigner } from "./paygrid-client.js";
 
 const config = loadConfig();
+
+function publicAgentMetadata() {
+  const signer = createAgentSigner(config);
+  return {
+    name: config.agentName,
+    agentId: config.agentId || null,
+    address: config.agentAddress || signer?.address || null,
+    chainId: config.chainId,
+    apiEndpoint: config.publicApiUrl,
+    mcpEndpoint: `${config.publicBaseUrl}/mcp`,
+    healthEndpoint: `${config.publicBaseUrl}/health`,
+    capabilities: [
+      "create_payment_request",
+      "verify_payment",
+      "list_agent_requests",
+      "create_card_checkout",
+      "pay_x402_endpoint",
+      "get_supported_stablecoins",
+      "treasury_report",
+    ],
+    supportedTrust: ["erc8004", "x402"],
+  };
+}
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -33,6 +57,15 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && req.url === "/health") {
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify({ ok: true, service: "paygrid-mcp", chainId: config.chainId }));
+    return;
+  }
+
+  if (
+    req.method === "GET" &&
+    (req.url === "/metadata" || req.url === "/.well-known/paygrid-agent.json")
+  ) {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify(publicAgentMetadata()));
     return;
   }
 

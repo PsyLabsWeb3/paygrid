@@ -15,7 +15,7 @@ export function loadConfig() {
     celoRpcUrl: process.env.CELO_RPC_URL ?? "https://forno.celo-sepolia.celo-testnet.org",
     mcpApiKey: process.env.PAYGRID_MCP_API_KEY,
     httpPort: Number(process.env.MCP_HTTP_PORT ?? "3002"),
-    publicBaseUrl: optionalEnv("MCP_PUBLIC_BASE_URL", "https://mcp.celopaygrid.xyz"),
+    publicBaseUrl: optionalEnv("MCP_PUBLIC_BASE_URL", "https://mcp.celopaygrid.xyz").replace(/\/$/, ""),
     tokenAddresses: {
       USDC: optionalEnv("USDC_ADDRESS", "0xcebA9300f2b948710d2653dD7B07f33A8B32118C"),
       USDT: optionalEnv("USDT_ADDRESS", "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e"),
