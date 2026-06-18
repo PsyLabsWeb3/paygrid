@@ -25,11 +25,11 @@ export const appConfig = {
     "https://forno.celo-sepolia.celo-testnet.org",
   paygridRouterAddress: publicAddress(
     "NEXT_PUBLIC_PAYGRID_ROUTER_ADDRESS",
-    "0xe75027ff07931ef97248402f4df63a4d3287020d",
+    "0x6c3363D33eCD912576051316AF0A1c95F77EAD73",
   ),
   paygridLinkAddress: publicAddress(
     "NEXT_PUBLIC_PAYGRID_LINK_ADDRESS",
-    "0xd2dc71c47803b0939944ec29f13b644c48bae7de",
+    "0x86D9B260F96873e82852B476ff7B0c93bD755597",
   ),
   usdcAddress: publicAddress(
     "NEXT_PUBLIC_USDC_ADDRESS",

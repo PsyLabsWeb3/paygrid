@@ -7,6 +7,7 @@ import { getFonbnkCountryConfig, verifyFonbnkWebhookAuth } from "../services/fon
 const env = {
   SUPABASE_URL: "https://example.supabase.co",
   SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
+  PUBLIC_APP_URL: "https://celopaygrid.xyz",
   CELO_RPC_URL: "https://example-rpc.invalid",
   CHAIN_ID: 11142220,
   PAYGRID_LINK_ADDRESS: "0x0000000000000000000000000000000000000001",

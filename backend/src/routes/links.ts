@@ -22,7 +22,7 @@ const createLinkSchema = z.object({
   amount: z.string(),
   token: z.enum(stablecoins),
   description: z.string().optional(),
-  acceptedMethods: z.array(z.enum(["crypto", "fonbnk"])).min(1).default(["crypto"]),
+  acceptedMethods: z.array(z.enum(["crypto", "fonbnk", "card"])).min(1).default(["crypto"]),
   recipientAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   expiresAt: z.string().datetime().optional(),
 });
@@ -122,6 +122,7 @@ export function linksRoutes(env: Env) {
     return c.json({
       id: link.id,
       onChainLinkId: String(link.on_chain_link_id),
+      paygridLinkAddress: link.paygrid_link_address,
       recipientAddress: link.recipient_address,
       amount: String(link.amount),
       token: link.token,

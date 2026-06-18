@@ -36,16 +36,21 @@ export async function handlePaymentReceived(
     .from("payment_links")
     .select("id, amount, token")
     .eq("on_chain_link_id", event.linkId.toString())
+    .eq("paygrid_link_address", env.PAYGRID_LINK_ADDRESS.toLowerCase())
     .maybeSingle();
 
   if (!link) {
-    console.warn("[indexer] no DB link for on_chain_link_id", event.linkId.toString());
+    console.warn(
+      "[indexer] no DB link for contract/link",
+      env.PAYGRID_LINK_ADDRESS,
+      event.linkId.toString(),
+    );
     return;
   }
 
   const amountHuman = formatHumanAmount(event.amount, tokenSymbol);
   const feeHuman = formatHumanAmount(event.fee, tokenSymbol);
-  const paymentMethod = event.method === 1 ? "fonbnk" : "crypto";
+  const paymentMethod = event.method === 2 ? "card" : event.method === 1 ? "fonbnk" : "crypto";
   const now = new Date().toISOString();
 
   const { error: payErr } = await supabase.from("payments").insert({

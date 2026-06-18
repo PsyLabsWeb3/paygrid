@@ -14,6 +14,7 @@ export type PaymentLinkRow = {
   creator_id: string | null;
   creator_type: "user" | "agent" | null;
   on_chain_link_id: string;
+  paygrid_link_address: string;
   recipient_address: string;
   amount: string;
   token: "USDm" | "USDC" | "USDT";

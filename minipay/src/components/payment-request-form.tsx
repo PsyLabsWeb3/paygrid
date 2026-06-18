@@ -35,7 +35,7 @@ export function PaymentRequestForm() {
         token,
         description: description.trim() || undefined,
         recipientAddress: address,
-        acceptedMethods: ["crypto", "fonbnk"],
+        acceptedMethods: ["crypto", "fonbnk", "card"],
       });
       const url = `${window.location.origin}/pay/${link.id}`;
       setCheckoutUrl(url);

@@ -11,7 +11,7 @@ import "./PaygridLink.sol";
 contract PaygridRouter is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    enum PaymentMethod { Crypto, Fonbnk }
+    enum PaymentMethod { Crypto, Fonbnk, Card }
 
     address public treasury;
     uint256 public feeBps = 50; // 0.5% = 50 bps
@@ -92,6 +92,24 @@ contract PaygridRouter is Ownable, ReentrancyGuard {
 
         // Tokens already held by router (sent by Fonbnk)
         _settleAndMarkPaid(linkId, link.recipient, token, amount, PaymentMethod.Fonbnk, onrampTxId);
+    }
+
+    // --- Card-funded payment (Ramp or future card provider) ---
+
+    function payWithCard(
+        uint256 linkId,
+        address token,
+        uint256 amount,
+        bytes32 providerTxId
+    ) external onlyOwner nonReentrant {
+        require(providerTxId != bytes32(0), "providerTxId required");
+
+        PaygridLink.PaymentLink memory link = paygridLink.getLink(linkId);
+        _validateLink(linkId, link, token, amount);
+        require(link.acceptsFiat, "Fiat not accepted");
+
+        // Tokens already held by router (sent by the card/onramp provider)
+        _settleAndMarkPaid(linkId, link.recipient, token, amount, PaymentMethod.Card, providerTxId);
     }
 
     // --- Shared helpers ---

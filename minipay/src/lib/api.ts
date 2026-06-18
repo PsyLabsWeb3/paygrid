@@ -23,7 +23,7 @@ export type CreateMiniPayLinkInput = {
   token: Stablecoin;
   description?: string;
   recipientAddress: Address;
-  acceptedMethods: Array<"crypto" | "fonbnk">;
+  acceptedMethods: Array<"crypto" | "fonbnk" | "card">;
 };
 
 type CreateMiniPayLinkResponse = {
@@ -79,6 +79,11 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   if (!res.ok) {
     const errorBody =
       data && typeof data === "object" ? (data as { error?: string; message?: string }) : null;
+    console.error("Paygrid API request failed", {
+      path,
+      status: res.status,
+      body: data,
+    });
     const message =
       errorBody?.message
         ? errorBody.message

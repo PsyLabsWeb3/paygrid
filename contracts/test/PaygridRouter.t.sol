@@ -133,6 +133,58 @@ contract PaygridRouterTest is Test {
         router.payWithFiat(id, address(usdc), amount, fakeId);
     }
 
+    // --- PayWithCard ---
+
+    function test_PayWithCard() public {
+        vm.prank(creator);
+        uint256 id = link.createLink(recipient, amount, address(usdc), "card", true, expiresAt);
+
+        usdc.mint(address(router), amount);
+
+        bytes32 providerTxId = keccak256("ramp-tx-123");
+        router.payWithCard(id, address(usdc), amount, providerTxId);
+
+        assertEq(usdc.balanceOf(treasury), 500000);
+        assertEq(usdc.balanceOf(recipient), 99500000);
+
+        PaygridLink.PaymentLink memory l = link.getLink(id);
+        assertTrue(l.paid);
+    }
+
+    function test_PayWithCard_EmitsCardMethod() public {
+        vm.prank(creator);
+        uint256 id = link.createLink(recipient, amount, address(usdc), "card", true, expiresAt);
+
+        usdc.mint(address(router), amount);
+        bytes32 providerTxId = keccak256("ramp-tx-123");
+        uint256 expectedFee = (amount * 50) / 10000;
+
+        vm.expectEmit(true, true, true, false);
+        emit PaygridRouter.PaymentReceived(
+            id, address(this), address(usdc), amount, expectedFee, PaygridRouter.PaymentMethod.Card, providerTxId
+        );
+        router.payWithCard(id, address(usdc), amount, providerTxId);
+    }
+
+    function test_PayWithCard_RevertsNotOwner() public {
+        vm.prank(creator);
+        uint256 id = link.createLink(recipient, amount, address(usdc), "card", true, expiresAt);
+
+        vm.prank(address(0x1337));
+        vm.expectRevert();
+        router.payWithCard(id, address(usdc), amount, keccak256("test"));
+    }
+
+    function test_PayWithCard_RevertsFiatNotAccepted() public {
+        vm.prank(creator);
+        uint256 id = link.createLink(recipient, amount, address(usdc), "nocard", false, expiresAt);
+
+        usdc.mint(address(router), amount);
+
+        vm.expectRevert("Fiat not accepted");
+        router.payWithCard(id, address(usdc), amount, keccak256("test"));
+    }
+
     // --- Validation ---
 
     function test_Pay_RevertsAlreadyPaid() public {

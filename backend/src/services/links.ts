@@ -19,7 +19,7 @@ export type CreateLinkInput = {
   amount: string;
   token: Stablecoin;
   description?: string;
-  acceptedMethods: ("crypto" | "fonbnk")[];
+  acceptedMethods: ("crypto" | "fonbnk" | "card")[];
   recipientAddress: `0x${string}`;
   expiresAt?: string;
   creator?: {
@@ -44,6 +44,7 @@ function serializeLink(row: PaymentLinkRow) {
   return {
     id: row.id,
     onChainLinkId: row.on_chain_link_id,
+    paygridLinkAddress: row.paygrid_link_address,
     creatorId: row.creator_id,
     creatorType: row.creator_type,
     recipientAddress: row.recipient_address,
@@ -65,7 +66,7 @@ export async function createPaymentLink(env: Env, input: CreateLinkInput) {
 
   const amountWei = parseHumanAmount(input.amount, input.token);
   const tokenAddress = getTokenAddress(env, input.token);
-  const acceptsFiat = input.acceptedMethods.includes("fonbnk");
+  const acceptsFiat = input.acceptedMethods.includes("fonbnk") || input.acceptedMethods.includes("card");
   const expiresAtUnix = input.expiresAt
     ? BigInt(Math.floor(new Date(input.expiresAt).getTime() / 1000))
     : 0n;
@@ -116,6 +117,7 @@ export async function createPaymentLink(env: Env, input: CreateLinkInput) {
     .from("payment_links")
     .insert({
       on_chain_link_id: onChainLinkId.toString(),
+      paygrid_link_address: env.PAYGRID_LINK_ADDRESS.toLowerCase(),
       recipient_address: input.recipientAddress.toLowerCase(),
       amount: input.amount,
       token: input.token,
@@ -139,7 +141,7 @@ export async function createPaymentLink(env: Env, input: CreateLinkInput) {
   return {
     id: row.id,
     onChainLinkId: onChainLinkId.toString(),
-    url: `https://paygrid.xyz/pay/${row.id}`,
+    url: `${env.PUBLIC_APP_URL.replace(/\/$/, "")}/pay/${row.id}`,
     amount: String(input.amount),
     token: input.token,
     status: row.status,

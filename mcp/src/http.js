@@ -1,0 +1,62 @@
+import http from "node:http";
+import { loadConfig, isWriteAuthorized } from "./config.js";
+import { handleRpc } from "./rpc.js";
+
+const config = loadConfig();
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+      if (body.length > 1_000_000) {
+        req.destroy();
+        reject(new Error("Request too large"));
+      }
+    });
+    req.on("end", () => resolve(body));
+    req.on("error", reject);
+  });
+}
+
+const server = http.createServer(async (req, res) => {
+  res.setHeader("access-control-allow-origin", "*");
+  res.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
+  res.setHeader("access-control-allow-headers", "content-type,authorization,x-api-key");
+
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  if (req.method === "GET" && req.url === "/health") {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ ok: true, service: "paygrid-mcp", chainId: config.chainId }));
+    return;
+  }
+
+  if (req.method !== "POST" || req.url !== "/mcp") {
+    res.writeHead(404, { "content-type": "application/json" });
+    res.end(JSON.stringify({ error: "not_found" }));
+    return;
+  }
+
+  try {
+    const body = await readBody(req);
+    const message = JSON.parse(body);
+    const result = await handleRpc(config, message, {
+      remote: true,
+      writeAuthorized: isWriteAuthorized(config, req.headers),
+    });
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify(result));
+  } catch (error) {
+    res.writeHead(400, { "content-type": "application/json" });
+    res.end(JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }));
+  }
+});
+
+server.listen(config.httpPort, "0.0.0.0", () => {
+  console.log(`Paygrid MCP HTTP listening on http://0.0.0.0:${config.httpPort}`);
+});

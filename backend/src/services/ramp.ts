@@ -220,7 +220,7 @@ async function settleRampPaymentOnChain(
   const { request } = await publicClient.simulateContract({
     address: env.PAYGRID_ROUTER_ADDRESS,
     abi: paygridRouterAbiConst,
-    functionName: "payWithFiat",
+    functionName: "payWithCard",
     args: [
       BigInt(args.link.on_chain_link_id),
       tokenAddress,
@@ -308,7 +308,7 @@ export async function createRampPaySession(
   const paymentLink = link as PaymentLinkRow;
   if (paymentLink.status === "paid") throw new ApiError(409, "ALREADY_PAID", "Link already settled");
   if (paymentLink.status !== "active") throw new ApiError(410, "EXPIRED", `Link is ${paymentLink.status}`);
-  if (!paymentLink.accepted_methods.includes("fonbnk")) {
+  if (!paymentLink.accepted_methods.includes("card") && !paymentLink.accepted_methods.includes("fonbnk")) {
     throw new ApiError(400, "UNSUPPORTED_METHOD", "Card payments are not accepted for this link");
   }
 

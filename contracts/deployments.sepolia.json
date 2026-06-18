@@ -1,18 +1,18 @@
 {
   "chainId": 11142220,
   "network": "celo-sepolia",
-  "deployer": "0xd4683314a013792fe8840e4171dc4692e317617b",
-  "timestamp": 1779839564422,
+  "deployer": "0x0acf80b591ea0fe2cf9b1108ba9e4b278f3330ce",
+  "timestamp": 1781790344329,
   "contracts": [
     {
       "name": "PaygridLink",
-      "address": "0x58b7125e0bed4d082985c76b772bf84808e5a474",
-      "tx": "0x5cdd12d7f398937c7a2915088dd58147106c6428457d29b4ebfd9ae06d0a947d"
+      "address": "0x86d9b260f96873e82852b476ff7b0c93bd755597",
+      "tx": "0x6bd5c0ad481597ef197f21d9ce893855f855ca79c1f0ae63f002897cd4f9af96"
     },
     {
       "name": "PaygridRouter",
-      "address": "0xb3fe724934de14afd56157bacb8ed6907a3d091b",
-      "tx": "0x97621473662b2c2a9a19bb50e2c75ac354789ee96d52502aeed0aa7903bb25e1"
+      "address": "0x6c3363d33ecd912576051316af0a1c95f77ead73",
+      "tx": "0xb643cb679e8da0e7d82980fc2b4eecd4be93d4a1ac5da6b422c92aaa43a15c94"
     }
   ]
 }

@@ -14,7 +14,8 @@ export const account = privateKeyToAccount(privateKey);
 
 export const CHAIN_ID = Number(process.env.CHAIN_ID ?? process.env.CELO_CHAIN_ID ?? celoSepolia.id);
 const chain = CHAIN_ID === celo.id ? celo : { ...celoSepolia, id: CHAIN_ID };
-const transport = http(process.env.CELO_RPC_URL);
+const rpcUrl = process.env.CELO_RPC_URL ?? "https://forno.celo-sepolia.celo-testnet.org";
+const transport = http(rpcUrl);
 
 export const publicClient = createPublicClient({
   chain,

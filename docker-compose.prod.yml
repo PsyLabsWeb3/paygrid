@@ -3,6 +3,11 @@ x-backend-image: &backend-image
   build:
     context: ./backend
 
+x-mcp-image: &mcp-image
+  image: paygrid-mcp:latest
+  build:
+    context: ./mcp
+
 services:
   backend:
     <<: *backend-image
@@ -33,3 +38,28 @@ services:
     environment:
       NODE_ENV: production
     command: ["npm", "run", "indexer:start"]
+
+  mcp-http:
+    <<: *mcp-image
+    restart: unless-stopped
+    env_file:
+      - ./mcp/.env
+    environment:
+      NODE_ENV: production
+      BACKEND_URL: http://backend:3001
+      MCP_HTTP_PORT: 3002
+    ports:
+      - "127.0.0.1:3002:3002"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3002/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

@@ -12,11 +12,14 @@ const ERC20_ABI = [
   },
 ];
 
-// Address constants for Celo Mainnet / Sepolia
+function optionalAddress(value: string | undefined, fallback: `0x${string}`) {
+  return value && /^0x[a-fA-F0-9]{40}$/.test(value) ? (value as `0x${string}`) : fallback;
+}
+
 const TOKENS: Record<string, `0x${string}`> = {
-  USDC: "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
-  USDT: "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
-  USDm: "0x765DE816845861e75A25fCA122bb6898B8B1282a",
+  USDC: optionalAddress(process.env.USDC_ADDRESS, "0xcebA9300f2b948710d2653dD7B07f33A8B32118C"),
+  USDT: optionalAddress(process.env.USDT_ADDRESS, "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e"),
+  USDm: optionalAddress(process.env.USDM_ADDRESS, "0x765DE816845861e75A25fCA122bb6898B8B1282a"),
 };
 
 export const getBalance = tool({

@@ -6,17 +6,17 @@ import "../src/PaygridLink.sol";
 import "../src/PaygridRouter.sol";
 
 contract Deploy is Script {
-    address constant TREASURY = 0xD4683314A013792fe8840E4171dC4692E317617B;
-
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        address treasury = vm.envAddress("TREASURY_ADDRESS");
+        uint256 chainId = block.chainid;
 
         vm.startBroadcast(deployerPrivateKey);
 
         PaygridLink link = new PaygridLink();
         console.log("PaygridLink:", address(link));
 
-        PaygridRouter router = new PaygridRouter(TREASURY, address(link));
+        PaygridRouter router = new PaygridRouter(treasury, address(link));
         console.log("PaygridRouter:", address(router));
 
         link.setRouter(address(router));
@@ -24,8 +24,9 @@ contract Deploy is Script {
 
         vm.stopBroadcast();
 
-        console.log("\n=== Deployed on Sepolia ===");
-        console.log("Treasury:     ", TREASURY);
+        console.log("\n=== Paygrid deployment ===");
+        console.log("Chain ID:     ", chainId);
+        console.log("Treasury:     ", treasury);
         console.log("PaygridLink:  ", address(link));
         console.log("PaygridRouter:", address(router));
     }

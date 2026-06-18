@@ -1,6 +1,6 @@
 # API Spec
 
-Base URL: `https://api.paygrid.xyz` (TBD)
+Base URL: `https://api.celopaygrid.xyz` (TBD)
 
 ## Authentication
 
@@ -33,7 +33,7 @@ Response:
 ```json
 {
   "id": "link_abc123",
-  "url": "https://paygrid.xyz/pay/link_abc123",
+  "url": "https://celopaygrid.xyz/pay/link_abc123",
   "amount": "10.00",
   "token": "USDC",
   "status": "active",

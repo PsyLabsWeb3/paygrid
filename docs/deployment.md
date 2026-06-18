@@ -5,15 +5,15 @@
 ```
                     ┌─────────────┐
                     │    DNS      │
-                    │ paygrid.xyz │
+                    │ celopaygrid.xyz │
                     └──────┬──────┘
                            │
            ┌───────────────┼────────────────┐
            ▼               ▼                ▼
    ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
    │   Vercel     │ │   VPS        │ │   VPS        │
-   │  Frontend    │ │ Backend API  │ │ Agent +      │
-   │ (minipay/)   │ │ + Indexer    │ │ Indexer      │
+   │  Frontend    │ │ Backend API  │ │ MCP HTTP +   │
+   │ (minipay/)   │ │ + Indexer    │ │ Agent later  │
    └──────┬───────┘ └──────┬───────┘ └──────┬───────┘
           │                │                │
           └────────────────┼────────────────┘
@@ -35,6 +35,7 @@
 | Frontend (minipay/) | **Vercel** | Next.js, edge-optimized, free tier |
 | Backend API | **VPS** (Docker Compose) | Standalone `backend/` service, persistent auth + chain access |
 | Event Indexer | **VPS** (Docker Compose) | Long-running, Viem `watchContractEvent` |
+| MCP HTTP | **VPS** (Docker Compose) | Remote agent/builder interface for Paygrid tools |
 | Agent Runtime | **VPS** (Docker Compose, later phase) | Long-running, persistent wallet, x402 server |
 | Database | **Supabase** | Managed PostgreSQL, free tier |
 | Blockchain | **Celo Mainnet** | Production |
@@ -42,7 +43,7 @@
 
 ---
 
-## VPS Setup (Backend API + Indexer)
+## VPS Setup (Backend API + Indexer + MCP HTTP)
 
 ### Specs
 
@@ -83,6 +84,8 @@ cd /opt/paygrid
 # 5. Environment
 cp backend/.env.example backend/.env
 # Edit backend/.env with production keys
+cp mcp/.env.example mcp/.env
+# Edit mcp/.env with MCP public URL, API key, and optional agent key
 
 # 6. Build and start services
 sudo docker compose -f docker-compose.prod.yml up -d --build
@@ -94,23 +97,24 @@ sudo docker compose -f docker-compose.prod.yml logs -f backend
 
 ### Docker Compose services
 
-`docker-compose.prod.yml` runs two backend containers from the same image:
+`docker-compose.prod.yml` runs backend, indexer, and MCP HTTP:
 
 ```bash
 sudo docker compose -f docker-compose.prod.yml up -d --build
 sudo docker compose -f docker-compose.prod.yml logs -f backend
 sudo docker compose -f docker-compose.prod.yml logs -f indexer
-sudo docker compose -f docker-compose.prod.yml restart backend indexer
+sudo docker compose -f docker-compose.prod.yml logs -f mcp-http
+sudo docker compose -f docker-compose.prod.yml restart backend indexer mcp-http
 ```
 
-The API binds to `127.0.0.1:3001` so only Nginx can expose it publicly. The indexer has no public port.
+The API binds to `127.0.0.1:3001` and MCP HTTP binds to `127.0.0.1:3002`, so only Nginx can expose them publicly. The indexer has no public port.
 
 ### Nginx reverse proxy + SSL
 
 ```nginx
 server {
     listen 80;
-    server_name api.paygrid.xyz;
+    server_name api.celopaygrid.xyz;
 
     location / {
         proxy_pass http://localhost:3001;
@@ -123,9 +127,23 @@ server {
 }
 ```
 
+```nginx
+server {
+    listen 80;
+    server_name mcp.celopaygrid.xyz;
+
+    location / {
+        proxy_pass http://localhost:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d api.paygrid.xyz
+sudo certbot --nginx -d api.celopaygrid.xyz -d mcp.celopaygrid.xyz
 ```
 
 ---
@@ -135,7 +153,7 @@ sudo certbot --nginx -d api.paygrid.xyz
 ### Frontend (minipay/)
 
 ```
-Framework: Next.js 14 (App Router)
+Framework: Next.js (App Router)
 Root directory: minipay/
 Build command: npm run build
 Output directory: .next
@@ -151,18 +169,16 @@ Single Vercel deploy handles the frontend only. API traffic goes to `backend/` o
 ### Vercel (Frontend)
 
 ```bash
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-
-# Privy
-NEXT_PUBLIC_PRIVY_APP_ID=...
-
 # Backend
-BACKEND_URL=https://api.paygrid.xyz
+NEXT_PUBLIC_BACKEND_URL=https://api.celopaygrid.xyz
+NEXT_PUBLIC_APP_ENV=production
 
 # Celo
-NEXT_PUBLIC_CELO_RPC=https://forno.celo.org
+NEXT_PUBLIC_CHAIN_ID=42220
+NEXT_PUBLIC_CELO_RPC_URL=https://forno.celo.org
+NEXT_PUBLIC_PAYGRID_LINK_ADDRESS=0x...
+NEXT_PUBLIC_PAYGRID_ROUTER_ADDRESS=0x...
+NEXT_PUBLIC_USDC_ADDRESS=0xcebA9300f2b948710d2653dD7B07f33A8B32118C
 ```
 
 ### VPS (Backend API + Indexer)
@@ -173,8 +189,8 @@ SUPABASE_URL=https://xxx.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=...
 CELO_RPC_URL=https://forno.celo-sepolia.celo-testnet.org
 CHAIN_ID=11142220
-PAYGRID_LINK_ADDRESS=0x58b7125e0bed4d082985c76b772bf84808e5a474
-PAYGRID_ROUTER_ADDRESS=0xb3fe724934de14afd56157bacb8ed6907a3d091b
+PAYGRID_LINK_ADDRESS=0x86D9B260F96873e82852B476ff7B0c93bD755597
+PAYGRID_ROUTER_ADDRESS=0x6c3363D33eCD912576051316AF0A1c95F77EAD73
 BACKEND_WALLET_PRIVATE_KEY=0x...
 PRIVY_APP_ID=...
 PRIVY_APP_SECRET=...
@@ -192,7 +208,13 @@ THIRDWEB_SECRET_KEY=...
 FONBNK_API_KEY=...
 ROUTER_OWNER_PRIVATE_KEY=0x...
 FONBNK_WEBHOOK_SECRET=...
+
+# MCP HTTP remote
+PAYGRID_MCP_API_KEY=sk_...
+MCP_PUBLIC_BASE_URL=https://mcp.celopaygrid.xyz
 ```
+
+`mcp/.env` should contain MCP-specific values only. Do not reuse `backend/.env` for MCP because the MCP service does not need Supabase service-role keys or backend relayer keys.
 
 ---
 
@@ -200,8 +222,8 @@ FONBNK_WEBHOOK_SECRET=...
 
 | Contract | Sepolia | Mainnet |
 |----------|---------|---------|
-| PaygridRouter | `0xb3fe724934de14afd56157bacb8ed6907a3d091b` | deployed |
-| PaygridLink | `0x58b7125e0bed4d082985c76b772bf84808e5a474` | deployed |
+| PaygridRouter | `0x6c3363D33eCD912576051316AF0A1c95F77EAD73` | TBD |
+| PaygridLink | `0x86D9B260F96873e82852B476ff7B0c93bD755597` | TBD |
 | Paygrid Treasury | `0xd4683314a013792fe8840e4171dc4692e317617b` | TBD |
 | USDm | same as mainnet | `0x765DE816845861e75A25fCA122bb6898B8B1282a` |
 | USDC | same as mainnet | `0xcebA9300f2b948710d2653dD7B07f33A8B32118C` |
@@ -210,12 +232,36 @@ FONBNK_WEBHOOK_SECRET=...
 
 ---
 
+## Mainnet Launch Gate
+
+Do not deploy to Celo mainnet until all of these are true:
+
+- Supabase production has applied every migration in `backend/supabase/migrations`.
+- `forge test` passes after the `PaymentMethod.Card` contract change.
+- `backend/src/lib/contracts/*.json` ABIs include `payWithCard`.
+- Backend build and tests pass.
+- MiniPay build passes with production env values.
+- MCP tests pass and `/health` works locally.
+- Ramp production key is approved, or the UI keeps card checkout disabled/hidden in production.
+- A small Sepolia E2E payment is confirmed as `paid` by the indexer.
+
+After mainnet deploy:
+
+1. Save deployed contract addresses in backend and frontend envs.
+2. Verify contracts on CeloScan.
+3. Run one small stablecoin payment.
+4. Confirm Supabase `payment_links.status = paid`.
+5. Confirm `mcp.celopaygrid.xyz/health`.
+6. Register/update Paygrid ERC-8004 metadata with API, MCP, wallet, and supported trust fields.
+
+---
+
 ## CI/CD
 
 ### Vercel (auto)
 
 ```text
-git push main → Vercel auto-builds minipay/ → deploys paygrid.xyz frontend
+git push main → Vercel auto-builds minipay/ → deploys celopaygrid.xyz frontend
 ```
 
 ### VPS (GitHub Actions)
@@ -256,10 +302,10 @@ jobs:
 
 | Subdomain | Type | Target |
 |-----------|------|--------|
-| `paygrid.xyz` | A/CNAME | Vercel |
-| `www.paygrid.xyz` | CNAME | `paygrid.xyz` |
-| `api.paygrid.xyz` | A | VPS IP |
-| `agent.paygrid.xyz` | A | VPS IP |
+| `celopaygrid.xyz` | A/CNAME | Vercel |
+| `www.celopaygrid.xyz` | CNAME | `celopaygrid.xyz` |
+| `api.celopaygrid.xyz` | A | VPS IP |
+| `agent.celopaygrid.xyz` | A | VPS IP |
 
 ---
 

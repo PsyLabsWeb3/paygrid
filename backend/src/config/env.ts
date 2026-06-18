@@ -24,6 +24,7 @@ const rawEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: requiredString(),
   SUPABASE_ANON_KEY: optionalString(),
   CORS_ORIGINS: optionalString(),
+  PUBLIC_APP_URL: z.string().url().default("https://celopaygrid.xyz"),
   PRIVY_APP_ID: optionalString(),
   PRIVY_APP_SECRET: optionalString(),
   PRIVY_JWT_VERIFICATION_KEY: optionalString(),

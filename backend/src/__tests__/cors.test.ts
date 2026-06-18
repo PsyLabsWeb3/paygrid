@@ -6,6 +6,7 @@ import type { Env } from "../config/env.js";
 const env = {
   SUPABASE_URL: "https://example.supabase.co",
   SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
+  PUBLIC_APP_URL: "https://celopaygrid.xyz",
   CORS_ORIGINS: "http://localhost:3002",
   CELO_RPC_URL: "https://example-rpc.invalid",
   CHAIN_ID: 11142220,

@@ -481,9 +481,10 @@ function deriveCurrencyIsoCode(raw: JsonRecord) {
 }
 
 function deriveRedirectUrl(env: Env, linkId: string, existing?: string | null) {
+  const publicAppUrl = env.PUBLIC_APP_URL.replace(/\/$/, "");
   return (
     existing ??
-    `${fonbnkPayBaseUrl(env)}/wallet?redirectUrl=${encodeURIComponent(`https://paygrid.xyz/pay/${linkId}`)}`
+    `${fonbnkPayBaseUrl(env)}/wallet?redirectUrl=${encodeURIComponent(`${publicAppUrl}/pay/${linkId}`)}`
   );
 }
 
@@ -860,6 +861,7 @@ export async function createFonbnkPaySession(
   if (!quoteId) {
     throw new ApiError(502, "FONBNK_ERROR", "Fonbnk best-offer did not return a quoteId");
   }
+  const publicAppUrl = env.PUBLIC_APP_URL.replace(/\/$/, "");
 
   const orderBody: JsonRecord = {
     quoteId,
@@ -872,7 +874,7 @@ export async function createFonbnkPaySession(
     address: env.PAYGRID_ROUTER_ADDRESS,
     orderParams: session.id,
     redirectUrl:
-      input.redirectUrl ?? `${fonbnkPayBaseUrl(env)}/wallet?redirectUrl=${encodeURIComponent(`https://paygrid.xyz/pay/${link.id}`)}`,
+      input.redirectUrl ?? `${fonbnkPayBaseUrl(env)}/wallet?redirectUrl=${encodeURIComponent(`${publicAppUrl}/pay/${link.id}`)}`,
   };
   if (input.extraFields) {
     orderBody.extraFields = input.extraFields;

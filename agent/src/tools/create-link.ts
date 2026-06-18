@@ -9,7 +9,7 @@ export const createPaymentLink = tool({
     token: z.enum(["USDC", "USDT", "USDm"]).describe("The token to receive payment in"),
     description: z.string().describe("Description for the payment link"),
     recipientAddress: z.string().describe("0x address of the recipient"),
-    acceptedMethods: z.array(z.enum(["crypto", "fonbnk"])).describe("List of accepted payment methods"),
+    acceptedMethods: z.array(z.enum(["crypto", "fonbnk", "card"])).describe("List of accepted payment methods"),
   }),
   execute: async (params) => {
     const response = await fetchWithAgentAuth("/api/links", {
