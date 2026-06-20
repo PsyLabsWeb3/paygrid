@@ -12,6 +12,21 @@ import { redirectToMiniPayDeposit } from "@/lib/minipay";
 import { tokenDecimals, tokenAddresses } from "@/lib/tokens";
 import { useQuery } from "@tanstack/react-query";
 
+function getPaymentErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : "";
+  if (
+    message.includes("returned no data") ||
+    message.includes("address is not a contract") ||
+    message.includes("does not have the function")
+  ) {
+    return "Payment token unavailable on this network. Please refresh and try again.";
+  }
+  if (message.toLowerCase().includes("user rejected")) {
+    return "Payment cancelled.";
+  }
+  return message || "Payment failed";
+}
+
 export function CheckoutView({ id }: { id: string }) {
   const { address, isConnected } = useAccount();
   const publicClient = usePublicClient();
@@ -57,7 +72,7 @@ export function CheckoutView({ id }: { id: string }) {
 
       setBalanceLabel(`${formatUnits(balance, tokenDecimals[linkData.token])} ${linkData.token}`);
       if (balance < amountWei) {
-        toast.error("Insufficient balance");
+        toast.error(`Insufficient ${linkData.token} balance. Deposit and try again.`);
         return;
       }
 
@@ -88,7 +103,7 @@ export function CheckoutView({ id }: { id: string }) {
       toast.success("Payment submitted");
       await query.refetch();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Payment failed");
+      toast.error(getPaymentErrorMessage(error));
     } finally {
       setIsPaying(false);
     }
