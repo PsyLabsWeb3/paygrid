@@ -8,6 +8,8 @@ test("lists Paygrid MCP tools", async () => {
   assert.equal(result.id, 1);
   assert.ok(result.result.tools.some((tool) => tool.name === "create_payment_request"));
   assert.ok(result.result.tools.some((tool) => tool.name === "verify_payment"));
+  assert.ok(result.result.tools.some((tool) => tool.name === "get_agent_capabilities"));
+  assert.ok(result.result.tools.some((tool) => tool.name === "get_celo_defi_context"));
 });
 
 test("blocks remote write tools without API key", async () => {
@@ -29,4 +31,17 @@ test("accepts bearer or x-api-key for remote write auth", () => {
   assert.equal(isWriteAuthorized(config, { authorization: "Bearer secret" }), true);
   assert.equal(isWriteAuthorized(config, { "x-api-key": "secret" }), true);
   assert.equal(isWriteAuthorized(config, { authorization: "Bearer nope" }), false);
+});
+
+test("returns Celo agent spend context", async () => {
+  const result = await handleRpc(loadConfig(), {
+    jsonrpc: "2.0",
+    id: 3,
+    method: "tools/call",
+    params: { name: "get_celo_defi_context", arguments: {} },
+  });
+  const payload = JSON.parse(result.result.content[0].text);
+  assert.equal(payload.chainId, 42220);
+  assert.equal(payload.tokens.USDC.address, "0xcebA9300f2b948710d2653dD7B07f33A8B32118C");
+  assert.equal(payload.status.current, "context only; Paygrid does not execute swaps yet");
 });

@@ -16,6 +16,9 @@ Paygrid MCP exposes Paygrid as agent spend infrastructure on Celo.
 - `create_card_checkout`
 - `pay_x402_endpoint`
 - `get_supported_stablecoins`
+- `get_agent_capabilities`
+- `get_agent_connection_guide`
+- `get_celo_defi_context`
 - `get_agent_profile`
 - `treasury_report`
 
