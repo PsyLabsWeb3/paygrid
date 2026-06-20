@@ -17,8 +17,13 @@ function publicAddress(name: string, fallback: Address): Address {
 }
 
 export const appConfig = {
-  backendUrl: publicEnv("NEXT_PUBLIC_BACKEND_URL", "http://localhost:3001").replace(/\/$/, ""),
   appEnv: process.env.NEXT_PUBLIC_APP_ENV ?? "development",
+  backendUrl: publicEnv(
+    "NEXT_PUBLIC_BACKEND_URL",
+    (process.env.NEXT_PUBLIC_APP_ENV ?? process.env.NODE_ENV) === "production"
+      ? "https://api.celopaygrid.xyz"
+      : "http://localhost:3001",
+  ).replace(/\/$/, ""),
   chainId: Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 11142220),
   rpcUrl:
     process.env.NEXT_PUBLIC_CELO_RPC_URL ??
