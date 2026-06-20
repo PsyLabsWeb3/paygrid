@@ -7,14 +7,24 @@ const config = loadConfig();
 
 function publicAgentMetadata() {
   const signer = createAgentSigner(config);
+  const address = config.agentAddress || signer?.address || null;
   return {
+    type: "Agent",
     name: config.agentName,
+    description:
+      "Paygrid is agent spend infrastructure on Celo, exposing programmable stablecoin payment requests, payment verification, card-funded checkout preparation, and x402-ready commerce tools through MCP.",
     agentId: config.agentId || null,
-    address: config.agentAddress || signer?.address || null,
+    address,
     chainId: config.chainId,
     apiEndpoint: config.publicApiUrl,
     mcpEndpoint: `${config.publicBaseUrl}/mcp`,
     healthEndpoint: `${config.publicBaseUrl}/health`,
+    endpoints: [
+      { type: "mcp", url: `${config.publicBaseUrl}/mcp` },
+      { type: "api", url: config.publicApiUrl },
+      { type: "health", url: `${config.publicBaseUrl}/health` },
+      ...(address ? [{ type: "wallet", address, chainId: config.chainId }] : []),
+    ],
     capabilities: [
       "create_payment_request",
       "verify_payment",
