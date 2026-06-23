@@ -8,6 +8,18 @@ const config = loadConfig();
 function publicAgentMetadata() {
   const signer = createAgentSigner(config);
   const address = config.agentAddress || signer?.address || null;
+  const selfProtocol = {
+    status: config.selfVerificationStatus || "pending",
+    agentId: config.selfAgentId || null,
+    agentAddress: config.selfAgentAddress || null,
+    verificationUrl: config.selfVerificationUrl || null,
+  };
+  const supportedTrust = [
+    "erc8004",
+    "x402",
+    ...(selfProtocol.status === "verified" ? ["self-agent-id"] : []),
+  ];
+
   return {
     type: "Agent",
     name: config.agentName,
@@ -15,6 +27,7 @@ function publicAgentMetadata() {
       "Paygrid is agent spend infrastructure on Celo, exposing programmable stablecoin payment requests, payment verification, card-funded checkout preparation, and x402-ready commerce tools through MCP.",
     agentId: config.agentId || null,
     address,
+    selfProtocol,
     chainId: config.chainId,
     apiEndpoint: config.publicApiUrl,
     mcpEndpoint: `${config.publicBaseUrl}/mcp`,
@@ -37,7 +50,7 @@ function publicAgentMetadata() {
       "get_celo_defi_context",
       "treasury_report",
     ],
-    supportedTrust: ["erc8004", "x402"],
+    supportedTrust,
   };
 }
 

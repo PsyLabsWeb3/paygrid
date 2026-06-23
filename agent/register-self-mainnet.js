@@ -2,14 +2,25 @@ const { SelfAgent } = require("@selfxyz/agent-sdk");
 const { readFileSync } = require("fs");
 const path = require("path");
 
+function readDotenv() {
+  return Object.fromEntries(
+    readFileSync(path.join(__dirname, ".env"), "utf8")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("#") && line.includes("="))
+      .map((line) => {
+        const index = line.indexOf("=");
+        return [line.slice(0, index), line.slice(index + 1)];
+      }),
+  );
+}
+
 async function main() {
-  const privateKey = readFileSync(path.join(__dirname, ".env"), "utf8")
-    .split("\n")
-    .find(line => line.startsWith("AGENT_OWNER_PRIVATE_KEY="))
-    ?.split("=")[1];
+  const env = readDotenv();
+  const privateKey = env.AGENT_OWNER_PRIVATE_KEY || env.AGENT_PRIVATE_KEY;
 
   if (!privateKey) {
-    console.error("No AGENT_OWNER_PRIVATE_KEY found in .env");
+    console.error("No AGENT_OWNER_PRIVATE_KEY or AGENT_PRIVATE_KEY found in agent/.env");
     process.exit(1);
   }
 
@@ -41,6 +52,10 @@ async function main() {
     console.log(data.scanUrl);
     console.log("\nSession token:", data.sessionToken);
     console.log(`Poll: GET https://app.ai.self.xyz/api/agent/register/status?sessionToken=${data.sessionToken}`);
+    console.log("\nAfter verification, update the hosted MCP env with:");
+    console.log("SELF_VERIFICATION_STATUS=verified");
+    console.log("SELF_AGENT_ID=<id returned by the status endpoint>");
+    console.log("SELF_VERIFICATION_URL=<public Self status/proof URL if provided>");
   } else {
     console.log("\nFull response:", JSON.stringify(data, null, 2));
   }

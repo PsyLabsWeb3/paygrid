@@ -75,11 +75,15 @@
             <tr><td>Agent wallet</td><td><code>0x0AcF80b591eA0fE2cf9b1108ba9E4b278f3330Ce</code></td></tr>
             <tr><td>Metadata URI</td><td><code>https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json</code></td></tr>
             <tr><td>ERC-8004 Identity Registry</td><td><code>0x8004A169FB4a3325136EB29fA0ceB6D2e539a432</code></td></tr>
+            <tr><td>Self Protocol Agent ID</td><td><code>172</code></td></tr>
+            <tr><td>Self agent address</td><td><code>0xEf3481bcDd48Db5FFdaF77A39F5f64BaDC957316</code></td></tr>
           </table>
           <h2>Verify token URI</h2>
           <pre><code>cast call 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432 \
   "tokenURI(uint256)(string)" 9497 \
   --rpc-url https://forno.celo.org</code></pre>
+          <h2>Self Protocol identity</h2>
+          <p>Celo PayGrid supports Self Protocol Agent ID metadata in the MCP service. The current public state is <code>verified</code> for Self Agent ID <code>172</code>, and the public MCP metadata advertises <code>self-agent-id</code> in <code>supportedTrust</code> when the hosted MCP env is configured with the verified Self values.</p>
           <h2>Current limitations</h2>
           <p>Celo PayGrid does not currently claim support for autonomous swaps, advanced spending policies, ERP automation, enterprise reconciliation, guaranteed fraud protection, banking compliance, insurance or automatic approvals.</p>
           <div class="doc-actions">

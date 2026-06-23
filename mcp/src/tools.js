@@ -45,6 +45,23 @@ function requireString(args, key) {
   return value;
 }
 
+function getSelfProtocol(config) {
+  return {
+    status: config.selfVerificationStatus || "pending",
+    agentId: config.selfAgentId || null,
+    agentAddress: config.selfAgentAddress || null,
+    verificationUrl: config.selfVerificationUrl || null,
+  };
+}
+
+function getSupportedTrust(config) {
+  return [
+    "erc8004",
+    "x402",
+    ...(getSelfProtocol(config).status === "verified" ? ["self-agent-id"] : []),
+  ];
+}
+
 export const toolDefinitions = [
   {
     name: "create_payment_request",
@@ -253,7 +270,8 @@ export async function callTool(config, name, args = {}) {
           standard: "ERC-8004",
           agentId: config.agentId ?? null,
           address: config.agentAddress ?? createAgentSigner(config)?.address ?? null,
-          supportedTrust: ["erc8004", "x402"],
+          selfProtocol: getSelfProtocol(config),
+          supportedTrust: getSupportedTrust(config),
         },
         access: {
           readOnlyTools: toolDefinitions.filter((tool) => !tool.write).map((tool) => tool.name),
@@ -329,10 +347,12 @@ export async function callTool(config, name, args = {}) {
         name: config.agentName,
         agentId: config.agentId ?? null,
         address: config.agentAddress ?? signer?.address ?? null,
+        selfProtocol: getSelfProtocol(config),
         chainId: config.chainId,
         apiEndpoint: config.publicApiUrl,
         mcpEndpoint: config.publicBaseUrl,
         capabilities: toolDefinitions.map((tool) => tool.name),
+        supportedTrust: getSupportedTrust(config),
       });
     }
     case "treasury_report": {

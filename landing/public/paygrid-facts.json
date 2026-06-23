@@ -18,6 +18,12 @@
     "identityRegistry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
     "agentWallet": "0x0AcF80b591eA0fE2cf9b1108ba9E4b278f3330Ce"
   },
+  "selfProtocol": {
+    "status": "verified",
+    "agentId": "172",
+    "agentAddress": "0xEf3481bcDd48Db5FFdaF77A39F5f64BaDC957316",
+    "note": "Self Protocol Agent ID verification completed for the current Paygrid mainnet agent wallet."
+  },
   "contracts": {
     "paygridLink": "0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89",
     "paygridRouter": "0x2924FEf3eF7c3ADBFF22b286C42764a96c53f9f4",

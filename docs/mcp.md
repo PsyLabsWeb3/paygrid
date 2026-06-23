@@ -59,3 +59,19 @@ ERC-8004 metadata should include:
 - MCP endpoint: `https://mcp.celopaygrid.xyz/mcp`.
 - Supported trust/reputation fields.
 - x402 support for monetized API calls.
+- Self Protocol Agent ID status once the Self App verification flow is completed.
+
+## Self Protocol Agent ID
+
+Paygrid uses ERC-8004 for onchain agent identity and supports Self Protocol metadata for sybil-resistant identity status.
+
+The hosted MCP reads these optional environment variables:
+
+```bash
+SELF_AGENT_ID=
+SELF_AGENT_ADDRESS=
+SELF_VERIFICATION_STATUS=pending
+SELF_VERIFICATION_URL=
+```
+
+Use `pending` until the current Paygrid mainnet agent wallet completes the Self App flow. After verification, set `SELF_VERIFICATION_STATUS=verified` and redeploy/recreate the MCP service so the public metadata advertises `self-agent-id` in `supportedTrust`.

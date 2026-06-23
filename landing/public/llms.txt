@@ -22,5 +22,7 @@
 - Discovery tool: get_agent_capabilities
 - Core use cases: payment request generation, transaction verification and agent-to-human payment workflows
 - ERC-8004 Agent ID: 9497
+- Self Protocol Agent ID: 172
+- Self agent address: 0xEf3481bcDd48Db5FFdaF77A39F5f64BaDC957316
 - PaygridLink contract: 0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89
 - PaygridRouter contract: 0x2924FEf3eF7c3ADBFF22b286C42764a96c53f9f4

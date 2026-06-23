@@ -65,6 +65,8 @@ The core production flow is:
 | Agent wallet | `0x0AcF80b591eA0fE2cf9b1108ba9E4b278f3330Ce` |
 | Metadata URI | `https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json` |
 | ERC-8004 Identity Registry | `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` |
+| Self Protocol Agent ID | `172` |
+| Self agent address | `0xEf3481bcDd48Db5FFdaF77A39F5f64BaDC957316` |
 
 Verify the token URI:
 
@@ -73,6 +75,10 @@ cast call 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432 \
   "tokenURI(uint256)(string)" 9497 \
   --rpc-url https://forno.celo.org
 ```
+
+## Self Protocol identity
+
+Celo PayGrid supports Self Protocol Agent ID metadata in the MCP service. The current public state is `verified` for Self Agent ID `172`, and the public MCP metadata advertises `self-agent-id` in `supportedTrust` when the hosted MCP env is configured with the verified Self values.
 
 ## Current limitations
 
@@ -88,4 +94,3 @@ Celo PayGrid does not currently claim support for:
 - automatic approvals.
 
 Those areas are roadmap items and should not be treated as current production capabilities.
-

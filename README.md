@@ -13,7 +13,7 @@ Paygrid is a [MiniPay](https://docs.minipay.xyz) MiniApp that enables agent-to-a
 1. **Create** — generate a payment link from MiniPay with amount, token, and optional description. Accepts crypto, fiat, or both.
 2. **Share** — send it via WhatsApp, email, or social media.
 3. **Pay with crypto** — the payer opens the link, connects their wallet, and pays in stablecoins.
-4. **Pay with fiat** — no crypto? The payer uses the Fonbnk onramp to pay with mobile airtime or card, converted to stablecoin automatically.
+4. **Pay with fiat** — no crypto? The payer can use supported provider rails such as Fonbnk airtime flows today, with card-funded checkout prepared for a future provider integration.
 5. **Settle** — funds arrive instantly on Celo. Paygrid takes 0.5% fee.
 
 ### For AI agents
@@ -96,7 +96,21 @@ Read `SPEC.md` for the full project brief or `AGENTS.md` if you're an AI agent c
 
 ---
 
-## Hackathon
+## Production Agent Identity
+
+| Item | Value |
+|------|-------|
+| Network | Celo Mainnet |
+| ERC-8004 Agent ID | **#9497** |
+| Agent wallet | `0x0AcF80b591eA0fE2cf9b1108ba9E4b278f3330Ce` |
+| MCP endpoint | `https://mcp.celopaygrid.xyz/mcp` |
+| Metadata URI | `https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json` |
+| Self Protocol Agent ID | **#172** |
+| Self agent address | `0xEf3481bcDd48Db5FFdaF77A39F5f64BaDC957316` |
+
+---
+
+## Historical Hackathon Registration
 
 Built by [@PsyLabs_io](https://x.com/PsyLabs_io) for the **Onchain Agents Hackathon — Celo** (May 22 – June 15, 2026).
 
@@ -106,6 +120,8 @@ Built by [@PsyLabs_io](https://x.com/PsyLabs_io) for the **Onchain Agents Hackat
 | 8004scan | https://8004scan.io/agents/celo/9113 |
 | Self Agent ID | ✅ Verified (proof-of-human) |
 | Owner | `0xD4683314A013792fe8840E4171dC4692E317617B` |
+
+This historical registration predates the current Paygrid mainnet deployment. The active production identity is Agent ID `9497`.
 
 - [ERC-8004 Agent Trust Protocol](https://www.8004.org)
 - [x402 Payment Protocol](https://www.x402.org)

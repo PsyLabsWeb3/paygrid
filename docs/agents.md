@@ -20,6 +20,8 @@ Paygrid lets autonomous agents and builder runtimes use Celo stablecoin commerce
 | ERC-8004 Agent ID | `9497` |
 | Agent wallet | `0x0AcF80b591eA0fE2cf9b1108ba9E4b278f3330Ce` |
 | Metadata URI | `https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json` |
+| Self Protocol Agent ID | `172` |
+| Self agent address | `0xEf3481bcDd48Db5FFdaF77A39F5f64BaDC957316` |
 
 Onchain verification:
 
@@ -127,6 +129,35 @@ The backend validates:
 - existing or auto-created `agents` row.
 
 External agents can use the same header format when they call Paygrid backend routes directly.
+
+## Self Protocol Agent ID
+
+Self Protocol is the sybil-resistant identity layer Paygrid will expose next to ERC-8004. ERC-8004 proves the agent exists onchain and owns a wallet; Self Protocol adds a verifiable identity signal for the human/operator behind the agent.
+
+Current status:
+
+- ERC-8004 mainnet registration is live for agent `9497`.
+- Self Protocol Agent ID `172` is verified for the current Paygrid mainnet agent wallet.
+- Self returned agent address `0xEf3481bcDd48Db5FFdaF77A39F5f64BaDC957316`.
+- Self Protocol fields are supported by MCP metadata and should be exposed by the hosted MCP service.
+
+Run the Self registration helper from `agent/`:
+
+```bash
+cd agent
+node register-self-mainnet.js
+```
+
+The script returns a Self App scan URL and session token. After the Self App flow completes, update the hosted MCP env:
+
+```bash
+SELF_AGENT_ID=172
+SELF_AGENT_ADDRESS=0xEf3481bcDd48Db5FFdaF77A39F5f64BaDC957316
+SELF_VERIFICATION_STATUS=verified
+SELF_VERIFICATION_URL=https://app.ai.self.xyz
+```
+
+Then recreate the MCP container so `https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json` reflects the verified Self status.
 
 ## Celo DeFi Roadmap For Agent Spend
 
