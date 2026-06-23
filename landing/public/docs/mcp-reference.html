@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Celo PayGrid Docs | MCP Reference</title>
+    <meta name="description" content="MCP tool reference for Celo PayGrid AI agent payment infrastructure." />
+    <link rel="canonical" href="https://celopaygrid.xyz/docs/mcp-reference.html" />
+    <link rel="stylesheet" href="/docs/docs.css" />
+  </head>
+  <body>
+    <header class="docs-shell docs-nav">
+      <a class="brand" href="/agents"><span class="brand-mark">C</span><span>Celo PayGrid</span></a>
+      <nav class="docs-nav-links" aria-label="Documentation navigation">
+        <a href="/docs/overview.html">Overview</a>
+        <a href="/docs/technical-architecture.html">Architecture</a>
+        <a href="/docs/mcp-reference.html">MCP reference</a>
+        <a href="/docs/security-model.html">Security</a>
+      </nav>
+    </header>
+    <main class="docs-shell">
+      <section class="docs-hero">
+        <p class="eyebrow">Documentation</p>
+        <h1>MCP reference</h1>
+        <p>Celo PayGrid exposes a remote MCP endpoint for AI agents and builder runtimes.</p>
+      </section>
+      <div class="docs-layout">
+        <aside class="docs-sidebar" aria-label="Docs pages">
+          <a href="/docs/overview.html">Overview</a>
+          <a href="/docs/technical-architecture.html">Technical architecture</a>
+          <a class="active" href="/docs/mcp-reference.html">MCP reference</a>
+          <a href="/docs/security-model.html">Security model</a>
+        </aside>
+        <article class="doc-card">
+          <h2>Endpoint</h2>
+          <pre><code>https://mcp.celopaygrid.xyz/mcp</code></pre>
+          <h2>List tools</h2>
+          <pre><code>curl -X POST https://mcp.celopaygrid.xyz/mcp \
+  -H "content-type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'</code></pre>
+          <h2>Authentication</h2>
+          <p>Read-only tools are public. Remote write tools require <code>Authorization: Bearer &lt;PAYGRID_MCP_API_KEY&gt;</code> or <code>X-API-Key</code>.</p>
+          <h2>Current tools</h2>
+          <table>
+            <tr><th>Tool</th><th>Auth</th><th>Purpose</th></tr>
+            <tr><td><code>create_payment_request</code></td><td>API key</td><td>Create an agent-owned payment request on Celo.</td></tr>
+            <tr><td><code>get_payment_request</code></td><td>public</td><td>Fetch a payment request and its state.</td></tr>
+            <tr><td><code>verify_payment</code></td><td>public</td><td>Verify whether a payment request is paid.</td></tr>
+            <tr><td><code>list_agent_requests</code></td><td>API key</td><td>List requests owned by the configured ERC-8004 agent.</td></tr>
+            <tr><td><code>create_card_checkout</code></td><td>API key</td><td>Create a card-funded checkout session for an existing request.</td></tr>
+            <tr><td><code>pay_x402_endpoint</code></td><td>API key</td><td>Call an x402-protected endpoint with caller-provided payment headers.</td></tr>
+            <tr><td><code>get_supported_stablecoins</code></td><td>public</td><td>List supported Celo stablecoins and configured addresses.</td></tr>
+            <tr><td><code>get_agent_capabilities</code></td><td>public</td><td>Return endpoints, auth model, current flows and guardrails.</td></tr>
+            <tr><td><code>get_agent_connection_guide</code></td><td>public</td><td>Return MCP connection examples.</td></tr>
+            <tr><td><code>get_celo_defi_context</code></td><td>public</td><td>Return Celo DeFi context for future agent spend features.</td></tr>
+          </table>
+          <h2>Discover capabilities</h2>
+          <pre><code>curl -X POST https://mcp.celopaygrid.xyz/mcp \
+  -H "content-type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_agent_capabilities","arguments":{}}}'</code></pre>
+          <h2>Create a payment request</h2>
+          <pre><code>curl -X POST https://mcp.celopaygrid.xyz/mcp \
+  -H "content-type: application/json" \
+  -H "authorization: Bearer &lt;PAYGRID_MCP_API_KEY&gt;" \
+  -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"create_payment_request","arguments":{"amount":"10.00","token":"USDC","description":"Agent service payment","recipientAddress":"0x...","acceptedMethods":["crypto","card"]}}}'</code></pre>
+          <h2>Verify payment</h2>
+          <pre><code>curl -X POST https://mcp.celopaygrid.xyz/mcp \
+  -H "content-type: application/json" \
+  -d '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"verify_payment","arguments":{"id":"&lt;payment_request_id&gt;"}}}'</code></pre>
+          <div class="doc-actions">
+            <a class="pill-link" href="/docs/mcp-reference.md">Raw markdown</a>
+            <a class="pill-link" href="/docs/security-model.html">Next: security model</a>
+          </div>
+        </article>
+      </div>
+    </main>
+    <footer class="docs-footer">Celo PayGrid documentation. MCP write tools require API-key authorization.</footer>
+  </body>
+</html>

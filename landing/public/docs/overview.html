@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Celo PayGrid Docs | Overview</title>
+    <meta name="description" content="Current production capabilities, endpoints, contracts and ERC-8004 identity for Celo PayGrid." />
+    <link rel="canonical" href="https://celopaygrid.xyz/docs/overview.html" />
+    <link rel="stylesheet" href="/docs/docs.css" />
+  </head>
+  <body>
+    <header class="docs-shell docs-nav">
+      <a class="brand" href="/agents"><span class="brand-mark">C</span><span>Celo PayGrid</span></a>
+      <nav class="docs-nav-links" aria-label="Documentation navigation">
+        <a href="/docs/overview.html">Overview</a>
+        <a href="/docs/technical-architecture.html">Architecture</a>
+        <a href="/docs/mcp-reference.html">MCP reference</a>
+        <a href="/docs/security-model.html">Security</a>
+      </nav>
+    </header>
+    <main class="docs-shell">
+      <section class="docs-hero">
+        <p class="eyebrow">Documentation</p>
+        <h1>Celo PayGrid Overview</h1>
+        <p>Celo PayGrid is an MCP-based payment execution and verification layer for AI agents on Celo Mainnet.</p>
+      </section>
+      <div class="docs-layout">
+        <aside class="docs-sidebar" aria-label="Docs pages">
+          <a class="active" href="/docs/overview.html">Overview</a>
+          <a href="/docs/technical-architecture.html">Technical architecture</a>
+          <a href="/docs/mcp-reference.html">MCP reference</a>
+          <a href="/docs/security-model.html">Security model</a>
+        </aside>
+        <article class="doc-card">
+          <h2>Production endpoints</h2>
+          <table>
+            <tr><th>Resource</th><th>URL</th></tr>
+            <tr><td>MCP endpoint</td><td><code>https://mcp.celopaygrid.xyz/mcp</code></td></tr>
+            <tr><td>Agent metadata</td><td><code>https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json</code></td></tr>
+            <tr><td>API health</td><td><code>https://api.celopaygrid.xyz/health</code></td></tr>
+            <tr><td>MCP health</td><td><code>https://mcp.celopaygrid.xyz/health</code></td></tr>
+            <tr><td>Landing</td><td><code>https://celopaygrid.xyz/agents</code></td></tr>
+          </table>
+          <h2>Network</h2>
+          <table>
+            <tr><th>Item</th><th>Value</th></tr>
+            <tr><td>Network</td><td>Celo Mainnet</td></tr>
+            <tr><td>Chain ID</td><td><code>42220</code></td></tr>
+            <tr><td>RPC used by production services</td><td><code>https://forno.celo.org</code></td></tr>
+            <tr><td>Agent ID standard</td><td>ERC-8004</td></tr>
+            <tr><td>Discovery tool</td><td><code>get_agent_capabilities</code></td></tr>
+          </table>
+          <h2>Current production capabilities</h2>
+          <ul>
+            <li>Remote MCP discovery and tool listing.</li>
+            <li>Payment request creation, lookup and verification.</li>
+            <li>Agent payment activity review.</li>
+            <li>Supported stablecoin discovery.</li>
+            <li>Card checkout preparation through the existing provider abstraction.</li>
+            <li>x402 endpoint calling with caller-provided payment headers.</li>
+            <li>Public agent metadata discovery.</li>
+            <li>Celo Mainnet settlement verification.</li>
+          </ul>
+          <h2>Mainnet contracts</h2>
+          <table>
+            <tr><th>Contract</th><th>Address</th></tr>
+            <tr><td>PaygridLink</td><td><code>0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89</code></td></tr>
+            <tr><td>PaygridRouter</td><td><code>0x2924FEf3eF7c3ADBFF22b286C42764a96c53f9f4</code></td></tr>
+            <tr><td>Treasury Safe</td><td><code>0xc0C019DCeCE7a3a235Ab520F394A57c132F90cD6</code></td></tr>
+          </table>
+          <h2>ERC-8004 identity</h2>
+          <table>
+            <tr><th>Item</th><th>Value</th></tr>
+            <tr><td>Agent ID</td><td><code>9497</code></td></tr>
+            <tr><td>Agent wallet</td><td><code>0x0AcF80b591eA0fE2cf9b1108ba9E4b278f3330Ce</code></td></tr>
+            <tr><td>Metadata URI</td><td><code>https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json</code></td></tr>
+            <tr><td>ERC-8004 Identity Registry</td><td><code>0x8004A169FB4a3325136EB29fA0ceB6D2e539a432</code></td></tr>
+          </table>
+          <h2>Verify token URI</h2>
+          <pre><code>cast call 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432 \
+  "tokenURI(uint256)(string)" 9497 \
+  --rpc-url https://forno.celo.org</code></pre>
+          <h2>Current limitations</h2>
+          <p>Celo PayGrid does not currently claim support for autonomous swaps, advanced spending policies, ERP automation, enterprise reconciliation, guaranteed fraud protection, banking compliance, insurance or automatic approvals.</p>
+          <div class="doc-actions">
+            <a class="pill-link" href="/docs/overview.md">Raw markdown</a>
+            <a class="pill-link" href="/docs/technical-architecture.html">Next: architecture</a>
+          </div>
+        </article>
+      </div>
+    </main>
+    <footer class="docs-footer">Celo PayGrid documentation. Current production capabilities and roadmap features are documented separately.</footer>
+  </body>
+</html>

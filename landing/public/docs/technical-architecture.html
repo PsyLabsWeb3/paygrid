@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Celo PayGrid Docs | Technical Architecture</title>
+    <meta name="description" content="Technical architecture for Celo PayGrid MCP, backend, contracts, indexer and Supabase." />
+    <link rel="canonical" href="https://celopaygrid.xyz/docs/technical-architecture.html" />
+    <link rel="stylesheet" href="/docs/docs.css" />
+  </head>
+  <body>
+    <header class="docs-shell docs-nav">
+      <a class="brand" href="/agents"><span class="brand-mark">C</span><span>Celo PayGrid</span></a>
+      <nav class="docs-nav-links" aria-label="Documentation navigation">
+        <a href="/docs/overview.html">Overview</a>
+        <a href="/docs/technical-architecture.html">Architecture</a>
+        <a href="/docs/mcp-reference.html">MCP reference</a>
+        <a href="/docs/security-model.html">Security</a>
+      </nav>
+    </header>
+    <main class="docs-shell">
+      <section class="docs-hero">
+        <p class="eyebrow">Documentation</p>
+        <h1>Technical architecture</h1>
+        <p>Celo PayGrid connects AI agents, payment requests, Celo Mainnet settlement and verification through MCP and backend services.</p>
+      </section>
+      <div class="docs-layout">
+        <aside class="docs-sidebar" aria-label="Docs pages">
+          <a href="/docs/overview.html">Overview</a>
+          <a class="active" href="/docs/technical-architecture.html">Technical architecture</a>
+          <a href="/docs/mcp-reference.html">MCP reference</a>
+          <a href="/docs/security-model.html">Security model</a>
+        </aside>
+        <article class="doc-card">
+          <h2>System flow</h2>
+          <pre><code>AI Agent / Builder Runtime
+        |
+        | MCP JSON-RPC
+        v
+Celo PayGrid MCP HTTP
+        |
+        | ERC-8004 signed backend request
+        v
+Celo PayGrid Backend API
+        |
+        | viem contract writes / reads
+        v
+PaygridLink + PaygridRouter on Celo Mainnet
+        |
+        | PaymentReceived event
+        v
+Indexer
+        |
+        | normalized payment state
+        v
+Supabase
+        |
+        | payment lookup / verification
+        v
+MCP verify_payment + Frontend checkout status</code></pre>
+          <h2>Components</h2>
+          <h3>MCP HTTP service</h3>
+          <p>The MCP service exposes JSON-RPC tools, serves public metadata, protects write tools with an API key and signs protected backend requests with the configured agent key.</p>
+          <h3>Backend API</h3>
+          <p>The backend creates payment requests, reads state, prepares transaction payloads, validates ERC-8004 signed requests, applies rate limits and writes normalized state to Supabase.</p>
+          <h3>Contracts</h3>
+          <p><code>PaygridLink</code> stores request state. <code>PaygridRouter</code> coordinates settlement and emits payment events on Celo Mainnet.</p>
+          <h3>Indexer</h3>
+          <p>The indexer watches <code>PaymentReceived</code> events from the router and updates confirmed payment records.</p>
+          <h3>Supabase</h3>
+          <p>Supabase stores agents, payment links, payments, onramp sessions, users and migration state.</p>
+          <h2>Trust boundaries</h2>
+          <table>
+            <tr><th>Boundary</th><th>Control</th></tr>
+            <tr><td>Browser to backend</td><td>CORS, validation, rate limits</td></tr>
+            <tr><td>MCP remote write tools</td><td>API key</td></tr>
+            <tr><td>MCP to backend protected routes</td><td>ERC-8004 signed HTTP headers</td></tr>
+            <tr><td>Backend to contracts</td><td>backend wallet / viem</td></tr>
+            <tr><td>Contract settlement</td><td>Celo Mainnet</td></tr>
+            <tr><td>Payment status</td><td>indexer + Supabase + onchain events</td></tr>
+          </table>
+          <h2>ERC-8004 signed request format</h2>
+          <pre><code>paygrid:erc8004:&lt;agentId&gt;:&lt;address&gt;:&lt;METHOD&gt;:&lt;path&gt;:&lt;timestamp&gt;:&lt;nonce&gt;</code></pre>
+          <h2>Deployment shape</h2>
+          <table>
+            <tr><th>Surface</th><th>Runtime</th></tr>
+            <tr><td><code>https://celopaygrid.xyz</code></td><td>landing / frontend hosting</td></tr>
+            <tr><td><code>https://api.celopaygrid.xyz</code></td><td>VPS + Nginx + Docker backend</td></tr>
+            <tr><td><code>https://mcp.celopaygrid.xyz</code></td><td>VPS + Nginx + Docker MCP HTTP</td></tr>
+            <tr><td>indexer</td><td>private Docker service</td></tr>
+            <tr><td>database</td><td>Supabase</td></tr>
+            <tr><td>contracts</td><td>Celo Mainnet</td></tr>
+          </table>
+          <div class="doc-actions">
+            <a class="pill-link" href="/docs/technical-architecture.md">Raw markdown</a>
+            <a class="pill-link" href="/docs/mcp-reference.html">Next: MCP reference</a>
+          </div>
+        </article>
+      </div>
+    </main>
+    <footer class="docs-footer">Celo PayGrid documentation. Architecture describes current production services.</footer>
+  </body>
+</html>

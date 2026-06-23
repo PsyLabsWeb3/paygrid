@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://celopaygrid.xyz/sitemap.xml

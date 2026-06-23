@@ -1,0 +1,26 @@
+# Celo PayGrid
+
+> Celo PayGrid is an MCP-based payment execution layer for AI agents on Celo Mainnet.
+
+## Core resources
+
+- Agent landing: https://celopaygrid.xyz/agents
+- MCP endpoint: https://mcp.celopaygrid.xyz/mcp
+- Agent metadata: https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json
+- Documentation overview: https://celopaygrid.xyz/docs/overview.html
+- Technical architecture: https://celopaygrid.xyz/docs/technical-architecture.html
+- MCP reference: https://celopaygrid.xyz/docs/mcp-reference.html
+- Security model: https://celopaygrid.xyz/docs/security-model.html
+- Raw markdown docs are also available under /docs/*.md
+
+## Key facts
+
+- Product name: Celo PayGrid
+- Network: Celo Mainnet
+- Chain ID: 42220
+- Interface: Remote MCP
+- Discovery tool: get_agent_capabilities
+- Core use cases: payment request generation, transaction verification and agent-to-human payment workflows
+- ERC-8004 Agent ID: 9497
+- PaygridLink contract: 0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89
+- PaygridRouter contract: 0x2924FEf3eF7c3ADBFF22b286C42764a96c53f9f4

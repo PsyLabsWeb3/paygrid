@@ -1,0 +1,40 @@
+{
+  "productName": "Celo PayGrid",
+  "definition": "Celo PayGrid is an MCP-based payment execution layer for AI agents on Celo Mainnet.",
+  "network": "Celo Mainnet",
+  "chainId": 42220,
+  "mcpEndpoint": "https://mcp.celopaygrid.xyz/mcp",
+  "discoveryTool": "get_agent_capabilities",
+  "agentMetadata": "https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json",
+  "documentation": {
+    "overview": "https://celopaygrid.xyz/docs/overview.html",
+    "technicalArchitecture": "https://celopaygrid.xyz/docs/technical-architecture.html",
+    "mcpReference": "https://celopaygrid.xyz/docs/mcp-reference.html",
+    "securityModel": "https://celopaygrid.xyz/docs/security-model.html",
+    "rawMarkdownPattern": "https://celopaygrid.xyz/docs/*.md"
+  },
+  "erc8004": {
+    "agentId": "9497",
+    "identityRegistry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+    "agentWallet": "0x0AcF80b591eA0fE2cf9b1108ba9E4b278f3330Ce"
+  },
+  "contracts": {
+    "paygridLink": "0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89",
+    "paygridRouter": "0x2924FEf3eF7c3ADBFF22b286C42764a96c53f9f4",
+    "treasurySafe": "0xc0C019DCeCE7a3a235Ab520F394A57c132F90cD6"
+  },
+  "currentCapabilities": [
+    "Remote MCP server",
+    "Payment request generation",
+    "Transaction verification",
+    "Payment activity review",
+    "Agent capability discovery",
+    "Celo Mainnet settlement"
+  ],
+  "roadmap": [
+    "Yacamba ERP/CRM integration",
+    "Agent swaps",
+    "Spending policies",
+    "Enterprise reconciliation"
+  ]
+}

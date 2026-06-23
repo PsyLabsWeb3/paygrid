@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Celo PayGrid Docs | Security Model</title>
+    <meta name="description" content="Current security model, trust boundaries and limitations for Celo PayGrid." />
+    <link rel="canonical" href="https://celopaygrid.xyz/docs/security-model.html" />
+    <link rel="stylesheet" href="/docs/docs.css" />
+  </head>
+  <body>
+    <header class="docs-shell docs-nav">
+      <a class="brand" href="/agents"><span class="brand-mark">C</span><span>Celo PayGrid</span></a>
+      <nav class="docs-nav-links" aria-label="Documentation navigation">
+        <a href="/docs/overview.html">Overview</a>
+        <a href="/docs/technical-architecture.html">Architecture</a>
+        <a href="/docs/mcp-reference.html">MCP reference</a>
+        <a href="/docs/security-model.html">Security</a>
+      </nav>
+    </header>
+    <main class="docs-shell">
+      <section class="docs-hero">
+        <p class="eyebrow">Documentation</p>
+        <h1>Security model</h1>
+        <p>This document describes current controls and limitations. It does not claim banking compliance, SOC 2, ISO certification, insurance or regulatory approval.</p>
+      </section>
+      <div class="docs-layout">
+        <aside class="docs-sidebar" aria-label="Docs pages">
+          <a href="/docs/overview.html">Overview</a>
+          <a href="/docs/technical-architecture.html">Technical architecture</a>
+          <a href="/docs/mcp-reference.html">MCP reference</a>
+          <a class="active" href="/docs/security-model.html">Security model</a>
+        </aside>
+        <article class="doc-card">
+          <h2>Current controls</h2>
+          <h3>Treasury Safe</h3>
+          <p>Protocol fees are configured to route to the Celo Mainnet Safe <code>0xc0C019DCeCE7a3a235Ab520F394A57c132F90cD6</code>.</p>
+          <h3>Remote MCP write auth</h3>
+          <p>Read-only MCP tools are public. Write tools require <code>Authorization: Bearer &lt;PAYGRID_MCP_API_KEY&gt;</code>.</p>
+          <h3>ERC-8004 signed backend requests</h3>
+          <p>The MCP signs protected backend requests with an agent key. The backend verifies the signed request before treating it as agent-authenticated.</p>
+          <pre><code>paygrid:erc8004:&lt;agentId&gt;:&lt;address&gt;:&lt;METHOD&gt;:&lt;path&gt;:&lt;timestamp&gt;:&lt;nonce&gt;</code></pre>
+          <h3>Rate limits and CORS</h3>
+          <p>Backend routes apply rate limiting. Production backend CORS allows configured frontend origins only.</p>
+          <h3>Onchain settlement</h3>
+          <p>Payment status is anchored by Celo Mainnet contract events and indexed into Supabase.</p>
+          <h2>Trust boundaries</h2>
+          <table>
+            <tr><th>Boundary</th><th>Current protection</th></tr>
+            <tr><td>Public users to backend</td><td>validation, CORS, rate limits</td></tr>
+            <tr><td>External agents to MCP write tools</td><td>API key</td></tr>
+            <tr><td>MCP to backend</td><td>ERC-8004 signed headers</td></tr>
+            <tr><td>Backend to contracts</td><td>backend wallet</td></tr>
+            <tr><td>Funds settlement</td><td>Celo Mainnet contracts</td></tr>
+            <tr><td>Payment status</td><td>onchain event indexing</td></tr>
+          </table>
+          <h2>Current limitations</h2>
+          <ul>
+            <li>No per-agent scoped API keys yet.</li>
+            <li>No per-agent daily spend limits yet.</li>
+            <li>No token allowlists or merchant allowlists yet.</li>
+            <li>No autonomous swap execution.</li>
+            <li>No advanced human approval policies.</li>
+            <li>No enterprise reconciliation controls.</li>
+          </ul>
+          <h2>Planned hardening</h2>
+          <ol>
+            <li>Per-agent API keys.</li>
+            <li>Key hashing and rotation.</li>
+            <li>Scopes for MCP write tools.</li>
+            <li>Rate limits per external agent.</li>
+            <li>Daily request and spend limits.</li>
+            <li>Token allowlists.</li>
+            <li>Human confirmation thresholds for higher-risk actions.</li>
+            <li>Audit logs for agent write operations.</li>
+          </ol>
+          <div class="doc-actions">
+            <a class="pill-link" href="/docs/security-model.md">Raw markdown</a>
+            <a class="pill-link" href="/agents#docs">Back to docs</a>
+          </div>
+        </article>
+      </div>
+    </main>
+    <footer class="docs-footer">Celo PayGrid documentation. Security controls reflect current production behavior.</footer>
+  </body>
+</html>
