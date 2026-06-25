@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://celopaygrid.xyz/agents</loc>
+    <loc>https://web.celopaygrid.xyz</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -11,22 +11,22 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://celopaygrid.xyz/docs/overview.html</loc>
+    <loc>https://web.celopaygrid.xyz/docs/overview.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://celopaygrid.xyz/docs/technical-architecture.html</loc>
+    <loc>https://web.celopaygrid.xyz/docs/technical-architecture.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://celopaygrid.xyz/docs/mcp-reference.html</loc>
+    <loc>https://web.celopaygrid.xyz/docs/mcp-reference.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://celopaygrid.xyz/docs/security-model.html</loc>
+    <loc>https://web.celopaygrid.xyz/docs/security-model.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>

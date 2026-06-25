@@ -15,9 +15,9 @@ function publicAgentMetadata() {
   const mcpEndpoint = `${publicBaseUrl}/mcp`;
   const healthEndpoint = `${publicBaseUrl}/health`;
   const metadataEndpoint = `${publicBaseUrl}/.well-known/paygrid-agent.json`;
-  const appUrl = "https://celopaygrid.xyz/agents";
-  const docsUrl = "https://celopaygrid.xyz/docs/overview.html";
-  const iconUrl = "https://celopaygrid.xyz/PaygridIconLime.png";
+  const appUrl = "https://www.celopaygrid.xyz";
+  const docsUrl = "https://web.celopaygrid.xyz/docs/overview.html";
+  const iconUrl = "https://web.celopaygrid.xyz/PaygridIconLime.png";
   const mcpTools = [
     "create_payment_request",
     "verify_payment",
@@ -81,7 +81,7 @@ function publicAgentMetadata() {
       { type: "health", url: healthEndpoint },
       { type: "metadata", url: metadataEndpoint },
       { type: "docs", url: docsUrl },
-      { type: "llms", url: "https://celopaygrid.xyz/llms.txt" },
+      { type: "llms", url: "https://web.celopaygrid.xyz/llms.txt" },
       ...(address ? [{ type: "wallet", address, chainId }] : []),
     ],
     services: [

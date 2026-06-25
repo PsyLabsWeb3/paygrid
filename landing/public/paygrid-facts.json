@@ -7,11 +7,11 @@
   "discoveryTool": "get_agent_capabilities",
   "agentMetadata": "https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json",
   "documentation": {
-    "overview": "https://celopaygrid.xyz/docs/overview.html",
-    "technicalArchitecture": "https://celopaygrid.xyz/docs/technical-architecture.html",
-    "mcpReference": "https://celopaygrid.xyz/docs/mcp-reference.html",
-    "securityModel": "https://celopaygrid.xyz/docs/security-model.html",
-    "rawMarkdownPattern": "https://celopaygrid.xyz/docs/*.md"
+    "overview": "https://web.celopaygrid.xyz/docs/overview.html",
+    "technicalArchitecture": "https://web.celopaygrid.xyz/docs/technical-architecture.html",
+    "mcpReference": "https://web.celopaygrid.xyz/docs/mcp-reference.html",
+    "securityModel": "https://web.celopaygrid.xyz/docs/security-model.html",
+    "rawMarkdownPattern": "https://web.celopaygrid.xyz/docs/*.md"
   },
   "erc8004": {
     "agentId": "9497",

@@ -4,13 +4,13 @@
 
 ## Core resources
 
-- Agent landing: https://celopaygrid.xyz/agents
+- Agent landing: https://web.celopaygrid.xyz
 - MCP endpoint: https://mcp.celopaygrid.xyz/mcp
 - Agent metadata: https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json
-- Documentation overview: https://celopaygrid.xyz/docs/overview.html
-- Technical architecture: https://celopaygrid.xyz/docs/technical-architecture.html
-- MCP reference: https://celopaygrid.xyz/docs/mcp-reference.html
-- Security model: https://celopaygrid.xyz/docs/security-model.html
+- Documentation overview: https://web.celopaygrid.xyz/docs/overview.html
+- Technical architecture: https://web.celopaygrid.xyz/docs/technical-architecture.html
+- MCP reference: https://web.celopaygrid.xyz/docs/mcp-reference.html
+- Security model: https://web.celopaygrid.xyz/docs/security-model.html
 - Raw markdown docs are also available under /docs/*.md
 
 ## Key facts

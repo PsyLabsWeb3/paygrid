@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://celopaygrid.xyz/sitemap.xml
+Sitemap: https://web.celopaygrid.xyz/sitemap.xml

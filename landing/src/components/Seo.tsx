@@ -6,7 +6,7 @@ const structuredData = [
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Celo PayGrid",
-    url: "https://celopaygrid.xyz",
+    url: "https://www.celopaygrid.xyz",
   },
   {
     "@context": "https://schema.org",
@@ -14,7 +14,7 @@ const structuredData = [
     name: "Celo PayGrid",
     applicationCategory: "DeveloperApplication",
     description: "MCP-based payment execution infrastructure for AI agents on Celo Mainnet.",
-    url: "https://celopaygrid.xyz",
+    url: "https://www.celopaygrid.xyz",
     featureList: [
       "Remote MCP server",
       "Payment request generation",

@@ -12,7 +12,7 @@ This document describes the current production surface. Planned features are int
 | Agent metadata | `https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json` |
 | API health | `https://api.celopaygrid.xyz/health` |
 | MCP health | `https://mcp.celopaygrid.xyz/health` |
-| Landing | `https://celopaygrid.xyz/agents` |
+| Landing | `https://web.celopaygrid.xyz` |
 
 ## Network
 
