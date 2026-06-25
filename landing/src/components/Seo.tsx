@@ -56,7 +56,7 @@ export function Seo() {
       <meta name="description" content={site.description} />
       <meta
         name="keywords"
-        content="Celo PayGrid, AI agent payments, MCP payment server, payment links for AI agents, Celo agent payments, stablecoin payments for agents, agent-to-human payments, AI payment infrastructure, transaction verification MCP, agent commerce infrastructure, Celo MCP payments, agent payment execution layer"
+        content="Celo PayGrid, AI agent payments, MCP payment server, Celo agent payments, stablecoin payments for agents, agent-to-human payments, AI payment infrastructure, transaction verification MCP, settlement verification, business workflow layer, agent commerce infrastructure, Celo MCP payments, agent payment execution layer"
       />
       <link rel="canonical" href={site.canonical} />
       <meta property="og:type" content="website" />
@@ -75,4 +75,3 @@ export function Seo() {
     </Helmet>
   );
 }
-

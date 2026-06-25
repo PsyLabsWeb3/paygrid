@@ -57,6 +57,7 @@ ERC-8004 metadata should include:
 - Paygrid agent wallet.
 - API endpoint: `https://api.celopaygrid.xyz`.
 - MCP endpoint: `https://mcp.celopaygrid.xyz/mcp`.
+- Agent card: `https://mcp.celopaygrid.xyz/.well-known/agent.json`.
 - Supported trust/reputation fields.
 - x402 support for monetized API calls.
 - Self Protocol Agent ID status once the Self App verification flow is completed.

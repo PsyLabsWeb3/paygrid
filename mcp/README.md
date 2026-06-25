@@ -39,6 +39,7 @@ Hosted deployments expose:
 GET /health
 GET /metadata
 GET /.well-known/paygrid-agent.json
+GET /.well-known/agent.json
 POST /mcp
 ```
 
