@@ -62,7 +62,7 @@ function publicAgentMetadata() {
       url: appUrl,
       icon: iconUrl,
       did: address ? `did:pkh:${chainRef}:${address}` : null,
-      contact: "team@celopaygrid.xyz",
+      contact: "psylabswebdevs@gmail.com",
     },
     defaultInputModes: ["text", "json"],
     defaultOutputModes: ["text", "json"],
