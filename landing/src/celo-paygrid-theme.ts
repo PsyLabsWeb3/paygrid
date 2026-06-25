@@ -13,7 +13,7 @@ export const theme = {
     limeInk: "#081000",
     danger: "#ff7676",
     success: "#b7ff1a",
-    warning: "#ffd166",
+    warning: "#b660f9",
   },
   radii: {
     card: "24px",
@@ -24,4 +24,3 @@ export const theme = {
   fontFamily:
     'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 };
-

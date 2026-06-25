@@ -21,7 +21,7 @@ export const site = {
   name: "Celo PayGrid",
   title: "Celo PayGrid for AI Agents | MCP Payments on Celo",
   description:
-    "Connect AI agents to Celo PayGrid through MCP to create payment links, verify transactions and coordinate stablecoin payment workflows on Celo Mainnet.",
+    "Connect AI agents to Celo PayGrid through MCP to create payment requests, coordinate stablecoin payment workflows and verify settlement on Celo Mainnet.",
   url: "https://celopaygrid.xyz/agents",
   canonical: "https://celopaygrid.xyz/agents",
   mcpEndpoint: "https://mcp.celopaygrid.xyz/mcp",
@@ -40,7 +40,7 @@ export const navItems = [
   { label: "FAQ", href: "#faq" },
 ];
 
-export const badges = ["Live on Celo Mainnet", "Remote MCP", "Agent-ready", "Verifiable settlement"];
+export const badges = ["Live on Celo Mainnet", "Remote MCP", "Agent-to-Human Payments", "Verifiable Settlement"];
 
 export const capabilities = [
   {

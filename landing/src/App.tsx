@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { CopyButton } from "./components/CopyButton";
+import RippleGrid from "./components/RippleGrid";
 import { Seo } from "./components/Seo";
 import {
   badges,
@@ -30,10 +31,6 @@ import {
   useCases,
 } from "./data/site";
 
-const AgentNetworkScene = lazy(() =>
-  import("./components/AgentNetworkScene").then((module) => ({ default: module.AgentNetworkScene })),
-);
-
 const fadeUp = {
   hidden: { opacity: 0, y: 18 },
   show: { opacity: 1, y: 0 },
@@ -41,9 +38,15 @@ const fadeUp = {
 
 const demoSteps = [
   { role: "User", text: "Create a $25 payment request for logo design." },
-  { role: "Agent", text: "I'll inspect Celo PayGrid's available payment capabilities." },
+  {
+    role: "Agent",
+    text: "I'll inspect Celo PayGrid's available payment capabilities.",
+  },
   { role: "Tool call", text: "get_agent_capabilities", code: true },
-  { role: "Tool result", text: "Payment request creation and transaction verification are available." },
+  {
+    role: "Tool result",
+    text: "Payment request creation and transaction verification are available.",
+  },
   { role: "Agent", text: "I'll create the payment request." },
   {
     role: "Tool call",
@@ -57,7 +60,10 @@ const demoSteps = [
   { role: "User", text: "Check if the payment was completed." },
   { role: "Agent", text: "I'll verify the current transaction status." },
   { role: "Tool call", text: "verify_payment", code: true },
-  { role: "Result", text: "Payment confirmed\nTransaction: 0x8f3...\nNetwork: Celo Mainnet" },
+  {
+    role: "Result",
+    text: "Payment confirmed\nTransaction: 0x8f3...\nNetwork: Celo Mainnet",
+  },
 ];
 
 function Navbar() {
@@ -74,7 +80,11 @@ function Navbar() {
   return (
     <header className={`site-nav ${scrolled ? "site-nav-scrolled" : ""}`}>
       <a className="brand" href="#top" aria-label="Celo PayGrid home">
-        <span className="brand-mark">C</span>
+        <img
+          className="brand-mark"
+          src="/PaygridIcon.png"
+          alt="Celo PayGrid logo"
+        />
         <span>Celo PayGrid</span>
       </a>
       <nav className="desktop-nav" aria-label="Main navigation">
@@ -87,7 +97,13 @@ function Navbar() {
       <a className="nav-cta" href="#developers">
         Connect MCP
       </a>
-      <button className="mobile-menu-button" type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label="Toggle menu">
+      <button
+        className="mobile-menu-button"
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        aria-label="Toggle menu"
+      >
         {open ? <X size={22} /> : <Menu size={22} />}
       </button>
       {open ? (
@@ -123,20 +139,51 @@ function Hero() {
   return (
     <section className="hero section-shell" id="top">
       <div className="hero-copy-wrap">
-        <motion.p className="eyebrow" initial="hidden" animate="show" variants={fadeUp}>
-          Payments for the agent economy
+        <motion.p
+          className="eyebrow"
+          initial="hidden"
+          animate="show"
+          variants={fadeUp}
+        >
+          The financial execution layer for AI agents.
         </motion.p>
-        <motion.h1 initial="hidden" animate="show" variants={fadeUp} transition={{ delay: 0.05 }}>
+        <motion.h1
+          initial="hidden"
+          animate="show"
+          variants={fadeUp}
+          transition={{ delay: 0.05 }}
+        >
           Your agent can think.
           <span>Now let it transact.</span>
         </motion.h1>
-        <motion.p className="hero-subhead" initial="hidden" animate="show" variants={fadeUp} transition={{ delay: 0.1 }}>
-          Celo PayGrid gives AI agents the tools to create payment links, verify transactions and coordinate stablecoin payment workflows through one MCP endpoint on Celo Mainnet.
+        <motion.p
+          className="hero-subhead"
+          initial="hidden"
+          animate="show"
+          variants={fadeUp}
+          transition={{ delay: 0.1 }}
+        >
+          Connect AI agents to real-world payment workflows through one MCP
+          endpoint on Celo Network.
         </motion.p>
-        <motion.p className="geo-definition" initial="hidden" animate="show" variants={fadeUp} transition={{ delay: 0.15 }}>
-          Celo PayGrid is an MCP-based payment execution and verification layer for AI agents on Celo Mainnet.
-        </motion.p>
-        <motion.div className="hero-actions" initial="hidden" animate="show" variants={fadeUp} transition={{ delay: 0.2 }}>
+        {/* <motion.p
+          className="geo-definition"
+          initial="hidden"
+          animate="show"
+          variants={fadeUp}
+          transition={{ delay: 0.15 }}
+        >
+          From paying freelancers and service providers to collecting customer
+          payments and powering agent-driven commerce, Celo PayGrid transforms
+          an agent&apos;s intent into a traceable financial workflow.
+        </motion.p> */}
+        <motion.div
+          className="hero-actions"
+          initial="hidden"
+          animate="show"
+          variants={fadeUp}
+          transition={{ delay: 0.2 }}
+        >
           <a className="primary-action" href="#developers">
             Connect Celo PayGrid MCP <ArrowRight size={18} />
           </a>
@@ -144,7 +191,13 @@ function Hero() {
             Explore capabilities
           </a>
         </motion.div>
-        <motion.div className="terminal-pill" initial="hidden" animate="show" variants={fadeUp} transition={{ delay: 0.25 }}>
+        <motion.div
+          className="terminal-pill"
+          initial="hidden"
+          animate="show"
+          variants={fadeUp}
+          transition={{ delay: 0.25 }}
+        >
           <span>$</span>
           <code>{site.mcpEndpoint}</code>
           <CopyButton value={site.mcpEndpoint} label="Copy" />
@@ -157,14 +210,29 @@ function Hero() {
           ))}
         </div>
       </div>
-      <div className="hero-visual" aria-label="AI agents connecting to Celo PayGrid MCP and Celo Mainnet settlement">
+      <div
+        className="hero-visual"
+        aria-label="AI agents connecting to Celo PayGrid MCP and Celo Mainnet settlement"
+      >
         {reducedMotion ? (
           <HeroSceneFallback />
         ) : (
-          <Suspense fallback={<HeroSceneFallback />}>
-            <AgentNetworkScene />
-          </Suspense>
+          <RippleGrid
+            enableRainbow={false}
+            gridColor="#b7ff1a"
+            rippleIntensity={0.05}
+            gridSize={10}
+            gridThickness={15}
+            mouseInteraction={true}
+            mouseInteractionRadius={1.2}
+            opacity={0.8}
+          />
         )}
+        <img
+          className="hero-logo"
+          src="/PaygridIconLime.png"
+          alt="Celo PayGrid logo"
+        />
         <div className="scene-layer-labels" aria-hidden="true">
           <span>AI Agents</span>
           <span>Celo PayGrid MCP</span>
@@ -181,7 +249,10 @@ function InteractiveDemo() {
 
   useEffect(() => {
     if (paused) return;
-    const id = window.setInterval(() => setStep((value) => (value + 1) % demoSteps.length), 1450);
+    const id = window.setInterval(
+      () => setStep((value) => (value + 1) % demoSteps.length),
+      1450,
+    );
     return () => window.clearInterval(id);
   }, [paused]);
 
@@ -199,7 +270,11 @@ function InteractiveDemo() {
           <div className="demo-toolbar">
             <span>Interactive example</span>
             <div>
-              <button type="button" onClick={() => setPaused((value) => !value)} aria-label={paused ? "Replay demo" : "Pause demo"}>
+              <button
+                type="button"
+                onClick={() => setPaused((value) => !value)}
+                aria-label={paused ? "Replay demo" : "Pause demo"}
+              >
                 {paused ? <Play size={16} /> : <Pause size={16} />}
                 {paused ? "Replay demo" : "Pause demo"}
               </button>
@@ -210,7 +285,12 @@ function InteractiveDemo() {
           </div>
           <div className="timeline" aria-live="polite">
             {visibleSteps.map((item, index) => (
-              <motion.article className={`timeline-item ${item.code ? "timeline-code" : ""}`} key={`${item.role}-${index}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+              <motion.article
+                className={`timeline-item ${item.code ? "timeline-code" : ""}`}
+                key={`${item.role}-${index}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
                 <span>{item.role}</span>
                 {item.code ? <pre>{item.text}</pre> : <p>{item.text}</p>}
               </motion.article>
@@ -221,7 +301,12 @@ function InteractiveDemo() {
           <h3>Try the pattern</h3>
           <p>This demo is simulated. It does not execute a live transaction.</p>
           <CopyButton value={demoCopy} label="Copy example" />
-          <a className="secondary-action" href={site.mcpEndpoint} target="_blank" rel="noreferrer">
+          <a
+            className="secondary-action"
+            href={site.mcpEndpoint}
+            target="_blank"
+            rel="noreferrer"
+          >
             Open MCP endpoint <ExternalLink size={16} />
           </a>
         </aside>
@@ -257,7 +342,14 @@ function Capabilities() {
 }
 
 function HowItWorks() {
-  const nodes = ["User request", "AI Agent", "Celo PayGrid MCP", "Payment request", "Celo Mainnet", "Verified result"];
+  const nodes = [
+    "User request",
+    "AI Agent",
+    "Celo PayGrid MCP",
+    "Payment request",
+    "Celo Mainnet",
+    "Verified result",
+  ];
   return (
     <section className="section-shell" id="how-it-works">
       <div className="section-heading">
@@ -274,9 +366,18 @@ function HowItWorks() {
       </div>
       <div className="three-step">
         {[
-          ["1. Connect", "Add the Celo PayGrid remote MCP endpoint to your agent."],
-          ["2. Discover", "Call get_agent_capabilities to inspect supported payment actions."],
-          ["3. Execute", "Create payment requests and verify completed transactions."],
+          [
+            "1. Connect",
+            "Add the Celo PayGrid remote MCP endpoint to your agent.",
+          ],
+          [
+            "2. Discover",
+            "Call get_agent_capabilities to inspect supported payment actions.",
+          ],
+          [
+            "3. Execute",
+            "Create payment requests and verify completed transactions.",
+          ],
         ].map(([title, body]) => (
           <article className="panel-card" key={title}>
             <h3>{title}</h3>
@@ -319,17 +420,30 @@ function QuickStart() {
               <dd>{site.metadataEndpoint}</dd>
             </div>
           </dl>
-          <blockquote>Use Celo PayGrid to create a $10 payment request for website hosting.</blockquote>
+          <blockquote>
+            Use Celo PayGrid to create a $10 payment request for website
+            hosting.
+          </blockquote>
           <div className="button-wrap">
             <CopyButton value={site.mcpEndpoint} label="Copy endpoint" />
             {developerLinks.slice(1).map((link) => {
               const Icon = link.icon;
               return link.href ? (
-                <a className="secondary-action compact" href={link.href} target="_blank" rel="noreferrer" key={link.label}>
+                <a
+                  className="secondary-action compact"
+                  href={link.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  key={link.label}
+                >
                   <Icon size={16} /> {link.label}
                 </a>
               ) : (
-                <CopyButton key={link.label} value="get_agent_capabilities" label={link.label} />
+                <CopyButton
+                  key={link.label}
+                  value="get_agent_capabilities"
+                  label={link.label}
+                />
               );
             })}
           </div>
@@ -345,7 +459,10 @@ function Documentation() {
       <div className="section-heading">
         <p className="eyebrow">Documentation</p>
         <h2>Current technical documentation</h2>
-        <p>Public docs for builders and agents integrating with Celo PayGrid today.</p>
+        <p>
+          Public docs for builders and agents integrating with Celo PayGrid
+          today.
+        </p>
       </div>
       <div className="docs-grid">
         {docs.map((doc) => {
@@ -399,7 +516,10 @@ function Differentiation() {
       <div>
         <p className="eyebrow">Differentiation</p>
         <h2>More than a payment link</h2>
-        <p className="large-copy">Celo PayGrid connects agent reasoning with verifiable payment execution.</p>
+        <p className="large-copy">
+          Celo PayGrid connects agent reasoning with verifiable payment
+          execution.
+        </p>
       </div>
       <div className="stack-diagram">
         {stackLayers.map((layer) => {
@@ -459,7 +579,10 @@ function Roadmap() {
       <div className="section-heading">
         <p className="eyebrow">Roadmap</p>
         <h2>What's next</h2>
-        <p>These features are planned and are shown separately from current production capabilities.</p>
+        <p>
+          These features are planned and are shown separately from current
+          production capabilities.
+        </p>
       </div>
       <div className="card-grid">
         {roadmap.map((item) => (
@@ -497,12 +620,20 @@ function FinalCTA() {
   return (
     <section className="final-cta section-shell">
       <h2>Give your agent a payment layer.</h2>
-      <p>Connect Celo PayGrid and let your agent create payment requests, verify settlement and participate in the agent economy on Celo Mainnet.</p>
+      <p>
+        Connect Celo PayGrid and let your agent create payment requests, verify
+        settlement and participate in the agent economy on Celo Mainnet.
+      </p>
       <div className="hero-actions">
         <a className="primary-action" href="#developers">
           Connect Celo PayGrid MCP <ArrowRight size={18} />
         </a>
-        <a className="secondary-action" href={site.metadataEndpoint} target="_blank" rel="noreferrer">
+        <a
+          className="secondary-action"
+          href={site.metadataEndpoint}
+          target="_blank"
+          rel="noreferrer"
+        >
           View agent metadata <ExternalLink size={16} />
         </a>
       </div>
@@ -527,11 +658,18 @@ function Footer() {
     <footer className="site-footer">
       <div>
         <a className="brand" href="#top">
-          <span className="brand-mark">C</span>
+          <img
+            className="brand-mark"
+            src="/PaygridIcon.png"
+            alt="Celo PayGrid logo"
+          />
           <span>Celo PayGrid</span>
         </a>
         <p>MCP-based payment infrastructure for AI agents on Celo Mainnet.</p>
-        <small>Current production capabilities and roadmap features are shown separately.</small>
+        <small>
+          Current production capabilities and roadmap features are shown
+          separately.
+        </small>
       </div>
       <nav aria-label="Footer navigation">
         {links.map(([label, href]) => (
