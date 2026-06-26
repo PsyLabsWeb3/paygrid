@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { CopyButton } from "./components/CopyButton";
 import RippleGrid from "./components/RippleGrid";
+import PitchDeckSection from "./components/PitchDeckSection";
 import { Seo } from "./components/Seo";
 import {
   badges,
@@ -251,7 +252,7 @@ function InteractiveDemo() {
     if (paused) return;
     const id = window.setInterval(
       () => setStep((value) => (value + 1) % demoSteps.length),
-      1450,
+      1450
     );
     return () => window.clearInterval(id);
   }, [paused]);
@@ -683,23 +684,58 @@ function Footer() {
 }
 
 export default function App() {
+  // simple in-page route: show pitch deck if URL contains /pitchdeck or #pitchdeck
+  const [showPitch, setShowPitch] = useState(() => {
+    try {
+      const p = window.location.pathname || "";
+      const h = window.location.hash || "";
+      return (
+        p.endsWith("/pitchdeck") ||
+        h.includes("pitchdeck") ||
+        h.startsWith("#pitch-")
+      );
+    } catch (e) {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const onPop = () => {
+      const p = window.location.pathname || "";
+      const h = window.location.hash || "";
+      setShowPitch(
+        p.endsWith("/pitchdeck") ||
+          h.includes("pitchdeck") ||
+          h.startsWith("#pitch-")
+      );
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   return (
     <>
       <Seo />
       <Navbar />
       <main>
-        <Hero />
-        <InteractiveDemo />
-        <Capabilities />
-        <HowItWorks />
-        <QuickStart />
-        <Documentation />
-        <UseCases />
-        <Differentiation />
-        <StatusAndSecurity />
-        <Roadmap />
-        <FAQ />
-        <FinalCTA />
+        {showPitch ? (
+          <PitchDeckSection />
+        ) : (
+          <>
+            <Hero />
+            <InteractiveDemo />
+            <Capabilities />
+            <HowItWorks />
+            <QuickStart />
+            <Documentation />
+            <UseCases />
+            <Differentiation />
+            <StatusAndSecurity />
+            <Roadmap />
+            <FAQ />
+            <FinalCTA />
+          </>
+        )}
       </main>
       <Footer />
     </>
