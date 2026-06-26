@@ -10,6 +10,30 @@ export default function PitchSlide({
 }: {
   slide: (typeof slides)[number];
 }) {
+  // Intro/cover slide — large centered title only
+  if ((slide as any).isIntro) {
+    return (
+      <article className="pitch-slide pitch-slide--intro">
+        <h2 className="pitch-intro-title">{slide.title}</h2>
+        {slide.subtitle ? (
+          <p className="pitch-intro-sub">{slide.subtitle}</p>
+        ) : null}
+        {slide.badges ? (
+          <div
+            className="badge-row"
+            style={{ justifyContent: "center", marginTop: 28 }}
+          >
+            {slide.badges.map((b: string) => (
+              <span className="status-badge" key={b}>
+                {b}
+              </span>
+            ))}
+          </div>
+        ) : null}
+      </article>
+    );
+  }
+
   return (
     <article className="pitch-slide panel-card">
       <header>

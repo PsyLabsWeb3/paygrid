@@ -10,6 +10,18 @@ export default function PitchDeckSection() {
   const reduced = useReducedMotion();
   const total = slides.length;
 
+  // When the pitch deck mounts, make it fullscreen-like and prevent body scroll
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    // add a class to root for extra styling if needed
+    document.documentElement.classList.add("pitchdeck-open");
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.documentElement.classList.remove("pitchdeck-open");
+    };
+  }, []);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") setIndex((i) => Math.min(total - 1, i + 1));
@@ -61,19 +73,23 @@ export default function PitchDeckSection() {
   }, [total]);
 
   return (
-    <section className="pitchdeck section-shell" id="pitchdeck">
-      <div className="section-heading">
-        <p className="eyebrow">Pitch</p>
-        <h2>PayGrid &amp; Yacamba</h2>
-        <p>Interactive pitch deck: Celo PayGrid x Yacamba partnership</p>
-      </div>
+    <section className="pitchdeck" id="pitchdeck">
       <div className="pitch-shell" ref={ref}>
         <div className="pitch-canvas" aria-hidden>
           {/* Three.js scene removed to avoid blocking pointer events on controls.
               Provide a lightweight static SVG/network fallback that is fully
               non-interactive and accessible. */}
-          <div className="pitch-canvas-fallback" style={{padding: 18, pointerEvents: 'none'}}>
-            <svg width="100%" height="100%" viewBox="0 0 600 240" preserveAspectRatio="xMidYMid meet" role="img">
+          <div
+            className="pitch-canvas-fallback"
+            style={{ padding: 18, pointerEvents: "none" }}
+          >
+            <svg
+              width="100%"
+              height="100%"
+              viewBox="0 0 600 240"
+              preserveAspectRatio="xMidYMid meet"
+              role="img"
+            >
               <g fill="none" stroke="#b7ff1a" strokeWidth="1.6">
                 <circle cx="50" cy="120" r="8" fill="#b7ff1a" />
                 <circle cx="170" cy="60" r="6" fill="#b7ff1a" />

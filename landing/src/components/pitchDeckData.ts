@@ -1,5 +1,12 @@
 export const slides = [
   {
+    id: 0,
+    title: "PayGrid & Yacamba",
+    subtitle: "Interactive pitch deck — Celo PayGrid × Yacamba partnership",
+    isIntro: true,
+    badges: ["Celo Mainnet", "Remote MCP", "Yacamba by Kilauea"],
+  },
+  {
     id: 1,
     title:
       "PayGrid & Yacamba join forces to unleash agentic business and commerce workflows",
