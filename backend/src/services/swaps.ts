@@ -1,10 +1,14 @@
-import { Mento, deadlineFromMinutes } from "@mento-protocol/mento-sdk";
+import { createRequire } from "node:module";
+import type * as MentoSdk from "@mento-protocol/mento-sdk";
 import { encodeFunctionData, erc20Abi, parseAbi, type Address, type Hex } from "viem";
 import type { Env } from "../config/env.js";
 import type { PaymentLinkRow } from "../db/supabase.js";
 import { createChainClients, paygridRouterAbiConst } from "../lib/chain.js";
 import { ApiError } from "../lib/errors.js";
 import { getTokenAddress, parseHumanAmount, TOKEN_DECIMALS, type Stablecoin } from "../lib/tokens.js";
+
+const require = createRequire(import.meta.url);
+const { Mento, deadlineFromMinutes } = require("@mento-protocol/mento-sdk") as typeof MentoSdk;
 
 const uniswapQuoterAbi = parseAbi([
   "function quoteExactOutput(bytes path, uint256 amountOut) returns (uint256 amountIn, uint160[] sqrtPriceX96AfterList, uint32[] initializedTicksCrossedList, uint256 gasEstimate)",
