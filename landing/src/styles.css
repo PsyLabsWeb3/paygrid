@@ -765,9 +765,37 @@ blockquote {
   align-items: center;
 }
 
-.stack-diagram {
+.stack-diagram,
+.agentic-card-grid {
   display: grid;
   gap: 12px;
+}
+
+.agentic-business {
+  align-items: center;
+}
+
+.detail-page {
+  padding-top: 34px;
+}
+
+.detail-hero {
+  min-height: auto;
+  padding: 84px 0 32px;
+}
+
+.detail-hero .secondary-action {
+  margin-bottom: 28px;
+}
+
+.roadmap-timeline {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.feature-list {
+  grid-template-columns: 1fr;
 }
 
 .stack-layer {
@@ -962,6 +990,7 @@ blockquote {
   .quick-grid,
   .split-section,
   .status-security,
+  .roadmap-timeline,
   .site-footer {
     grid-template-columns: 1fr;
   }

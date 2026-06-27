@@ -7,6 +7,7 @@
 - Agent landing: https://web.celopaygrid.xyz
 - MCP endpoint: https://mcp.celopaygrid.xyz/mcp
 - Agent metadata: https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json
+- Agentic business roadmap: https://web.celopaygrid.xyz/agenticbusiness
 - Documentation overview: https://web.celopaygrid.xyz/docs/overview.html
 - Technical architecture: https://web.celopaygrid.xyz/docs/technical-architecture.html
 - MCP reference: https://web.celopaygrid.xyz/docs/mcp-reference.html
@@ -20,7 +21,7 @@
 - Chain ID: 42220
 - Interface: Remote MCP
 - Discovery tool: get_agent_capabilities
-- Core use cases: payment request generation, transaction verification and agent-to-human payment workflows
+- Core use cases: payment request generation, transaction verification, agent-to-human payment workflows and planned agentic business workflows with Yacamba ERP/CRM
 - ERC-8004 Agent ID: 9497
 - Self Protocol Agent ID: 172
 - Self agent address: 0xEf3481bcDd48Db5FFdaF77A39F5f64BaDC957316

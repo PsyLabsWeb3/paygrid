@@ -11,7 +11,8 @@
     "technicalArchitecture": "https://web.celopaygrid.xyz/docs/technical-architecture.html",
     "mcpReference": "https://web.celopaygrid.xyz/docs/mcp-reference.html",
     "securityModel": "https://web.celopaygrid.xyz/docs/security-model.html",
-    "rawMarkdownPattern": "https://web.celopaygrid.xyz/docs/*.md"
+    "rawMarkdownPattern": "https://web.celopaygrid.xyz/docs/*.md",
+    "agenticBusinessRoadmap": "https://web.celopaygrid.xyz/agenticbusiness"
   },
   "erc8004": {
     "agentId": "9497",
@@ -39,8 +40,14 @@
   ],
   "roadmap": [
     "Yacamba ERP/CRM integration",
+    "Agentic business workflows",
     "Agent swaps",
     "Spending policies",
     "Enterprise reconciliation"
-  ]
+  ],
+  "yacambaCollaboration": {
+    "status": "roadmap/pilot",
+    "focus": "Agentic collections, settlement verification and ERP/CRM reconciliation for real businesses.",
+    "page": "https://web.celopaygrid.xyz/agenticbusiness"
+  }
 }

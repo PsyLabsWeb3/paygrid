@@ -9,12 +9,15 @@ import {
   Pause,
   Play,
   RotateCcw,
+  Workflow,
   X,
 } from "lucide-react";
 import { CopyButton } from "./components/CopyButton";
 import RippleGrid from "./components/RippleGrid";
 import { Seo } from "./components/Seo";
 import {
+  agenticBusinessCards,
+  agenticBusinessRoadmap,
   badges,
   capabilities,
   demoCopy,
@@ -23,6 +26,7 @@ import {
   faqs,
   mainnetStatus,
   navItems,
+  plannedBusinessFeatures,
   quickStartConfig,
   roadmap,
   securityItems,
@@ -510,12 +514,51 @@ function UseCases() {
   );
 }
 
+function AgenticBusinessSection() {
+  return (
+    <section className="section-shell split-section agentic-business" id="agentic-business">
+      <div>
+        <p className="eyebrow">Yacamba x Celo PayGrid</p>
+        <h2>Agentic business workflows with Yacamba</h2>
+        <p className="large-copy">
+          Celo PayGrid and Yacamba are building a path for agents to operate
+          inside real business workflows: creating payment requests from
+          invoices, tracking collections, verifying Celo settlement and
+          reconciling payments back to ERP/CRM records.
+        </p>
+        <div className="hero-actions">
+          <a className="primary-action" href="/agenticbusiness">
+            Explore the agentic business roadmap <ArrowRight size={18} />
+          </a>
+          <a className="secondary-action" href="#developers">
+            Connect PayGrid MCP
+          </a>
+        </div>
+      </div>
+      <div className="agentic-card-grid">
+        {agenticBusinessCards.map((item) => {
+          const Icon = item.icon;
+          return (
+            <article className="panel-card" key={item.title}>
+              <span className="icon-chip">
+                <Icon size={20} />
+              </span>
+              <h3>{item.title}</h3>
+              <p>{item.body}</p>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function Differentiation() {
   return (
     <section className="section-shell split-section">
       <div>
         <p className="eyebrow">Differentiation</p>
-        <h2>More than a payment link</h2>
+        <h2>Payment execution for agents</h2>
         <p className="large-copy">
           Celo PayGrid connects agent reasoning with verifiable payment
           execution.
@@ -641,6 +684,144 @@ function FinalCTA() {
   );
 }
 
+function AgenticBusinessPage() {
+  return (
+    <>
+      <Seo />
+      <main className="detail-page">
+        <section className="section-shell detail-hero">
+          <a className="secondary-action compact" href="/">
+            Back to landing
+          </a>
+          <p className="eyebrow">Yacamba x Celo PayGrid</p>
+          <h1>Agentic business infrastructure for real-world companies</h1>
+          <p className="hero-subhead">
+            PayGrid extends agent payments into ERP/CRM workflows where
+            businesses already manage customers, invoices, balances and
+            collections. The goal is to turn agent intent into payment
+            execution, settlement verification and business reconciliation on
+            Celo.
+          </p>
+          <div className="badge-row">
+            <span className="status-badge"><CheckCircle2 size={14} /> Frontier roadmap</span>
+            <span className="status-badge"><CheckCircle2 size={14} /> Yacamba pilot direction</span>
+            <span className="status-badge"><CheckCircle2 size={14} /> Celo Mainnet settlement</span>
+          </div>
+        </section>
+
+        <section className="section-shell split-section">
+          <div>
+            <p className="eyebrow">Why this matters</p>
+            <h2>Agents need business context, not just payment rails</h2>
+            <p className="large-copy">
+              Real companies already run on ERP and CRM systems. They need
+              agents that can understand business records, prepare payment
+              workflows, verify what settled and update operational context
+              without losing accountability.
+            </p>
+          </div>
+          <div className="stack-diagram">
+            {[
+              ["Business systems", "Invoices, customers, balances and collections context in Yacamba."],
+              ["Agent workflows", "Payment request creation, follow-up and settlement checks through PayGrid MCP."],
+              ["Celo settlement", "Fast stablecoin settlement with onchain evidence agents can verify."],
+            ].map(([title, body]) => (
+              <article className="stack-layer" key={title}>
+                <Workflow size={22} />
+                <div>
+                  <h3>{title}</h3>
+                  <p>{body}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="section-shell">
+          <div className="section-heading">
+            <p className="eyebrow">Core workflows</p>
+            <h2>From business record to verified settlement</h2>
+          </div>
+          <div className="card-grid">
+            {[
+              ["Invoice-to-payment request", "Create payment requests from invoice or customer balance context."],
+              ["Collections follow-up", "Help teams track pending payments and prepare customer-facing reminders."],
+              ["Payment verification", "Verify settlement status with Celo transaction evidence."],
+              ["ERP/CRM reconciliation", "Match confirmed payments to invoices, orders and customer records."],
+              ["Agent-generated receipts", "Return readable payment evidence for humans, agents and business systems."],
+              ["Exception handling", "Surface unpaid, expired or mismatched payment states for human review."],
+            ].map(([title, body]) => (
+              <article className="panel-card" key={title}>
+                <h3>{title}</h3>
+                <p>{body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="section-shell">
+          <div className="section-heading">
+            <p className="eyebrow">Planned Frontier roadmap</p>
+            <h2>Roadmap for agentic business adoption</h2>
+            <p>
+              These phases describe planned pilot and roadmap work. They are
+              separate from current production MCP, ERC-8004, Self Agent ID and
+              Celo Mainnet capabilities.
+            </p>
+          </div>
+          <div className="roadmap-timeline">
+            {agenticBusinessRoadmap.map((item) => (
+              <article className="panel-card roadmap-card" key={item.phase}>
+                <span className="roadmap-status">{item.phase}</span>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="section-shell split-section">
+          <div>
+            <p className="eyebrow">Planned features</p>
+            <h2>Infrastructure agents and builders can depend on</h2>
+            <p className="large-copy">
+              The roadmap focuses on trust, repeatability and operational
+              controls so PayGrid can support business agents beyond a single
+              checkout flow.
+            </p>
+          </div>
+          <ul className="check-list feature-list">
+            {plannedBusinessFeatures.map((item) => (
+              <li key={item}>
+                <CheckCircle2 size={16} /> {item}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="section-shell final-cta">
+          <h2>Current status</h2>
+          <p>
+            PayGrid MCP is live on Celo Mainnet with ERC-8004 identity, Self
+            Agent ID and settlement verification. The Yacamba ERP/CRM
+            integration is roadmap and pilot work, not a current production
+            capability.
+          </p>
+          <div className="hero-actions">
+            <a className="primary-action" href={site.mcpEndpoint} target="_blank" rel="noreferrer">
+              Connect MCP <ExternalLink size={16} />
+            </a>
+            <a className="secondary-action" href={site.metadataEndpoint} target="_blank" rel="noreferrer">
+              View agent metadata <ExternalLink size={16} />
+            </a>
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </>
+  );
+}
+
 function Footer() {
   const links = [
     ["MCP Endpoint", site.mcpEndpoint],
@@ -648,6 +829,7 @@ function Footer() {
     ["Documentation", site.docsUrl],
     ["Capabilities", "#capabilities"],
     ["Use Cases", "#use-cases"],
+    ["Agentic Business", "/agenticbusiness"],
     ["Roadmap", "#roadmap"],
     ["FAQ", "#faq"],
     ["Privacy", "/privacy"],
@@ -683,6 +865,10 @@ function Footer() {
 }
 
 export default function App() {
+  if (window.location.pathname === "/agenticbusiness") {
+    return <AgenticBusinessPage />;
+  }
+
   return (
     <>
       <Seo />
@@ -695,6 +881,7 @@ export default function App() {
         <QuickStart />
         <Documentation />
         <UseCases />
+        <AgenticBusinessSection />
         <Differentiation />
         <StatusAndSecurity />
         <Roadmap />

@@ -8,6 +8,7 @@ import {
   Compass,
   CreditCard,
   FileCode2,
+  FileText,
   FileSearch,
   Link2,
   Network,
@@ -34,6 +35,7 @@ export const navItems = [
   { label: "Capabilities", href: "#capabilities" },
   { label: "How it works", href: "#how-it-works" },
   { label: "Use cases", href: "#use-cases" },
+  { label: "Agentic Business", href: "#agentic-business" },
   { label: "Developers", href: "#developers" },
   { label: "Docs", href: "#docs" },
   { label: "Roadmap", href: "#roadmap" },
@@ -101,6 +103,68 @@ export const useCases = [
     body: "Agents can generate payment links for digital work, subscriptions or professional services.",
     icon: CircleDollarSign,
   },
+];
+
+export const agenticBusinessCards = [
+  {
+    title: "Agentic Collections",
+    body: "Agents help businesses turn invoices, customer balances and payment follow-ups into structured payment workflows.",
+    icon: FileSearch,
+  },
+  {
+    title: "Settlement Verification",
+    body: "PayGrid verifies payment status with Celo Mainnet evidence so agents can report what actually settled.",
+    icon: ClipboardCheck,
+  },
+  {
+    title: "ERP/CRM Reconciliation",
+    body: "Confirmed payments can be matched back to customers, invoices, orders and business records in Yacamba.",
+    icon: FileText,
+  },
+  {
+    title: "Human-in-the-loop Controls",
+    body: "The roadmap keeps approvals, limits and exceptions explicit before deeper autonomous workflows are enabled.",
+    icon: ShieldCheck,
+  },
+];
+
+export const agenticBusinessRoadmap = [
+  {
+    phase: "Phase 1",
+    title: "Workflow mapping with Yacamba",
+    body: "Map invoice, customer balance, collections and payment confirmation flows inside Yacamba ERP/CRM.",
+  },
+  {
+    phase: "Phase 2",
+    title: "Payment requests from business records",
+    body: "Let agents prepare PayGrid payment requests from ERP/CRM context while preserving customer and invoice references.",
+  },
+  {
+    phase: "Phase 3",
+    title: "Settlement verification and reconciliation",
+    body: "Use Celo Mainnet transaction evidence to update payment state and reconcile business records.",
+  },
+  {
+    phase: "Phase 4",
+    title: "Agentic collections assistant",
+    body: "Support follow-up workflows, status checks and customer-facing payment reminders with human review controls.",
+  },
+  {
+    phase: "Phase 5",
+    title: "Autonomous business workflows",
+    body: "Add spending policies, approval thresholds, ERC-8004 reputation events and agent escrow primitives.",
+  },
+];
+
+export const plannedBusinessFeatures = [
+  "Agent permissions and scoped API keys",
+  "Spend and collection policies",
+  "Customer and invoice context",
+  "Reconciliation logs",
+  "x402 API monetization",
+  "Agent escrow",
+  "ERC-8004 reputation events",
+  "Self Agent ID trust layer",
 ];
 
 export const mainnetStatus = [
