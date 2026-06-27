@@ -35,7 +35,7 @@ export default function PitchSlide({
   }
 
   return (
-    <article className="pitch-slide panel-card">
+    <article className={`pitch-slide pitch-slide--${slide.id} panel-card`}>
       <header>
         <h3>{slide.title}</h3>
         {slide.subtitle ? <p className="subhead">{slide.subtitle}</p> : null}
@@ -74,7 +74,15 @@ export default function PitchSlide({
         ) : null}
 
         {slide.scene === "workflow" ? <WorkflowDiagram /> : null}
-        {slide.scene === "paymentFlow" ? <PaymentIntentGrid /> : null}
+        {slide.scene === "paymentFlow" ? (
+          <div className="payment-flow-strip" aria-label="Payment collection flow">
+            <span>Invoice</span>
+            <span>Request</span>
+            <span>Pay</span>
+            <span>Verify</span>
+            <span>Reconcile</span>
+          </div>
+        ) : null}
         {slide.scene === "intents" ? <PaymentIntentGrid compact /> : null}
         {slide.scene === "distribution" ? <DistributionNetwork /> : null}
         {slide.roadmap ? (

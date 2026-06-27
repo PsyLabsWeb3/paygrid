@@ -18,8 +18,14 @@
   --warning: #b660f9;
   --shadow: 0 24px 90px rgba(0, 0, 0, 0.42);
   color-scheme: dark;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 }
 
 * {
@@ -33,7 +39,8 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background: radial-gradient(
+  background:
+    radial-gradient(
       circle at 50% -18rem,
       rgba(183, 255, 26, 0.24),
       transparent 34rem
@@ -48,7 +55,8 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
   background-size: 72px 72px;
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 72%);
@@ -101,7 +109,9 @@ main {
   gap: 16px;
   border: 1px solid transparent;
   border-radius: 999px;
-  transition: background 180ms ease, border-color 180ms ease,
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
     box-shadow 180ms ease;
 }
 
@@ -334,8 +344,9 @@ h3 {
 
 code,
 pre {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
 }
 
 .terminal-pill code {
@@ -373,7 +384,8 @@ pre {
   border: 1px solid var(--line);
   border-radius: 38px;
   overflow: hidden;
-  background: radial-gradient(
+  background:
+    radial-gradient(
       circle at 50% 45%,
       rgba(183, 255, 26, 0.18),
       transparent 18rem
@@ -728,8 +740,9 @@ pre {
   margin: 4px 0 0;
   word-break: break-word;
   color: var(--ink);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
   font-size: 0.86rem;
 }
 
@@ -831,7 +844,8 @@ blockquote {
 }
 
 .roadmap-card {
-  background: linear-gradient(180deg, rgba(255, 209, 102, 0.08), transparent),
+  background:
+    linear-gradient(180deg, rgba(255, 209, 102, 0.08), transparent),
     var(--panel);
 }
 
@@ -1063,6 +1077,26 @@ blockquote {
   border: 1px solid var(--line);
   background: var(--panel-2);
 }
+.payment-flow-strip {
+  width: min(720px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.payment-flow-strip span {
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--panel-2);
+  color: var(--soft);
+  font-size: clamp(0.72rem, 1vw, 0.92rem);
+  font-weight: 900;
+  line-height: 1.1;
+}
 .workflow-diagram {
   padding: 12px;
   border-radius: 12px;
@@ -1136,9 +1170,9 @@ blockquote {
 }
 .pitch-slide {
   width: min(1100px, 90vw);
-  height: auto;
-  max-height: 80vh;
-  padding: 40px;
+  height: min(78vh, 760px);
+  max-height: calc(100vh - 150px);
+  padding: clamp(18px, 3.2vw, 40px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1148,7 +1182,7 @@ blockquote {
   border-radius: 0;
   box-shadow: none;
   border: none;
-  overflow-y: auto;
+  overflow: hidden;
   margin: 0 auto;
 }
 .pitch-slide header {
@@ -1167,10 +1201,11 @@ blockquote {
   font-weight: 600;
 }
 .pitch-slide .slide-body {
+  width: min(100%, 1000px);
   max-width: 1000px;
   display: grid;
-  gap: 16px;
-  margin: 20px 0 0 0;
+  gap: clamp(10px, 1.4vw, 16px);
+  margin: clamp(10px, 1.8vw, 20px) 0 0 0;
 }
 .pitch-slide p {
   font-size: clamp(1rem, 1.8vw, 1.4rem);
@@ -1196,13 +1231,54 @@ blockquote {
 }
 .pitch-slide blockquote {
   max-width: 700px;
-  margin: 16px auto;
-  font-size: clamp(1rem, 1.8vw, 1.3rem);
+  margin: clamp(8px, 1.2vw, 16px) auto 0;
+  font-size: clamp(0.95rem, 1.45vw, 1.2rem);
 }
 
 .pitch-slide .badge-row {
   justify-content: center;
   margin-top: 20px;
+}
+
+.pitch-slide--4 {
+  justify-content: flex-start;
+  gap: clamp(8px, 1.1vw, 14px);
+  padding-top: clamp(34px, 5.8vw, 102px);
+}
+
+.pitch-slide--4 header {
+  max-width: 980px;
+}
+
+.pitch-slide--4 h3 {
+  max-width: 980px;
+  font-size: clamp(1.95rem, 4.7vw, 4.25rem);
+  line-height: 0.98;
+  margin-bottom: clamp(10px, 1.5vw, 18px);
+}
+
+.pitch-slide--4 .slide-body {
+  width: min(760px, 100%);
+  gap: clamp(10px, 1.2vw, 14px);
+  margin-top: 0rem;
+}
+
+.pitch-slide--4 ol {
+  width: min(560px, 100%);
+  gap: clamp(6px, 0.9vw, 10px);
+}
+
+.pitch-slide--4 li {
+  font-size: clamp(0.9rem, 1.35vw, 1.08rem);
+  line-height: 1.35;
+}
+
+.pitch-slide--4 blockquote {
+  width: min(700px, 100%);
+  max-height: none;
+  padding: clamp(12px, 1.4vw, 16px) clamp(14px, 1.8vw, 20px);
+  font-size: clamp(0.88rem, 1.22vw, 1.08rem);
+  line-height: 1.38;
 }
 
 .deck-nav {
@@ -1246,6 +1322,7 @@ blockquote {
     height: 240px;
   }
   .pitch-slide {
+    height: min(78vh, 700px);
     padding: 30px;
     width: min(900px, 88vw);
   }
@@ -1266,8 +1343,18 @@ blockquote {
     padding: 12px;
   }
   .pitch-slide {
+    height: min(76vh, 640px);
     padding: 20px;
     width: min(90vw, 100%);
+  }
+  .pitch-slide--4 {
+    padding-top: clamp(28px, 5vw, 44px);
+  }
+  .pitch-slide--4 h3 {
+    font-size: clamp(1.65rem, 6.2vw, 2.8rem);
+  }
+  .payment-flow-strip {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
   .pitch-slide h3 {
     font-size: clamp(1.6rem, 4.5vw, 2.8rem);
@@ -1294,7 +1381,27 @@ blockquote {
     height: 160px;
   }
   .pitch-slide {
+    height: min(76vh, 590px);
     padding: 12px;
+  }
+  .pitch-slide--4 {
+    padding-top: 22px;
+  }
+  .pitch-slide--4 .slide-body {
+    gap: 7px;
+  }
+  .pitch-slide--4 ol {
+    gap: 5px;
+  }
+  .payment-flow-strip {
+    gap: 5px;
+  }
+  .payment-flow-strip span {
+    min-height: 34px;
+    padding: 0 6px;
+  }
+  .pitch-slide--4 blockquote {
+    padding: 10px 12px;
   }
   .pitch-slide h3 {
     font-size: 1.5rem;
