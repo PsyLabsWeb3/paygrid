@@ -1,98 +1,226 @@
 export const slides = [
   {
-    id: 0,
-    title: "PayGrid & Yacamba",
-    subtitle: "Interactive pitch deck — Celo PayGrid × Yacamba partnership",
-    isIntro: true,
-    badges: ["Celo Mainnet", "Remote MCP", "Yacamba by Kilauea"],
+    "id": 0,
+    "title": "PayGrid & Yacamba",
+    "subtitle": "Agentic business infrastructure for Mexican SMEs and real-world commerce",
+    "isIntro": true,
+    "badges": [
+      "Celo Mainnet",
+      "Remote MCP",
+      "Yacamba by Kilauea",
+      "Mexico SME adoption"
+    ],
+    "stats": [
+      {
+        "value": "5.47M",
+        "label": "economic units in Mexico"
+      },
+      {
+        "value": "83.1%",
+        "label": "internet users, age 6+"
+      },
+      {
+        "value": "1s",
+        "label": "Celo settlement target"
+      }
+    ]
   },
   {
-    id: 1,
-    title:
-      "PayGrid & Yacamba join forces to unleash agentic business and commerce workflows",
-    subtitle:
-      "Celo PayGrid brings programmable payment execution to Yacamba’s ERP, CRM and WhatsApp business workflows.",
-    badges: [
+    "id": 1,
+    "title": "A payment layer for the software Mexican businesses already use.",
+    "subtitle": "Yacamba brings the ERP, CRM and WhatsApp operating layer. Celo PayGrid brings agent-readable payment execution, settlement verification and stablecoin rails.",
+    "badges": [
       "Celo Mainnet",
       "Remote MCP",
       "ERP/CRM Workflows",
       "Agentic Commerce",
-      "Yacamba by Kilauea",
+      "Yacamba by Kilauea"
     ],
-    scene: "network",
+    "stats": [
+      {
+        "value": "5.47M",
+        "label": "economic units"
+      },
+      {
+        "value": "100M+",
+        "label": "internet users"
+      },
+      {
+        "value": "15+",
+        "label": "Celo stablecoins"
+      }
+    ],
+    "scene": "network"
   },
   {
-    id: 2,
-    title:
-      "Agents will not live in isolation. They will live inside business software.",
-    body: "Businesses will not adopt agents as abstract standalone tools. Agents will operate inside ERP, CRM, POS, WhatsApp, inventory, invoicing, finance and collections systems.\n\nWhen those agents need to collect, pay, reconcile, verify or escalate a financial operation, they need programmable payment infrastructure.\n\nThat is where Celo PayGrid fits.",
-    scene: "workflow",
+    "id": 2,
+    "title": "The adoption wedge is not another wallet. It is business software.",
+    "body": "Mexican SMEs do not wake up asking for agents or blockchains. They ask for paid invoices, cleaner records, faster reconciliation and fewer manual follow-ups.\n\nAgents will be adopted where business work already happens: ERP, CRM, WhatsApp, inventory, invoicing, finance and collections.\n\nPayGrid turns those workflows into payment execution and verifiable settlement on Celo.",
+    "stats": [
+      {
+        "value": "81.7%",
+        "label": "cell phone adoption"
+      },
+      {
+        "value": "90%",
+        "label": "cash still commonly used"
+      },
+      {
+        "value": "50%",
+        "label": "reported without a bank account"
+      }
+    ],
+    "scene": "workflow"
   },
   {
-    id: 3,
-    title:
-      "Yacamba provides business context. Celo PayGrid provides payment execution.",
-    columns: {
-      left: [
-        "customers",
-        "invoices",
-        "balances",
-        "inventory",
-        "orders",
-        "CRM",
-        "WhatsApp workflows",
-        "business rules",
+    "id": 3,
+    "title": "Mexico is mobile-first, cash-heavy and record-poor.",
+    "subtitle": "That gap is exactly where agentic business payments can enter.",
+    "columns": {
+      "left": [
+        "5.47M economic units recorded by INEGI",
+        "83.1% of people age 6+ use internet",
+        "81.7% use a cell phone",
+        "Commerce and private services are massive SME channels",
+        "WhatsApp is already a daily business interface"
       ],
-      right: [
-        "payment requests",
-        "MCP agent interface",
-        "transaction verification",
-        "settlement evidence",
-        "payment intent layer",
-        "agent-readable metadata",
-        "Celo Mainnet infrastructure",
-      ],
+      "right": [
+        "Cash remains the default payment habit",
+        "Many SMEs still reconcile manually",
+        "Customers may pay through different rails",
+        "Agents need settlement evidence, not screenshots",
+        "ERP/CRM context is the distribution advantage"
+      ]
     },
+    "stats": [
+      {
+        "value": "35M",
+        "label": "internet users buying online"
+      },
+      {
+        "value": "11M",
+        "label": "internet users selling online"
+      },
+      {
+        "value": "2.6%",
+        "label": "annual unit growth, 2018-2023"
+      }
+    ]
   },
   {
-    id: 4,
-    title: "An agent that can collect, not just remind.",
-    steps: [
-      "Yacamba detects overdue invoice",
-      "Agent generates Celo PayGrid request",
+    "id": 4,
+    "title": "An agent that can collect, not just remind.",
+    "steps": [
+      "Yacamba detects an overdue invoice",
+      "Agent creates a Celo PayGrid request",
       "Customer receives WhatsApp/email reminder",
-      "Customer pays",
+      "Customer pays through available rails",
       "Celo PayGrid verifies settlement",
-      "Yacamba updates account receivable",
+      "Yacamba updates accounts receivable"
     ],
-    example:
-      "Customer A owes MXN $2,400. The agent creates a payment request, sends a reminder, verifies payment and marks the invoice as paid.",
-    scene: "paymentFlow",
+    "example": "Customer A owes MXN $2,400. The agent creates the request, sends the reminder, verifies payment and marks the invoice as paid with settlement evidence.",
+    "stats": [
+      {
+        "value": "6",
+        "label": "manual steps collapsed"
+      },
+      {
+        "value": "1",
+        "label": "agent-readable receipt"
+      },
+      {
+        "value": "0",
+        "label": "screenshots required"
+      }
+    ],
+    "scene": "paymentFlow"
   },
   {
-    id: 5,
-    title: "Businesses do not want “crypto”. They want clean records.",
-    body: "Each Celo PayGrid payment can include: payment request ID, external Yacamba reference, amount, stablecoin, payer, transaction hash, settlement status, fees, net received amount.",
-    scene: "reconciliation",
+    "id": 5,
+    "title": "The product is not a link. It is a business record with money attached.",
+    "body": "Every PayGrid payment can carry a payment request ID, Yacamba reference, invoice/customer metadata, amount, stablecoin, payer, transaction hash, settlement status, fee and net received amount.\n\nThat makes the agent useful to accountants, operators and founders — not only to wallets.",
+    "stats": [
+      {
+        "value": "ID",
+        "label": "business reference"
+      },
+      {
+        "value": "TX",
+        "label": "onchain evidence"
+      },
+      {
+        "value": "NET",
+        "label": "reconciled amount"
+      }
+    ],
+    "scene": "reconciliation"
   },
   {
-    id: 6,
-    title: "An AI sales agent that can actually collect money.",
-    body: "Customer asks price on WhatsApp → Yacamba agent checks catalog/inventory → agent generates quote → Celo PayGrid creates payment request → customer pays → Yacamba reserves inventory, creates order and triggers invoice",
-    highlight:
-      "Celo PayGrid turns conversational commerce into payable commerce.",
-    scene: "whatsapp",
+    "id": 6,
+    "title": "Onramping and offramping turn agents into real-world operators.",
+    "body": "A customer may want to pay with card, cash rails, bank transfer or stablecoins. A business may want to receive stablecoins, pesos or a reconciled balance inside Yacamba.\n\nPayGrid becomes the execution layer that lets agents coordinate the payment path while Yacamba keeps the business context.",
+    "highlight": "The roadmap is not only agent payments. It is agent spend and collections infrastructure for Mexican commerce.",
+    "stats": [
+      {
+        "value": "card",
+        "label": "customer funding"
+      },
+      {
+        "value": "stablecoin",
+        "label": "Celo settlement"
+      },
+      {
+        "value": "MXN",
+        "label": "business cash-out path"
+      }
+    ],
+    "scene": "onramp"
   },
   {
-    id: 7,
-    title: "Make Yacamba businesses payable by agents.",
-    body: "External agents could buy products, services, data or business actions from companies using Yacamba, even if those businesses do not manage wallets or agent infrastructure directly. Celo PayGrid becomes the payment interface between external agents and real businesses.",
-    scene: "payments",
+    "id": 7,
+    "title": "An AI sales agent that can actually collect money.",
+    "body": "Customer asks for a price on WhatsApp → Yacamba agent checks catalog and inventory → agent generates a quote → PayGrid creates the payment request → customer pays → Yacamba reserves inventory, creates the order and triggers the invoice.",
+    "highlight": "Celo PayGrid turns conversational commerce into payable commerce.",
+    "stats": [
+      {
+        "value": "Quote",
+        "label": "agent prepares"
+      },
+      {
+        "value": "Pay",
+        "label": "customer completes"
+      },
+      {
+        "value": "Order",
+        "label": "Yacamba updates"
+      }
+    ],
+    "scene": "whatsapp"
   },
   {
-    id: 8,
-    title: "Beyond links: programmable payment intents.",
-    items: [
+    "id": 8,
+    "title": "Make Yacamba businesses payable by other agents.",
+    "body": "External agents could buy products, book services, access business data or trigger operational actions from companies using Yacamba — even if those businesses never run wallets or agent infrastructure directly.\n\nPayGrid gives those agents a payment and verification interface they can trust.",
+    "stats": [
+      {
+        "value": "B2A",
+        "label": "business-to-agent commerce"
+      },
+      {
+        "value": "A2B",
+        "label": "agent-to-business payments"
+      },
+      {
+        "value": "API",
+        "label": "paid business actions"
+      }
+    ],
+    "scene": "payments"
+  },
+  {
+    "id": 9,
+    "title": "Programmable payment intents for the Mexican SME stack.",
+    "items": [
       "collect invoice",
       "collect deposit",
       "pay supplier",
@@ -100,35 +228,80 @@ export const slides = [
       "confirm order",
       "release escrow",
       "collect on delivery",
-      "pay API/x402 endpoint",
+      "pay API/x402 endpoint"
     ],
-    scene: "intents",
+    "stats": [
+      {
+        "value": "MCP",
+        "label": "agent interface"
+      },
+      {
+        "value": "x402",
+        "label": "paid APIs"
+      },
+      {
+        "value": "ERC-8004",
+        "label": "agent trust"
+      }
+    ],
+    "scene": "intents"
   },
   {
-    id: 9,
-    title: "From payment requests to autonomous business finance.",
-    roadmap: [
+    "id": 10,
+    "title": "Roadmap: from collections to autonomous business finance.",
+    "roadmap": [
       {
-        title: "Agent Escrow",
-        body: "customer deposits; condition verified in Yacamba; payment released; evidence recorded",
+        "title": "Phase 1: Collections",
+        "body": "invoice references; PayGrid requests; WhatsApp reminders; settlement checks"
       },
       {
-        title: "Spend Policies",
-        body: "limits; token allowlists; supplier allowlists; approval thresholds; audit logs",
+        "title": "Phase 2: Reconciliation",
+        "body": "Yacamba records; transaction hashes; net received; fee accounting; audit trail"
       },
-      { title: "Agent Swaps", body: "quote; swap; settle in required asset" },
       {
-        title: "x402 Business APIs",
-        body: "paid access to quotes; inventory checks; logistics calculations; business actions",
+        "title": "Phase 3: On/offramp orchestration",
+        "body": "card-funded checkout; stablecoin settlement; MXN cash-out paths; provider abstraction"
       },
+      {
+        "title": "Phase 4: Agent finance",
+        "body": "escrow; spend policies; supplier payments; x402 business APIs; reputation events"
+      }
     ],
-    note: "Roadmap / Planned",
+    "stats": [
+      {
+        "value": "10",
+        "label": "pilot agents/business users"
+      },
+      {
+        "value": "100",
+        "label": "Yacamba-network target"
+      },
+      {
+        "value": "1,000+",
+        "label": "repeat workflows target"
+      }
+    ],
+    "note": "Frontier roadmap / planned milestones"
   },
   {
-    id: 10,
-    title: "One integration can activate an entire business network.",
-    body: "Instead of onboarding every business one by one, Celo PayGrid can be embedded into Yacamba’s ERP, CRM and WhatsApp workflows. Each participating business becomes a node in the agent economy.",
-    scene: "distribution",
-    cta: true,
-  },
+    "id": 11,
+    "title": "One ERP integration can activate an entire business network.",
+    "body": "Instead of onboarding every business one by one, PayGrid can be embedded into Yacamba’s ERP, CRM and WhatsApp workflows. Each participating business becomes a node in the agent economy, and each payment creates verifiable Celo activity.",
+    "stats": [
+      {
+        "value": "1",
+        "label": "Yacamba integration"
+      },
+      {
+        "value": "N",
+        "label": "business workflows"
+      },
+      {
+        "value": "∞",
+        "label": "agent payment intents"
+      }
+    ],
+    "scene": "distribution",
+    "cta": true
+  }
 ];

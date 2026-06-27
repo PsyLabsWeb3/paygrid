@@ -30,6 +30,16 @@ export default function PitchSlide({
             ))}
           </div>
         ) : null}
+        {slide.stats ? (
+          <div className="pitch-stats pitch-stats--intro">
+            {slide.stats.map((stat: { value: string; label: string }) => (
+              <div className="pitch-stat" key={stat.label}>
+                <strong>{stat.value}</strong>
+                <span>{stat.label}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </article>
     );
   }
@@ -48,6 +58,16 @@ export default function PitchSlide({
             ))}
           </div>
         ) : null}
+        {slide.stats ? (
+          <div className="pitch-stats pitch-stats--header">
+            {slide.stats.map((stat: { value: string; label: string }) => (
+              <div className="pitch-stat" key={stat.label}>
+                <strong>{stat.value}</strong>
+                <span>{stat.label}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </header>
       <div className="slide-body">
         {slide.body ? <p>{slide.body}</p> : null}
@@ -57,6 +77,15 @@ export default function PitchSlide({
               <li key={i}>{s}</li>
             ))}
           </ol>
+        ) : null}
+        {slide.items ? (
+          <div className="intent-grid compact">
+            {slide.items.map((item: string) => (
+              <div key={item} className="intent-card panel-card">
+                <strong>{item}</strong>
+              </div>
+            ))}
+          </div>
         ) : null}
         {slide.columns ? (
           <div className="two-col">
@@ -83,10 +112,17 @@ export default function PitchSlide({
             <span>Reconcile</span>
           </div>
         ) : null}
-        {slide.scene === "intents" ? <PaymentIntentGrid compact /> : null}
+        {slide.scene === "intents" && !slide.items ? <PaymentIntentGrid compact /> : null}
         {slide.scene === "distribution" ? <DistributionNetwork /> : null}
         {slide.roadmap ? (
           <RoadmapCards items={slide.roadmap} note={slide.note} />
+        ) : null}
+        {["onramp", "reconciliation", "whatsapp", "payments"].includes(slide.scene || "") ? (
+          <div className={`pitch-mini-graphic pitch-mini-graphic--${slide.scene}`} aria-hidden>
+            <span />
+            <span />
+            <span />
+          </div>
         ) : null}
 
         {slide.example ? <blockquote>{slide.example}</blockquote> : null}
