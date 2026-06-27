@@ -44,6 +44,11 @@ const rawEnvSchema = z.object({
   USDC_ADDRESS: optionalAddress(),
   USDT_ADDRESS: optionalAddress(),
   USDM_ADDRESS: optionalAddress(),
+  MENTO_ROUTER_ADDRESS: optionalAddress(),
+  UNISWAP_ROUTER_ADDRESS: optionalAddress(),
+  UNISWAP_QUOTER_ADDRESS: optionalAddress(),
+  UNISWAP_POOL_FEE: z.coerce.number().int().positive().optional(),
+  MAX_SWAP_SLIPPAGE_BPS: z.coerce.number().int().min(1).max(1000).optional(),
   CHAIN_ID: z.coerce.number().default(11142220),
   PAYGRID_LINK_ADDRESS: z
     .string()

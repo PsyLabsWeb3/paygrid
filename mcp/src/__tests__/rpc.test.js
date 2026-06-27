@@ -10,6 +10,8 @@ test("lists Paygrid MCP tools", async () => {
   assert.ok(result.result.tools.some((tool) => tool.name === "verify_payment"));
   assert.ok(result.result.tools.some((tool) => tool.name === "get_agent_capabilities"));
   assert.ok(result.result.tools.some((tool) => tool.name === "get_celo_defi_context"));
+  assert.ok(result.result.tools.some((tool) => tool.name === "quote_payment_request"));
+  assert.ok(result.result.tools.some((tool) => tool.name === "pay_payment_request"));
 });
 
 test("blocks remote write tools without API key", async () => {
@@ -43,5 +45,5 @@ test("returns Celo agent spend context", async () => {
   const payload = JSON.parse(result.result.content[0].text);
   assert.equal(payload.chainId, 42220);
   assert.equal(payload.tokens.USDC.address, "0xcebA9300f2b948710d2653dD7B07f33A8B32118C");
-  assert.equal(payload.status.current, "context only; Paygrid does not execute swaps yet");
+  assert.equal(payload.status.current, "Paygrid quotes USDC/USDT/USDm swaps with Mento first and falls back to Uniswap when configured");
 });

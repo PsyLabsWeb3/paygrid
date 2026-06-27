@@ -81,6 +81,35 @@ export const toolDefinitions = [
     },
   },
   {
+    name: "quote_payment_request",
+    description: "Quote paying a Paygrid request with USDC, USDT, or USDm, including automatic stablecoin swap details when needed.",
+    write: false,
+    inputSchema: {
+      type: "object",
+      required: ["id", "payerToken"],
+      properties: {
+        id: { type: "string" },
+        payerToken: { type: "string", enum: ["USDC", "USDT", "USDm"] },
+        slippageBps: { type: "number" },
+      },
+    },
+  },
+  {
+    name: "pay_payment_request",
+    description: "Prepare a Paygrid payment transaction for an agent, using an automatic stablecoin swap if payerToken differs from the request token.",
+    write: true,
+    inputSchema: {
+      type: "object",
+      required: ["id", "payerToken"],
+      properties: {
+        id: { type: "string" },
+        payerToken: { type: "string", enum: ["USDC", "USDT", "USDm"] },
+        maxSlippageBps: { type: "number" },
+        preferExactToken: { type: "boolean" },
+      },
+    },
+  },
+  {
     name: "get_payment_request",
     description: "Fetch a Paygrid payment request and its payment state.",
     write: false,
@@ -207,6 +236,27 @@ export async function callTool(config, name, args = {}) {
       };
       return text(await paygridRequest(config, "/api/links", { method: "POST", body: JSON.stringify(payload) }, { agentAuth: true }));
     }
+    case "quote_payment_request":
+      return text(
+        await paygridRequest(config, `/api/links/${encodeURIComponent(requireString(args, "id"))}/quote`, {
+          method: "POST",
+          body: JSON.stringify({
+            payerToken: requireString(args, "payerToken"),
+            slippageBps: args.slippageBps ?? 100,
+          }),
+        }),
+      );
+    case "pay_payment_request":
+      return text(
+        await paygridRequest(config, `/api/links/${encodeURIComponent(requireString(args, "id"))}/pay`, {
+          method: "POST",
+          body: JSON.stringify({
+            method: "crypto",
+            payerToken: requireString(args, "payerToken"),
+            slippageBps: args.maxSlippageBps ?? 100,
+          }),
+        }, { agentAuth: true }),
+      );
     case "get_payment_request":
       return text(await paygridRequest(config, `/api/links/${encodeURIComponent(requireString(args, "id"))}`));
     case "verify_payment": {
@@ -288,6 +338,7 @@ export async function callTool(config, name, args = {}) {
           "agent verifies whether a payment request is paid",
           "agent prepares card-funded checkout for humans",
           "agent calls x402-protected endpoints with caller-provided payment headers",
+          "agent quotes and prepares stablecoin payments with automatic USDC/USDT/USDm swaps",
         ],
       });
     case "get_agent_connection_guide": {
@@ -337,8 +388,8 @@ export async function callTool(config, name, args = {}) {
           "agent_spend_policy: future per-agent limits for tokens, slippage, daily volume, and merchants",
         ],
         status: {
-          current: "context only; Paygrid does not execute swaps yet",
-          recommendedNextTool: "quote_swap",
+          current: "Paygrid quotes USDC/USDT/USDm swaps with Mento first and falls back to Uniswap when configured",
+          recommendedNextTool: "quote_payment_request",
         },
       });
     case "get_agent_profile": {

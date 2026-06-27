@@ -46,4 +46,12 @@ export const appConfig = {
       ? "0xcebA9300f2b948710d2653dD7B07f33A8B32118C"
       : "0x01C5C0122039549AD1493B8220cABEdD739BC44E",
   ),
+  usdtAddress: publicAddress(
+    "NEXT_PUBLIC_USDT_ADDRESS",
+    "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
+  ),
+  usdmAddress: publicAddress(
+    "NEXT_PUBLIC_USDM_ADDRESS",
+    "0x765DE816845861e75A25fCA122bb6898B8B1282a",
+  ),
 };

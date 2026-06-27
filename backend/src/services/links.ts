@@ -14,6 +14,7 @@ import {
   parseHumanAmount,
   type Stablecoin,
 } from "../lib/tokens.js";
+import { buildPreparedCryptoPayTx, ensureCryptoPayable, quoteCryptoPayment, type SwapQuoteInput } from "./swaps.js";
 
 export type CreateLinkInput = {
   amount: string;
@@ -176,7 +177,7 @@ export async function getPaymentLink(env: Env, id: string) {
   return { link: paymentLink, payments: payments ?? [] };
 }
 
-export async function buildCryptoPayTx(env: Env, linkId: string) {
+async function getPayableLink(env: Env, linkId: string) {
   const supabase = getSupabase(env);
   const { data: link, error } = await supabase
     .from("payment_links")
@@ -192,16 +193,22 @@ export async function buildCryptoPayTx(env: Env, linkId: string) {
   }
 
   const paymentLink = link as PaymentLinkRow;
-  if (paymentLink.status === "paid") {
-    throw new ApiError(409, "ALREADY_PAID", "Link already settled");
-  }
-  if (paymentLink.status !== "active") {
-    throw new ApiError(410, "EXPIRED", `Link is ${paymentLink.status}`);
-  }
-  if (!paymentLink.accepted_methods.includes("crypto")) {
-    throw new ApiError(400, "UNSUPPORTED_METHOD", "Crypto payments not accepted for this link");
-  }
+  ensureCryptoPayable(paymentLink);
+  return paymentLink;
+}
 
+export async function quotePaymentLink(env: Env, linkId: string, input: SwapQuoteInput) {
+  const paymentLink = await getPayableLink(env, linkId);
+  return quoteCryptoPayment(env, paymentLink, input);
+}
+
+export async function buildPreparedPayTx(env: Env, linkId: string, input: SwapQuoteInput) {
+  const paymentLink = await getPayableLink(env, linkId);
+  return buildPreparedCryptoPayTx(env, paymentLink, input);
+}
+
+export async function buildCryptoPayTx(env: Env, linkId: string) {
+  const paymentLink = await getPayableLink(env, linkId);
   const token = paymentLink.token as Stablecoin;
   const amountWei = parseHumanAmount(paymentLink.amount, token);
   const tokenAddress = getTokenAddress(env, token);

@@ -2,6 +2,7 @@ import type { Address } from "viem";
 import type { Env } from "../config/env.js";
 
 export type Stablecoin = "USDm" | "USDC" | "USDT";
+export const STABLECOINS = ["USDm", "USDC", "USDT"] as const;
 
 export const TOKEN_DECIMALS: Record<Stablecoin, number> = {
   USDC: 6,

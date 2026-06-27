@@ -37,13 +37,41 @@ type CreateMiniPayLinkResponse = {
   txHash: Hex;
 };
 
+export type SwapQuote = {
+  paymentMode: "exact" | "swap";
+  payerToken: Stablecoin;
+  settlementToken: Stablecoin;
+  amountOut: string;
+  amountIn: string;
+  amountInMax: string;
+  minAmountOut: string;
+  priceImpact: string | null;
+  protocol: "none" | "mento" | "uniswap-v3";
+  swapTarget: Address | null;
+  expiresAt: string;
+};
+
 type PayTxResponse = {
   method: "crypto";
-  tx: {
+  paymentMode?: "exact" | "swap";
+  tx?: {
     to: Address;
     data: Hex;
     value: string;
   };
+  approveTx?: {
+    to: Address;
+    data: Hex;
+    value: string;
+    amount: string;
+    token: Stablecoin;
+  };
+  payTx?: {
+    to: Address;
+    data: Hex;
+    value: string;
+  };
+  quote?: SwapQuote;
   link: {
     id: string;
     onChainLinkId: string;
@@ -107,10 +135,17 @@ export function getPaymentLink(id: string) {
   return requestJson<PaymentLink>(`/api/links/${id}`);
 }
 
-export function buildPayTx(id: string) {
+export function quotePaymentLink(id: string, input: { payerToken: Stablecoin; slippageBps?: number }) {
+  return requestJson<SwapQuote>(`/api/links/${id}/quote`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function buildPayTx(id: string, input?: { payerToken?: Stablecoin; slippageBps?: number }) {
   return requestJson<PayTxResponse>(`/api/links/${id}/pay`, {
     method: "POST",
-    body: JSON.stringify({ method: "crypto" }),
+    body: JSON.stringify({ method: "crypto", ...input }),
   });
 }
 

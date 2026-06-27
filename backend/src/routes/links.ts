@@ -8,9 +8,11 @@ import { getAuthAgent } from "../middleware/erc8004-auth.js";
 import { getAuthUser } from "../middleware/privy-auth.js";
 import {
   buildCryptoPayTx,
+  buildPreparedPayTx,
   createPaymentLink,
   getPaymentLink,
   listOwnedLinks,
+  quotePaymentLink,
 } from "../services/links.js";
 import { createFonbnkPaySession } from "../services/fonbnk.js";
 import { createRampPaySession } from "../services/ramp.js";
@@ -27,8 +29,15 @@ const createLinkSchema = z.object({
   expiresAt: z.string().datetime().optional(),
 });
 
+const quoteSchema = z.object({
+  payerToken: z.enum(stablecoins),
+  slippageBps: z.number().int().positive().optional(),
+});
+
 const cryptoPaySchema = z.object({
   method: z.literal("crypto"),
+  payerToken: z.enum(stablecoins).optional(),
+  slippageBps: z.number().int().positive().optional(),
 });
 
 const fonbnkPaySchema = z.object({
@@ -140,10 +149,21 @@ export function linksRoutes(env: Env) {
     });
   });
 
+  app.post("/:id/quote", async (c) => {
+    const body = quoteSchema.parse(await c.req.json());
+    const result = await quotePaymentLink(env, c.req.param("id"), body);
+    return c.json(result);
+  });
+
   app.post("/:id/pay", async (c) => {
     const body = paySchema.parse(await c.req.json());
     if (body.method === "crypto") {
-      const result = await buildCryptoPayTx(env, c.req.param("id"));
+      const result = body.payerToken
+        ? await buildPreparedPayTx(env, c.req.param("id"), {
+            payerToken: body.payerToken,
+            slippageBps: body.slippageBps,
+          })
+        : await buildCryptoPayTx(env, c.req.param("id"));
       return c.json(result);
     }
 
