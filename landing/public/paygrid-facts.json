@@ -1,6 +1,6 @@
 {
   "productName": "Celo PayGrid",
-  "definition": "Celo PayGrid is an MCP-based payment execution layer for AI agents on Celo Mainnet.",
+  "definition": "Celo PayGrid is an MCP-based payment execution layer for AI agents on Celo Mainnet with automatic USDC, USDT and USDm swap-enabled settlement.",
   "network": "Celo Mainnet",
   "chainId": 42220,
   "mcpEndpoint": "https://mcp.celopaygrid.xyz/mcp",
@@ -26,8 +26,9 @@
   },
   "contracts": {
     "paygridLink": "0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89",
-    "paygridRouter": "0x2924FEf3eF7c3ADBFF22b286C42764a96c53f9f4",
-    "treasurySafe": "0xc0C019DCeCE7a3a235Ab520F394A57c132F90cD6"
+    "treasurySafe": "0xc0C019DCeCE7a3a235Ab520F394A57c132F90cD6",
+    "paygridRouterV2": "0x8d290c97100f0e87e04Efd1a790F27004fA3f08B",
+    "mentoRouter": "0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6"
   },
   "currentCapabilities": [
     "Remote MCP server",
@@ -35,12 +36,28 @@
     "Transaction verification",
     "Payment activity review",
     "Agent capability discovery",
-    "Celo Mainnet settlement"
+    "Celo Mainnet settlement",
+    "Stablecoin swap quotes",
+    "Swap-enabled payment preparation",
+    "Mento-routed settlement"
   ],
   "roadmap": [
     "Yacamba ERP/CRM integration",
-    "Agent swaps",
     "Spending policies",
     "Enterprise reconciliation"
-  ]
+  ],
+  "swapSupport": {
+    "status": "live",
+    "supportedTokens": [
+      "USDC",
+      "USDT",
+      "USDm"
+    ],
+    "primaryRoute": "Mento",
+    "fallbackRoute": "Uniswap when configured",
+    "tools": [
+      "quote_payment_request",
+      "pay_payment_request"
+    ]
+  }
 }

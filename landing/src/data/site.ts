@@ -21,7 +21,7 @@ export const site = {
   name: "Celo PayGrid",
   title: "Celo PayGrid for AI Agents | MCP Payments on Celo",
   description:
-    "Connect AI agents to Celo PayGrid through MCP to create payment requests, coordinate stablecoin payment workflows and verify settlement on Celo Mainnet.",
+    "Connect AI agents to Celo PayGrid through MCP to create payment requests, quote stablecoin swaps, coordinate payment workflows and verify settlement on Celo Mainnet.",
   url: "https://web.celopaygrid.xyz",
   canonical: "https://www.celopaygrid.xyz",
   mcpEndpoint: "https://mcp.celopaygrid.xyz/mcp",
@@ -40,7 +40,7 @@ export const navItems = [
   { label: "FAQ", href: "#faq" },
 ];
 
-export const badges = ["Live on Celo Mainnet", "Remote MCP", "Agent-to-Human Payments", "Verifiable Settlement"];
+export const badges = ["Live on Celo Mainnet", "Mento swaps", "Remote MCP", "Verifiable Settlement"];
 
 export const capabilities = [
   {
@@ -54,6 +54,18 @@ export const capabilities = [
     body: "Check payment status and return verifiable settlement information.",
     tool: "verify_payment",
     icon: ClipboardCheck,
+  },
+  {
+    title: "Automatic stablecoin swaps",
+    body: "Let payers use USDC, USDT or USDm while recipients receive the token requested by the link.",
+    tool: "quote_payment_request",
+    icon: CircleDollarSign,
+  },
+  {
+    title: "Pay with any supported stablecoin",
+    body: "Agents can prepare approval and payment transactions for exact-token or swap-enabled settlement.",
+    tool: "pay_payment_request",
+    icon: CreditCard,
   },
   {
     title: "Review payment activity",
@@ -106,6 +118,7 @@ export const useCases = [
 export const mainnetStatus = [
   ["Celo PayGrid MCP", "Operational"],
   ["Celo Mainnet", "Operational"],
+  ["Stablecoin swaps", "Operational"],
   ["Chain ID", "42220"],
   ["Agent metadata", "Available"],
   ["Remote MCP", "Available"],
@@ -116,11 +129,6 @@ export const roadmap = [
     title: "Yacamba ERP/CRM integration",
     body: "Agent-assisted collections, payment request generation and reconciliation workflows inside Yacamba.",
     status: "Roadmap",
-  },
-  {
-    title: "Agent swaps",
-    body: "Allow agents to request quotes and swap supported assets before completing payment workflows.",
-    status: "Planned",
   },
   {
     title: "Spending policies",
@@ -139,6 +147,7 @@ export const securityItems = [
   "verifiable transaction status",
   "external references",
   "Celo Mainnet settlement",
+  "Mento-routed stablecoin swaps",
   "readable agent responses",
   "auditable payment activity",
   "traceable transaction results",
@@ -151,7 +160,7 @@ export const faqs = [
   },
   {
     q: "What can an AI agent do with Celo PayGrid?",
-    a: "An AI agent can discover Celo PayGrid capabilities, create payment requests, inspect payment activity and verify completed transactions.",
+    a: "An AI agent can discover Celo PayGrid capabilities, create payment requests, quote supported stablecoin swaps, inspect payment activity and verify completed transactions.",
   },
   { q: "What is the Celo PayGrid MCP endpoint?", a: site.mcpEndpoint },
   { q: "How does an agent discover Celo PayGrid tools?", a: "The agent can call get_agent_capabilities." },
@@ -167,7 +176,7 @@ export const faqs = [
   },
   {
     q: "Does Celo PayGrid support swaps?",
-    a: "Agent swaps are planned as part of the roadmap and are not part of the current production capabilities.",
+    a: "Yes. Payment links can settle in USDC, USDT or USDm while payers use any supported stablecoin. Mento is the primary route, with Uniswap configurable as fallback.",
   },
 ];
 
@@ -216,16 +225,19 @@ export const quickStartConfig = `{
 export const demoCopy = `User: Create a $25 payment request for logo design.
 Agent: I'll inspect Celo PayGrid's available payment capabilities.
 Tool call: get_agent_capabilities
-Tool result: Payment request creation and transaction verification are available.
+Tool result: Payment request creation, swap quotes and transaction verification are available.
 Agent: I'll create the payment request.
 Tool call: create_payment_request
 Result: Payment request created. Amount: $25. Status: Pending. Network: Celo Mainnet.
+User: The payer has USDT but the request asks for USDC.
+Tool call: quote_payment_request
+Result: Quote ready. Route: Mento. Payer token: USDT. Settlement token: USDC.
 User: Check if the payment was completed.
 Tool call: verify_payment
 Result: Payment confirmed. Transaction: 0x8f3... Network: Celo Mainnet.`;
 
 export const stackLayers = [
   { title: "MCP", body: "Agent interaction layer", icon: Terminal },
-  { title: "Celo PayGrid", body: "Payment orchestration and verification layer", icon: CreditCard },
+  { title: "Celo PayGrid", body: "Payment orchestration, swaps and verification layer", icon: CreditCard },
   { title: "Celo Mainnet", body: "Settlement layer", icon: ShieldCheck },
 ];

@@ -36,6 +36,8 @@ X-API-Key: <PAYGRID_MCP_API_KEY>
 |---|---|---|
 | `create_payment_request` | API key | Create an agent-owned payment request on Celo. |
 | `get_payment_request` | public | Fetch a payment request and its state. |
+| `quote_payment_request` | public | Quote exact-token or swap-enabled payment settlement. |
+| `pay_payment_request` | API key | Prepare exact-token or swap-enabled approval and payment transactions. |
 | `verify_payment` | public | Verify whether a payment request is paid. |
 | `list_agent_requests` | API key | List requests owned by the configured ERC-8004 agent. |
 | `create_card_checkout` | API key | Create a card-funded checkout session for an existing request. |
@@ -91,12 +93,33 @@ Response fields include:
 - `createdAt`;
 - `txHash`.
 
+## Quote a payment request
+
+```bash
+curl -X POST https://mcp.celopaygrid.xyz/mcp \
+  -H "content-type: application/json" \
+  -d '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"quote_payment_request","arguments":{"id":"<payment_request_id>","payerToken":"USDT","maxSlippageBps":100}}}'
+```
+
+Quotes support `USDC`, `USDT` and `USDm`. If the payer token differs from the request token, Paygrid returns a Mento-first swap quote.
+
+## Prepare a payment
+
+```bash
+curl -X POST https://mcp.celopaygrid.xyz/mcp \
+  -H "content-type: application/json" \
+  -H "authorization: Bearer <PAYGRID_MCP_API_KEY>" \
+  -d '{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"pay_payment_request","arguments":{"id":"<payment_request_id>","payerToken":"USDT","maxSlippageBps":100,"preferExactToken":true}}}'
+```
+
+The response includes approval and payment transaction payloads. The recipient still receives the settlement token requested by the link.
+
 ## Verify payment
 
 ```bash
 curl -X POST https://mcp.celopaygrid.xyz/mcp \
   -H "content-type: application/json" \
-  -d '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"verify_payment","arguments":{"id":"<payment_request_id>"}}}'
+  -d '{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"verify_payment","arguments":{"id":"<payment_request_id>"}}}'
 ```
 
 Response fields include:
@@ -113,8 +136,7 @@ Response fields include:
 ```bash
 curl -X POST https://mcp.celopaygrid.xyz/mcp \
   -H "content-type: application/json" \
-  -d '{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"get_agent_connection_guide","arguments":{"runtime":"generic"}}}'
+  -d '{"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"get_agent_connection_guide","arguments":{"runtime":"generic"}}}'
 ```
 
 Use the returned config as the starting point for remote MCP-capable agent runtimes.
-

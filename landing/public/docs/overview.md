@@ -33,6 +33,7 @@ Celo PayGrid currently supports:
 - payment request creation;
 - payment request lookup;
 - payment verification;
+- automatic stablecoin swap quotes and payments;
 - agent payment activity review;
 - supported stablecoin discovery;
 - card checkout preparation through the existing provider abstraction;
@@ -45,16 +46,32 @@ The core production flow is:
 1. An agent or builder connects to the Celo PayGrid MCP endpoint.
 2. The agent calls `get_agent_capabilities` or `tools/list`.
 3. The agent creates a payment request.
-4. A payer pays through the Celo PayGrid checkout.
-5. Celo PayGrid indexes the onchain settlement.
-6. The agent calls `verify_payment` to confirm final state.
+4. A payer pays through the Celo PayGrid checkout with USDC, USDT or USDm.
+5. If the payer token differs from the requested token, Paygrid quotes and executes a Mento-routed swap.
+6. Celo PayGrid indexes the onchain settlement.
+7. The agent calls `verify_payment` to confirm final state.
+
+## Automatic stablecoin swaps
+
+Payment links settle in the token selected by the creator, while payers can use any supported stablecoin:
+
+| Token | Decimals | Role |
+|---|---:|---|
+| USDC | 6 | Supported payer and settlement token |
+| USDT | 6 | Supported payer and settlement token |
+| USDm | 18 | Supported payer and settlement token |
+
+If a link requests USDC and the payer only has USDT, Paygrid builds a `USDT -> USDC` payment. Mento is the primary route on Celo; Uniswap can be configured as a fallback. The recipient always receives the token requested by the link.
+
+Agents can use `quote_payment_request` to inspect the route and `pay_payment_request` to prepare the approval and payment transactions.
 
 ## Mainnet contracts
 
 | Contract | Address |
 |---|---|
 | PaygridLink | `0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89` |
-| PaygridRouter | `0x2924FEf3eF7c3ADBFF22b286C42764a96c53f9f4` |
+| PaygridRouterV2 | `0x8d290c97100f0e87e04Efd1a790F27004fA3f08B` |
+| Mento Router | `0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6` |
 | Treasury Safe | `0xc0C019DCeCE7a3a235Ab520F394A57c132F90cD6` |
 
 ## ERC-8004 identity
@@ -84,7 +101,6 @@ Celo PayGrid supports Self Protocol Agent ID metadata in the MCP service. The cu
 
 Celo PayGrid does not currently claim support for:
 
-- autonomous swaps;
 - advanced spending policies;
 - ERP automation;
 - enterprise reconciliation;

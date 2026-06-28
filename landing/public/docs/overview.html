@@ -54,6 +54,7 @@
           <ul>
             <li>Remote MCP discovery and tool listing.</li>
             <li>Payment request creation, lookup and verification.</li>
+            <li>Automatic stablecoin swap quotes and payments.</li>
             <li>Agent payment activity review.</li>
             <li>Supported stablecoin discovery.</li>
             <li>Card checkout preparation through the existing provider abstraction.</li>
@@ -61,11 +62,21 @@
             <li>Public agent metadata discovery.</li>
             <li>Celo Mainnet settlement verification.</li>
           </ul>
+          <h2>Automatic stablecoin swaps</h2>
+          <p>Payment links settle in the token selected by the creator, while payers can use USDC, USDT or USDm. If the payer token differs from the requested token, Paygrid quotes and executes a Mento-routed swap so the recipient still receives the original settlement token.</p>
+          <table>
+            <tr><th>Token</th><th>Decimals</th><th>Role</th></tr>
+            <tr><td>USDC</td><td>6</td><td>Supported payer and settlement token</td></tr>
+            <tr><td>USDT</td><td>6</td><td>Supported payer and settlement token</td></tr>
+            <tr><td>USDm</td><td>18</td><td>Supported payer and settlement token</td></tr>
+          </table>
+          <p>Agents can call <code>quote_payment_request</code> to inspect the route and <code>pay_payment_request</code> to prepare approval and payment transactions.</p>
           <h2>Mainnet contracts</h2>
           <table>
             <tr><th>Contract</th><th>Address</th></tr>
             <tr><td>PaygridLink</td><td><code>0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89</code></td></tr>
-            <tr><td>PaygridRouter</td><td><code>0x2924FEf3eF7c3ADBFF22b286C42764a96c53f9f4</code></td></tr>
+            <tr><td>PaygridRouterV2</td><td><code>0x8d290c97100f0e87e04Efd1a790F27004fA3f08B</code></td></tr>
+            <tr><td>Mento Router</td><td><code>0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6</code></td></tr>
             <tr><td>Treasury Safe</td><td><code>0xc0C019DCeCE7a3a235Ab520F394A57c132F90cD6</code></td></tr>
           </table>
           <h2>ERC-8004 identity</h2>
@@ -85,7 +96,7 @@
           <h2>Self Protocol identity</h2>
           <p>Celo PayGrid supports Self Protocol Agent ID metadata in the MCP service. The current public state is <code>verified</code> for Self Agent ID <code>172</code>, and the public MCP metadata advertises <code>self-agent-id</code> in <code>supportedTrust</code> when the hosted MCP env is configured with the verified Self values.</p>
           <h2>Current limitations</h2>
-          <p>Celo PayGrid does not currently claim support for autonomous swaps, advanced spending policies, ERP automation, enterprise reconciliation, guaranteed fraud protection, banking compliance, insurance or automatic approvals.</p>
+          <p>Celo PayGrid does not currently claim support for advanced spending policies, ERP automation, enterprise reconciliation, guaranteed fraud protection, banking compliance, insurance or automatic approvals.</p>
           <div class="doc-actions">
             <a class="pill-link" href="/docs/overview.md">Raw markdown</a>
             <a class="pill-link" href="/docs/technical-architecture.html">Next: architecture</a>

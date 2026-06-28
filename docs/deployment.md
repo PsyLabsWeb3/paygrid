@@ -236,9 +236,11 @@ X-API-Key: <PAYGRID_MCP_API_KEY>
 
 | Contract | Sepolia | Mainnet |
 |---|---|---|
-| PaygridRouter | `0x6c3363D33eCD912576051316AF0A1c95F77EAD73` | TBD |
-| PaygridLink | `0x86D9B260F96873e82852B476ff7B0c93bD755597` | TBD |
-| Paygrid Treasury | `0xd4683314a013792fe8840e4171dc4692e317617b` | TBD |
+| PaygridRouter | `0x6c3363D33eCD912576051316AF0A1c95F77EAD73` | legacy: `0x2924FEf3eF7c3ADBFF22b286C42764a96c53f9f4` |
+| PaygridRouterV2 | TBD | `0x8d290c97100f0e87e04Efd1a790F27004fA3f08B` |
+| PaygridLink | `0x86D9B260F96873e82852B476ff7B0c93bD755597` | `0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89` |
+| Mento Router | TBD | `0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6` |
+| Paygrid Treasury | `0xd4683314a013792fe8840e4171dc4692e317617b` | `0xc0C019DCeCE7a3a235Ab520F394A57c132F90cD6` |
 
 ## Smoke Tests
 
@@ -266,6 +268,8 @@ curl -s -X POST https://mcp.celopaygrid.xyz/mcp \
 Mainnet payment:
 
 1. Create a payment request from MiniPay or MCP.
-2. Pay a tiny amount of USDC.
+2. Pay a tiny amount with the exact requested token.
 3. Confirm `payment_links.status = paid`.
+4. Create or reuse a link requesting USDC and quote payment with USDT.
+5. Confirm `protocol = mento` and complete the swap-enabled payment.
 4. Confirm MCP `verify_payment` returns `paid: true`.

@@ -45,7 +45,7 @@ const demoSteps = [
   { role: "Tool call", text: "get_agent_capabilities", code: true },
   {
     role: "Tool result",
-    text: "Payment request creation and transaction verification are available.",
+    text: "Payment request creation, swap quotes and transaction verification are available.",
   },
   { role: "Agent", text: "I'll create the payment request." },
   {
@@ -56,6 +56,13 @@ const demoSteps = [
   {
     role: "Result",
     text: "Payment request created\nAmount: $25\nStatus: Pending\nNetwork: Celo Mainnet\nPayment URL: https://pay.celopaygrid.xyz/...",
+  },
+  { role: "User", text: "The payer has USDT, but the request asks for USDC." },
+  { role: "Agent", text: "I'll quote a supported stablecoin swap." },
+  { role: "Tool call", text: "quote_payment_request", code: true },
+  {
+    role: "Result",
+    text: "Quote ready\nRoute: Mento\nPayer token: USDT\nRecipient receives: USDC",
   },
   { role: "User", text: "Check if the payment was completed." },
   { role: "Agent", text: "I'll verify the current transaction status." },

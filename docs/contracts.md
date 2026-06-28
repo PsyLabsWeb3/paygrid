@@ -5,9 +5,9 @@
 Paygrid uses two core contracts on Celo:
 
 - **PaygridLink.sol** creates and manages payment links on-chain.
-- **PaygridRouter.sol** receives payments, splits the 0.5% fee to treasury, and forwards the remainder to the recipient.
+- **PaygridRouterV2.sol** receives exact-token payments, executes authorized stablecoin swaps, splits the 0.5% fee to treasury, and forwards the remainder to the recipient.
 
-The Sepolia deployment is the canonical development reference for backend integration and UI wiring. Mainnet addresses remain pending.
+Mainnet is the canonical production deployment. Sepolia remains the development reference for backend integration and UI wiring.
 
 ---
 
@@ -25,9 +25,10 @@ The Sepolia deployment is the canonical development reference for backend integr
 
 | Contract | Address |
 |----------|---------|
-| PaygridLink | TBD |
-| PaygridRouter | TBD |
-| Treasury | TBD |
+| PaygridLink | `0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89` |
+| PaygridRouterV2 | `0x8d290c97100f0e87e04Efd1a790F27004fA3f08B` |
+| Mento Router | `0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6` |
+| Treasury | `0xc0C019DCeCE7a3a235Ab520F394A57c132F90cD6` |
 
 ---
 
@@ -68,11 +69,13 @@ struct PaymentLink {
 
 ---
 
-## PaygridRouter.sol
+## PaygridRouterV2.sol
 
 ### Responsibility
 
 - Receive stablecoin payments.
+- Execute atomic swaps for supported stablecoin mismatches.
+- Validate final settlement token output before marking the link paid.
 - Split 0.5% fee to treasury.
 - Forward 99.5% to recipient.
 - Emit indexed payment events for the backend indexer.
@@ -81,10 +84,15 @@ struct PaymentLink {
 - `treasury: address` - fee recipient
 - `feeBps: uint256 = 50` - 0.5% fee
 - `paygridLink: PaygridLink` - link registry reference
+- `supportedTokens: mapping(address => bool)` - USDC, USDT, USDm allowlist
+- `authorizedSwapTargets: mapping(address => bool)` - Mento first, optional Uniswap fallback
 
 ### Functions
 - `pay(uint256 linkId, address token, uint256 amount)`
+- `payWithSwap(uint256 linkId, address tokenIn, uint256 amountInMax, uint256 minAmountOut, address swapTarget, bytes swapCalldata, uint256 deadline)`
 - `payWithFiat(uint256 linkId, address token, uint256 amount, bytes32 onrampTxId)` - backend-only settlement after Fonbnk confirmation
+- `setSupportedToken(address token, bool supported)` - owner only
+- `setSwapTarget(address target, bool authorized)` - owner only
 - `setTreasury(address)` - owner only
 - `setFeeBps(uint256)` - owner only, max 5% (500 bps)
 
@@ -93,6 +101,21 @@ struct PaymentLink {
 
 ### Events
 - `PaymentReceived(uint256 indexed linkId, address indexed payer, address indexed token, uint256 amount, uint256 fee, PaymentMethod method, bytes32 onrampTxId)`
+- `SwapPayment(uint256 indexed linkId, address indexed payer, address indexed tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, address swapTarget)`
+
+### Swap flow
+
+`payWithSwap` lets a payer use one supported stablecoin while the recipient receives the token requested by the payment link. For example, a link can request USDC while the payer pays with USDT.
+
+1. The payer approves `PaygridRouterV2` for `amountInMax` of `tokenIn`.
+2. `PaygridRouterV2` pulls `tokenIn` from the payer.
+3. The router approves an authorized swap target and calls the provided swap calldata.
+4. The router validates that final `tokenOut` balance increased by at least `link.amount`.
+5. Excess output is refunded to the payer.
+6. The Paygrid fee is charged in the final settlement token.
+7. The recipient receives the requested token and `PaygridLink` is marked paid.
+
+Mento is the primary configured route for USDC, USDT and USDm swaps. Uniswap may be enabled as a fallback.
 
 ---
 
@@ -110,14 +133,17 @@ enum PaymentMethod { Crypto, Fonbnk }
 - USDm uses 18 decimals.
 - All transfers use OpenZeppelin `safeTransfer` / `safeTransferFrom`.
 - MiniPay frontend and backend should never present CELO as a primary user-facing payment asset; user flows surface USDm, USDC, and USDT.
+- For fee abstraction, USDC and USDT gas payment uses adapter addresses, while settlement uses the token contract addresses.
 
 ---
 
 ## Security
 
 - `ReentrancyGuard` on `pay` and `payWithFiat`
+- `ReentrancyGuard` on `payWithSwap`
 - `onlyCreator` on `cancelLink`
 - Owner controls treasury address and fee cap
+- Owner controls supported token and swap target allowlists
 - Standard OpenZeppelin access control
 
 ---
@@ -156,14 +182,12 @@ Implemented on-chain and integrated with the backend today:
 
 - `createLink` / `LinkCreated`
 - `pay` / `PaymentReceived`
+- `payWithSwap` / `SwapPayment`
 - Sepolia addresses in `contracts/deployments.sepolia.json`
-
-Available on-chain but not yet wired by the backend:
 
 - `payWithFiat` for the future Fonbnk settlement path
 
 Still pending:
 
-- Mainnet deployment
 - Celoscan verification
 - Mainnet fork tests

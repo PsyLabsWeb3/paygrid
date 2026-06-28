@@ -15,9 +15,13 @@ Celo PayGrid MCP HTTP
         v
 Celo PayGrid Backend API
         |
-        | viem contract writes / reads
+        | viem contract writes / reads + swap quote building
         v
-PaygridLink + PaygridRouter on Celo Mainnet
+PaygridLink + PaygridRouterV2 on Celo Mainnet
+        |
+        | optional payWithSwap
+        v
+Mento Router
         |
         | PaymentReceived event
         v
@@ -65,6 +69,8 @@ The backend is responsible for:
 - creating payment requests;
 - reading payment request state;
 - preparing transaction payloads;
+- quoting Mento-first stablecoin swaps across USDC, USDT and USDm;
+- preparing approval and `payWithSwap` transaction payloads;
 - validating ERC-8004 signed requests;
 - enforcing rate limits;
 - writing normalized state into Supabase.
@@ -76,9 +82,24 @@ The deployed contracts are:
 | Contract | Address |
 |---|---|
 | PaygridLink | `0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89` |
-| PaygridRouter | `0x2924FEf3eF7c3ADBFF22b286C42764a96c53f9f4` |
+| PaygridRouterV2 | `0x8d290c97100f0e87e04Efd1a790F27004fA3f08B` |
+| Mento Router | `0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6` |
 
-`PaygridLink` stores payment request state. `PaygridRouter` coordinates settlement and emits payment events.
+`PaygridLink` stores payment request state. `PaygridRouterV2` coordinates exact-token settlement, swap-enabled settlement and payment events.
+
+### Swap settlement path
+
+For exact-token payments, the payer approves the settlement token and calls `pay`.
+
+For cross-token payments, the backend creates a quote and returns:
+
+- an approval transaction for the payer token;
+- a `payWithSwap` transaction targeting `PaygridRouterV2`;
+- the swap target and calldata for the authorized router.
+
+`PaygridRouterV2` pulls the input token, approves the authorized swap target, executes the swap, validates that it received at least the requested settlement amount, refunds any excess output, splits the Paygrid fee in the settlement token, pays the recipient and marks the link paid.
+
+Mento is the primary route for supported stablecoin swaps. Uniswap can be configured as a fallback by environment variable.
 
 ### Indexer
 
@@ -114,6 +135,7 @@ The frontend reads from the backend and submits transactions through the connect
 | MCP to backend protected routes | ERC-8004 signed HTTP headers |
 | Backend to contracts | backend wallet / viem |
 | Contract settlement | Celo Mainnet |
+| Swap execution | Authorized Mento / Uniswap router targets |
 | Payment status | indexer + Supabase + onchain events |
 
 ## ERC-8004 signed request format
@@ -144,4 +166,3 @@ The backend verifies:
 | indexer | private Docker service |
 | database | Supabase |
 | contracts | Celo Mainnet |
-

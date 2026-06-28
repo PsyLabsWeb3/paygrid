@@ -11,6 +11,8 @@ Paygrid MCP exposes Paygrid as agent spend infrastructure on Celo.
 
 - `create_payment_request`
 - `get_payment_request`
+- `quote_payment_request`
+- `pay_payment_request`
 - `verify_payment`
 - `list_agent_requests`
 - `create_card_checkout`
@@ -21,6 +23,39 @@ Paygrid MCP exposes Paygrid as agent spend infrastructure on Celo.
 - `get_celo_defi_context`
 - `get_agent_profile`
 - `treasury_report`
+
+## Stablecoin swaps
+
+Paygrid MCP supports swap-aware payments for USDC, USDT and USDm.
+
+Payment links still settle in the token selected by the creator. If a payer or agent wants to pay with a different supported stablecoin, the agent can first call `quote_payment_request` and then `pay_payment_request`.
+
+Default guardrails:
+
+- supported payer tokens: `USDC`, `USDT`, `USDm`;
+- default max slippage: `100` bps;
+- no payment if the quote expires;
+- no payment if the link is no longer active;
+- no unsupported assets or CELO user-facing payment option.
+
+Mento is the primary route for stablecoin conversion on Celo. Uniswap can be configured as a fallback route by backend environment variable.
+
+Example agent flow:
+
+```text
+get_payment_request -> quote_payment_request -> pay_payment_request -> verify_payment
+```
+
+Example:
+
+```json
+{
+  "paymentRequestId": "cce4b97b-74a8-4443-aab2-4e0af7308f90",
+  "payerToken": "USDT",
+  "maxSlippageBps": 100,
+  "preferExactToken": true
+}
+```
 
 ## Auth
 

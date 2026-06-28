@@ -43,9 +43,13 @@ Celo PayGrid MCP HTTP
         v
 Celo PayGrid Backend API
         |
-        | viem contract writes / reads
+        | viem contract writes / reads + swap quote building
         v
-PaygridLink + PaygridRouter on Celo Mainnet
+PaygridLink + PaygridRouterV2 on Celo Mainnet
+        |
+        | optional payWithSwap
+        v
+Mento Router
         |
         | PaymentReceived event
         v
@@ -62,9 +66,11 @@ MCP verify_payment + Frontend checkout status</code></pre>
           <h3>MCP HTTP service</h3>
           <p>The MCP service exposes JSON-RPC tools, serves public metadata, protects write tools with an API key and signs protected backend requests with the configured agent key.</p>
           <h3>Backend API</h3>
-          <p>The backend creates payment requests, reads state, prepares transaction payloads, validates ERC-8004 signed requests, applies rate limits and writes normalized state to Supabase.</p>
+          <p>The backend creates payment requests, reads state, prepares transaction payloads, quotes Mento-first swaps across USDC, USDT and USDm, validates ERC-8004 signed requests, applies rate limits and writes normalized state to Supabase.</p>
           <h3>Contracts</h3>
-          <p><code>PaygridLink</code> stores request state. <code>PaygridRouter</code> coordinates settlement and emits payment events on Celo Mainnet.</p>
+          <p><code>PaygridLink</code> stores request state. <code>PaygridRouterV2</code> coordinates exact-token settlement, swap-enabled settlement and payment events on Celo Mainnet.</p>
+          <h3>Swap settlement path</h3>
+          <p>For cross-token payments, the backend returns an approval transaction and a <code>payWithSwap</code> transaction. <code>PaygridRouterV2</code> pulls the input stablecoin, calls an authorized Mento or fallback router, validates the settlement output, refunds excess output, splits the Paygrid fee in the settlement token and marks the link paid.</p>
           <h3>Indexer</h3>
           <p>The indexer watches <code>PaymentReceived</code> events from the router and updates confirmed payment records.</p>
           <h3>Supabase</h3>
@@ -77,6 +83,7 @@ MCP verify_payment + Frontend checkout status</code></pre>
             <tr><td>MCP to backend protected routes</td><td>ERC-8004 signed HTTP headers</td></tr>
             <tr><td>Backend to contracts</td><td>backend wallet / viem</td></tr>
             <tr><td>Contract settlement</td><td>Celo Mainnet</td></tr>
+            <tr><td>Swap execution</td><td>Authorized Mento / Uniswap router targets</td></tr>
             <tr><td>Payment status</td><td>indexer + Supabase + onchain events</td></tr>
           </table>
           <h2>ERC-8004 signed request format</h2>

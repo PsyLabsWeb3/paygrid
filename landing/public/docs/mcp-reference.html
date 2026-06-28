@@ -45,6 +45,8 @@
             <tr><th>Tool</th><th>Auth</th><th>Purpose</th></tr>
             <tr><td><code>create_payment_request</code></td><td>API key</td><td>Create an agent-owned payment request on Celo.</td></tr>
             <tr><td><code>get_payment_request</code></td><td>public</td><td>Fetch a payment request and its state.</td></tr>
+            <tr><td><code>quote_payment_request</code></td><td>public</td><td>Quote exact-token or swap-enabled payment settlement.</td></tr>
+            <tr><td><code>pay_payment_request</code></td><td>API key</td><td>Prepare exact-token or swap-enabled approval and payment transactions.</td></tr>
             <tr><td><code>verify_payment</code></td><td>public</td><td>Verify whether a payment request is paid.</td></tr>
             <tr><td><code>list_agent_requests</code></td><td>API key</td><td>List requests owned by the configured ERC-8004 agent.</td></tr>
             <tr><td><code>create_card_checkout</code></td><td>API key</td><td>Create a card-funded checkout session for an existing request.</td></tr>
@@ -63,10 +65,21 @@
   -H "content-type: application/json" \
   -H "authorization: Bearer &lt;PAYGRID_MCP_API_KEY&gt;" \
   -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"create_payment_request","arguments":{"amount":"10.00","token":"USDC","description":"Agent service payment","recipientAddress":"0x...","acceptedMethods":["crypto","card"]}}}'</code></pre>
+          <h2>Quote a payment request</h2>
+          <pre><code>curl -X POST https://mcp.celopaygrid.xyz/mcp \
+  -H "content-type: application/json" \
+  -d '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"quote_payment_request","arguments":{"id":"&lt;payment_request_id&gt;","payerToken":"USDT","maxSlippageBps":100}}}'</code></pre>
+          <p>Quotes support <code>USDC</code>, <code>USDT</code> and <code>USDm</code>. If the payer token differs from the request token, Paygrid returns a Mento-first swap quote.</p>
+          <h2>Prepare a payment</h2>
+          <pre><code>curl -X POST https://mcp.celopaygrid.xyz/mcp \
+  -H "content-type: application/json" \
+  -H "authorization: Bearer &lt;PAYGRID_MCP_API_KEY&gt;" \
+  -d '{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"pay_payment_request","arguments":{"id":"&lt;payment_request_id&gt;","payerToken":"USDT","maxSlippageBps":100,"preferExactToken":true}}}'</code></pre>
+          <p>The response includes approval and payment transaction payloads. The recipient still receives the settlement token requested by the link.</p>
           <h2>Verify payment</h2>
           <pre><code>curl -X POST https://mcp.celopaygrid.xyz/mcp \
   -H "content-type: application/json" \
-  -d '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"verify_payment","arguments":{"id":"&lt;payment_request_id&gt;"}}}'</code></pre>
+  -d '{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"verify_payment","arguments":{"id":"&lt;payment_request_id&gt;"}}}'</code></pre>
           <div class="doc-actions">
             <a class="pill-link" href="/docs/mcp-reference.md">Raw markdown</a>
             <a class="pill-link" href="/docs/security-model.html">Next: security model</a>

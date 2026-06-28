@@ -1,6 +1,6 @@
 # Celo PayGrid
 
-> Celo PayGrid is an MCP-based payment execution layer for AI agents on Celo Mainnet.
+> Celo PayGrid is an MCP-based payment execution layer for AI agents on Celo Mainnet with automatic USDC, USDT and USDm swap-enabled settlement.
 
 ## Core resources
 
@@ -20,9 +20,11 @@
 - Chain ID: 42220
 - Interface: Remote MCP
 - Discovery tool: get_agent_capabilities
-- Core use cases: payment request generation, transaction verification and agent-to-human payment workflows
+- Core use cases: payment request generation, stablecoin swap quotes, transaction verification and agent-to-human payment workflows
 - ERC-8004 Agent ID: 9497
 - Self Protocol Agent ID: 172
 - Self agent address: 0xEf3481bcDd48Db5FFdaF77A39F5f64BaDC957316
 - PaygridLink contract: 0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89
-- PaygridRouter contract: 0x2924FEf3eF7c3ADBFF22b286C42764a96c53f9f4
+- PaygridRouterV2 contract: 0x8d290c97100f0e87e04Efd1a790F27004fA3f08B
+- Mento Router: 0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6
+- Swap tools: quote_payment_request, pay_payment_request

@@ -57,13 +57,62 @@ Query params: `?cursor=<iso-timestamp>&limit=20&status=active&token=USDC`
 
 ## Payments
 
+### `POST /api/links/[id]/quote`
+
+Return the quote needed to pay a link with a selected stablecoin.
+
+```json
+{
+  "payerToken": "USDT",
+  "slippageBps": 100
+}
+```
+
+If the payer token matches the link token, Paygrid returns an exact-token quote:
+
+```json
+{
+  "paymentMode": "exact",
+  "payerToken": "USDC",
+  "settlementToken": "USDC",
+  "amountOut": "1000000",
+  "amountIn": "1000000",
+  "amountInMax": "1000000",
+  "minAmountOut": "1000000",
+  "priceImpact": "0",
+  "protocol": "none",
+  "swapTarget": null,
+  "expiresAt": "2026-06-28T13:54:13.946Z"
+}
+```
+
+If the payer token differs from the link token, Paygrid returns a swap quote. Mento is the primary route; Uniswap can be configured as fallback.
+
+```json
+{
+  "paymentMode": "swap",
+  "payerToken": "USDT",
+  "settlementToken": "USDC",
+  "amountOut": "1000000",
+  "amountIn": "1001469",
+  "amountInMax": "1011484",
+  "minAmountOut": "1000000",
+  "priceImpact": null,
+  "protocol": "mento",
+  "swapTarget": "0x4861840C2EfB2b98312B0aE34d86fD73E8f9B6f6",
+  "expiresAt": "2026-06-28T13:54:13.946Z"
+}
+```
+
 ### `POST /api/links/[id]/pay`
 
 Initiate a payment. For crypto, returns transaction params. For Fonbnk, returns session data.
 
 ```json
 {
-  "method": "crypto"
+  "method": "crypto",
+  "payerToken": "USDT",
+  "slippageBps": 100
 }
 ```
 
@@ -71,13 +120,29 @@ Crypto response:
 ```json
 {
   "method": "crypto",
-  "tx": {
+  "paymentMode": "swap",
+  "approveTx": {
+    "to": "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
+    "data": "0x...",
+    "value": "0",
+    "amount": "1011484",
+    "token": "USDT"
+  },
+  "payTx": {
     "to": "0x...",
     "data": "0x...",
     "value": "0"
+  },
+  "quote": {
+    "paymentMode": "swap",
+    "payerToken": "USDT",
+    "settlementToken": "USDC",
+    "protocol": "mento"
   }
 }
 ```
+
+For exact-token payments, `paymentMode` is `exact`. New clients should prefer `approveTx` and `payTx` when present. Older exact-token clients may still receive or use the legacy `tx` shape.
 
 Fonbnk response:
 ```json
@@ -235,6 +300,7 @@ All errors return a consistent JSON structure:
 | 400 | `VALIDATION_ERROR` | Invalid request body or params |
 | 400 | `INVALID_TOKEN` | Token not in supported list |
 | 400 | `INVALID_AMOUNT` | Amount ≤ 0 or exceeds max |
+| 400 | `INVALID_SLIPPAGE` | Swap slippage outside configured bounds |
 | 400 | `UNSUPPORTED_METHOD` | Payment method not accepted by link |
 | 401 | `UNAUTHORIZED` | Missing or invalid auth |
 | 403 | `FORBIDDEN` | Not the link owner |
@@ -244,6 +310,7 @@ All errors return a consistent JSON structure:
 | 429 | `RATE_LIMITED` | Too many requests |
 | 500 | `INTERNAL_ERROR` | Unexpected server error |
 | 502 | `FONBNK_ERROR` | Fonbnk API unavailable |
+| 503 | `SWAP_UNAVAILABLE` | No viable Mento or fallback swap route |
 | 402 | `PAYMENT_REQUIRED` | x402 payment challenge |
 
 ---
