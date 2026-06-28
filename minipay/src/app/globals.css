@@ -322,12 +322,28 @@ a {
   min-height: 42px;
   padding: 0 14px;
   border-radius: 999px;
+  border: 1px solid transparent;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   color: var(--ink);
   background: var(--panel-3);
   font-weight: 900;
+}
+
+.token-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.token-row .token-chip {
+  margin: 2px 0;
+}
+
+.token-chip.active {
+  background: #050505;
+  border-color: #2f2f2f;
 }
 
 .token-mark {
