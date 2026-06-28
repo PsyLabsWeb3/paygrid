@@ -7,7 +7,6 @@ import { erc20Abi, formatUnits, parseUnits } from "viem";
 import { useAccount, usePublicClient, useSendTransaction, useWriteContract } from "wagmi";
 import { StatusPill } from "@/components/status-pill";
 import { buildPayTx, createRampSession, getPaymentLink, quotePaymentLink, type PaymentLink, type SwapQuote } from "@/lib/api";
-import { appConfig } from "@/lib/env";
 import { redirectToMiniPayDeposit } from "@/lib/minipay";
 import { paymentTokens, tokenDecimals, tokenAddresses, type Stablecoin } from "@/lib/tokens";
 import { useQuery } from "@tanstack/react-query";
@@ -147,17 +146,23 @@ export function CheckoutView({ id }: { id: string }) {
         address: tokenAddress,
         abi: erc20Abi,
         functionName: "allowance",
-        args: [address, appConfig.paygridRouterAddress],
+        args: [address, payTx.to],
       });
 
       if (allowance < amountToApprove) {
         toast.message("Approval requested");
-        const approvalHash = await writeContractAsync({
-          address: tokenAddress,
-          abi: erc20Abi,
-          functionName: "approve",
-          args: [appConfig.paygridRouterAddress, amountToApprove],
-        });
+        const approvalHash = prepared.approveTx
+          ? await sendTransactionAsync({
+              to: prepared.approveTx.to,
+              data: prepared.approveTx.data,
+              value: BigInt(prepared.approveTx.value),
+            })
+          : await writeContractAsync({
+              address: tokenAddress,
+              abi: erc20Abi,
+              functionName: "approve",
+              args: [payTx.to, amountToApprove],
+            });
         toast.message("Confirming approval");
         await publicClient.waitForTransactionReceipt({ hash: approvalHash });
       }
