@@ -152,21 +152,25 @@ export function CheckoutView({ id }: { id: string }) {
 
       if (allowance < amountToApprove) {
         toast.message("Approval requested");
-        await writeContractAsync({
+        const approvalHash = await writeContractAsync({
           address: tokenAddress,
           abi: erc20Abi,
           functionName: "approve",
           args: [appConfig.paygridRouterAddress, amountToApprove],
         });
+        toast.message("Confirming approval");
+        await publicClient.waitForTransactionReceipt({ hash: approvalHash });
       }
 
-      toast.message("Payment requested");
-      await sendTransactionAsync({
+      toast.message("Sending payment");
+      const paymentHash = await sendTransactionAsync({
         to: payTx.to,
         data: payTx.data,
         value: BigInt(payTx.value),
       });
-      toast.success("Payment submitted");
+      toast.message("Confirming payment");
+      await publicClient.waitForTransactionReceipt({ hash: paymentHash });
+      toast.success("Payment sent");
       await query.refetch();
     } catch (error) {
       toast.error(getPaymentErrorMessage(error));
