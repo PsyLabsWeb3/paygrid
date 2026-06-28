@@ -65,6 +65,20 @@ If a link requests USDC and the payer only has USDT, Paygrid builds a `USDT -> U
 
 Agents can use `quote_payment_request` to inspect the route and `pay_payment_request` to prepare the approval and payment transactions.
 
+## Mainnet swap proof
+
+Paygrid has a live Celo Mainnet transaction proving the swap-enabled flow:
+
+| Item | Value |
+|---|---|
+| Transaction | [`0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5`](https://celoscan.io/tx/0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5) |
+| Flow | USDT payer token to USDC settlement token |
+| Router | `PaygridRouterV2` |
+| Swap route | Mento Router |
+| Recipient settlement | USDC |
+
+This transaction calls `PaygridRouterV2`, routes through Mento, emits `SwapPayment` and `PaymentReceived`, pays the recipient in USDC and marks the payment request as paid onchain.
+
 ## Mainnet contracts
 
 | Contract | Address |

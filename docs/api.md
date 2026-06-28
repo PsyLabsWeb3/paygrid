@@ -144,6 +144,8 @@ Crypto response:
 
 For exact-token payments, `paymentMode` is `exact`. New clients should prefer `approveTx` and `payTx` when present. Older exact-token clients may still receive or use the legacy `tx` shape.
 
+Mainnet swap proof: [`0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5`](https://celoscan.io/tx/0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5) shows a USDT payer-token payment routed through Mento and settled to the recipient in USDC via `PaygridRouterV2`.
+
 Fonbnk response:
 ```json
 {

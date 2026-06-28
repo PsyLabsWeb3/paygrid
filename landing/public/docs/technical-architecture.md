@@ -101,6 +101,8 @@ For cross-token payments, the backend creates a quote and returns:
 
 Mento is the primary route for supported stablecoin swaps. Uniswap can be configured as a fallback by environment variable.
 
+Mainnet proof: [`0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5`](https://celoscan.io/tx/0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5) shows a USDT payer-token payment routed through Mento and settled to the recipient in USDC via `PaygridRouterV2`.
+
 ### Indexer
 
 The indexer watches `PaymentReceived` events from the router and updates Supabase with confirmed payment records.

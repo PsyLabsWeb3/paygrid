@@ -188,7 +188,7 @@ function publicAgentMetadata() {
     ],
     contracts: {
       "paygridLink.celoMainnet": "0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89",
-      "paygridRouter.celoMainnet": "0x2924FEf3eF7c3ADBFF22b286C42764a96c53f9f4",
+      "paygridRouterV2.celoMainnet": "0x8d290c97100f0e87e04Efd1a790F27004fA3f08B",
       "treasurySafe.celoMainnet": "0xc0C019DCeCE7a3a235Ab520F394A57c132F90cD6",
     },
     framework: "Node.js MCP HTTP server, Hono/TypeScript backend, Foundry smart contracts, Supabase indexer, Next.js MiniPay checkout",

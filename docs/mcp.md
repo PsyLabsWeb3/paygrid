@@ -46,6 +46,8 @@ Example agent flow:
 get_payment_request -> quote_payment_request -> pay_payment_request -> verify_payment
 ```
 
+Mainnet swap proof: [`0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5`](https://celoscan.io/tx/0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5) shows a USDT payer-token payment routed through Mento and settled to the recipient in USDC via `PaygridRouterV2`.
+
 Example:
 
 ```json

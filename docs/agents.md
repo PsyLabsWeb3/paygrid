@@ -159,22 +159,30 @@ SELF_VERIFICATION_URL=https://app.ai.self.xyz
 
 Then recreate the MCP container so `https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json` reflects the verified Self status.
 
-## Celo DeFi Roadmap For Agent Spend
+## Celo DeFi And Swap-Aware Agent Spend
 
-Paygrid MCP currently exposes Celo DeFi context, not swap execution. The recommended next tools are:
+Paygrid MCP now exposes live swap-aware payment tools. Agents can quote and prepare a payment request with a preferred payer token, while the recipient still receives the settlement token requested by the link.
 
 | Tool | Status | Purpose |
 |---|---|---|
-| `quote_swap` | planned | Estimate conversion into the token required by a payment request. |
-| `prepare_swap` | planned | Return calldata for review without execution. |
-| `fund_payment_request` | planned | Swap if needed, then pay a request under policy limits. |
-| `get_agent_spend_limits` | planned | Show per-agent token, slippage, and daily-volume guardrails. |
+| `quote_payment_request` | live | Quote exact-token or swap-enabled settlement for USDC, USDT or USDm. |
+| `pay_payment_request` | live | Return approval and payment transaction payloads for exact-token or `payWithSwap` settlement. |
+| `get_celo_defi_context` | live | Return Celo DeFi context and recommended agent-spend routes. |
+| `fund_payment_request` | planned | Add policy-aware orchestration around quote, approval and payment execution. |
+| `get_agent_spend_limits` | planned | Show per-agent token, slippage and daily-volume guardrails. |
 | `set_agent_spend_policy` | planned | Admin-only policy configuration for autonomous spend. |
 
-Celo rails to prioritize:
+Mainnet proof:
 
-- Uniswap V3/V4 for general token routing.
-- Mento stablecoins for local-currency stablecoin routes.
+- Flow: USDT payer token to USDC settlement token.
+- Router: `PaygridRouterV2`.
+- Route: Mento.
+- Transaction: [`0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5`](https://celoscan.io/tx/0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5).
+
+Celo rails to prioritize next:
+
+- Mento for stablecoin routing across USDC, USDT and USDm.
+- Uniswap V3/V4 as a configurable fallback route where liquidity is available.
 - Aave V3/Morpho for future agent treasury and liquidity context.
 
 ## Security Model

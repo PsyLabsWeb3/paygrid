@@ -59,6 +59,8 @@ User opens link → checkout reads USDC/USDT/USDm balances
 → refunds excess output → splits fee in final token → marks link paid
 ```
 
+Mainnet proof: [`0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5`](https://celoscan.io/tx/0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5) shows a USDT payer-token payment routed through Mento and settled to the recipient in USDC via `PaygridRouterV2`.
+
 ### Fiat payment flow (Fonbnk)
 
 ```text

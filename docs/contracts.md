@@ -117,6 +117,10 @@ struct PaymentLink {
 
 Mento is the primary configured route for USDC, USDT and USDm swaps. Uniswap may be enabled as a fallback.
 
+### Mainnet swap proof
+
+A live Celo Mainnet transaction proves the V2 swap flow: [`0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5`](https://celoscan.io/tx/0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5). The transaction uses USDT as the payer token, routes through Mento, settles the payment request in USDC, emits `SwapPayment` and `PaymentReceived`, and marks the link paid onchain.
+
 ---
 
 ## Enums

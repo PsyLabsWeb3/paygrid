@@ -71,6 +71,17 @@
             <tr><td>USDm</td><td>18</td><td>Supported payer and settlement token</td></tr>
           </table>
           <p>Agents can call <code>quote_payment_request</code> to inspect the route and <code>pay_payment_request</code> to prepare approval and payment transactions.</p>
+          <h2>Mainnet swap proof</h2>
+          <p>Paygrid has a live Celo Mainnet transaction proving the swap-enabled flow.</p>
+          <table>
+            <tr><th>Item</th><th>Value</th></tr>
+            <tr><td>Transaction</td><td><a href="https://celoscan.io/tx/0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5" target="_blank" rel="noreferrer"><code>0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5</code></a></td></tr>
+            <tr><td>Flow</td><td>USDT payer token to USDC settlement token</td></tr>
+            <tr><td>Router</td><td><code>PaygridRouterV2</code></td></tr>
+            <tr><td>Swap route</td><td>Mento Router</td></tr>
+            <tr><td>Recipient settlement</td><td>USDC</td></tr>
+          </table>
+          <p>The transaction calls <code>PaygridRouterV2</code>, routes through Mento, emits <code>SwapPayment</code> and <code>PaymentReceived</code>, pays the recipient in USDC and marks the payment request as paid onchain.</p>
           <h2>Mainnet contracts</h2>
           <table>
             <tr><th>Contract</th><th>Address</th></tr>

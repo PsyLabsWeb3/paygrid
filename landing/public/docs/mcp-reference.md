@@ -101,7 +101,7 @@ curl -X POST https://mcp.celopaygrid.xyz/mcp \
   -d '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"quote_payment_request","arguments":{"id":"<payment_request_id>","payerToken":"USDT","maxSlippageBps":100}}}'
 ```
 
-Quotes support `USDC`, `USDT` and `USDm`. If the payer token differs from the request token, Paygrid returns a Mento-first swap quote.
+Quotes support `USDC`, `USDT` and `USDm`. If the payer token differs from the request token, Paygrid returns a Mento-first swap quote. Mainnet proof: [`0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5`](https://celoscan.io/tx/0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5) shows USDT routed through Mento and settled as USDC.
 
 ## Prepare a payment
 

@@ -71,6 +71,7 @@ MCP verify_payment + Frontend checkout status</code></pre>
           <p><code>PaygridLink</code> stores request state. <code>PaygridRouterV2</code> coordinates exact-token settlement, swap-enabled settlement and payment events on Celo Mainnet.</p>
           <h3>Swap settlement path</h3>
           <p>For cross-token payments, the backend returns an approval transaction and a <code>payWithSwap</code> transaction. <code>PaygridRouterV2</code> pulls the input stablecoin, calls an authorized Mento or fallback router, validates the settlement output, refunds excess output, splits the Paygrid fee in the settlement token and marks the link paid.</p>
+          <p>Mainnet proof: <a href="https://celoscan.io/tx/0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5" target="_blank" rel="noreferrer"><code>0xef8a70228255479df5b42ad57aa708a14b108faff4725c0cbcb4e1a4439ce4d5</code></a> shows a USDT payer-token payment routed through Mento and settled to the recipient in USDC via <code>PaygridRouterV2</code>.</p>
           <h3>Indexer</h3>
           <p>The indexer watches <code>PaymentReceived</code> events from the router and updates confirmed payment records.</p>
           <h3>Supabase</h3>
