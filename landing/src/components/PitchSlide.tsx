@@ -1,0 +1,145 @@
+import React from "react";
+import { slides } from "./pitchDeckData";
+import WorkflowDiagram from "./WorkflowDiagram";
+import PaymentIntentGrid from "./PaymentIntentGrid";
+import RoadmapCards from "./RoadmapCards";
+import DistributionNetwork from "./DistributionNetwork";
+
+export default function PitchSlide({
+  slide,
+}: {
+  slide: (typeof slides)[number];
+}) {
+  // Intro/cover slide — large centered title only
+  if ((slide as any).isIntro) {
+    return (
+      <article className="pitch-slide pitch-slide--intro">
+        <h2 className="pitch-intro-title">{slide.title}</h2>
+        {slide.subtitle ? (
+          <p className="pitch-intro-sub">{slide.subtitle}</p>
+        ) : null}
+        {slide.badges ? (
+          <div
+            className="badge-row"
+            style={{ justifyContent: "center", marginTop: 28 }}
+          >
+            {slide.badges.map((b: string) => (
+              <span className="status-badge" key={b}>
+                {b}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        {slide.stats ? (
+          <div className="pitch-stats pitch-stats--intro">
+            {slide.stats.map((stat: { value: string; label: string }) => (
+              <div className="pitch-stat" key={stat.label}>
+                <strong>{stat.value}</strong>
+                <span>{stat.label}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </article>
+    );
+  }
+
+  return (
+    <article className={`pitch-slide pitch-slide--${slide.id} panel-card`}>
+      <header>
+        <h3>{slide.title}</h3>
+        {slide.subtitle ? <p className="subhead">{slide.subtitle}</p> : null}
+        {slide.badges ? (
+          <div className="badge-row">
+            {slide.badges.map((b: string) => (
+              <span className="status-badge" key={b}>
+                {b}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        {slide.stats ? (
+          <div className="pitch-stats pitch-stats--header">
+            {slide.stats.map((stat: { value: string; label: string }) => (
+              <div className="pitch-stat" key={stat.label}>
+                <strong>{stat.value}</strong>
+                <span>{stat.label}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </header>
+      <div className="slide-body">
+        {slide.body ? <p>{slide.body}</p> : null}
+        {slide.steps ? (
+          <ol>
+            {slide.steps.map((s: string, i: number) => (
+              <li key={i}>{s}</li>
+            ))}
+          </ol>
+        ) : null}
+        {slide.items ? (
+          <div className="intent-grid compact">
+            {slide.items.map((item: string) => (
+              <div key={item} className="intent-card panel-card">
+                <strong>{item}</strong>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        {slide.columns ? (
+          <div className="two-col">
+            <ul>
+              {slide.columns.left.map((c: string) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
+            <ul>
+              {slide.columns.right.map((c: string) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {slide.scene === "workflow" ? <WorkflowDiagram /> : null}
+        {slide.scene === "paymentFlow" ? (
+          <div className="payment-flow-strip" aria-label="Payment collection flow">
+            <span>Invoice</span>
+            <span>Request</span>
+            <span>Pay</span>
+            <span>Verify</span>
+            <span>Reconcile</span>
+          </div>
+        ) : null}
+        {slide.scene === "intents" && !slide.items ? <PaymentIntentGrid compact /> : null}
+        {slide.scene === "distribution" ? <DistributionNetwork /> : null}
+        {slide.roadmap ? (
+          <RoadmapCards items={slide.roadmap} note={slide.note} />
+        ) : null}
+        {["onramp", "reconciliation", "whatsapp", "payments"].includes(slide.scene || "") ? (
+          <div className={`pitch-mini-graphic pitch-mini-graphic--${slide.scene}`} aria-hidden>
+            <span />
+            <span />
+            <span />
+          </div>
+        ) : null}
+
+        {slide.example ? <blockquote>{slide.example}</blockquote> : null}
+        {slide.highlight ? (
+          <p className="highlight">{slide.highlight}</p>
+        ) : null}
+      </div>
+      {slide.cta ? (
+        <footer className="slide-cta">
+          <a className="primary-action" href="#developers">
+            Connect Celo PayGrid MCP
+          </a>
+          <a className="secondary-action" href="#docs">
+            Explore the roadmap
+          </a>
+        </footer>
+      ) : null}
+    </article>
+  );
+}

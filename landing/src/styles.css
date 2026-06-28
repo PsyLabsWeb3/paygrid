@@ -1061,3 +1061,487 @@ blockquote {
     border-radius: 28px;
   }
 }
+
+/* Pitch deck shared styles */
+.intent-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, 1fr);
+}
+.intent-grid.compact {
+  grid-template-columns: 1fr 1fr;
+}
+.intent-card {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+}
+.payment-flow-strip {
+  width: min(720px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.payment-flow-strip span {
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--panel-2);
+  color: var(--soft);
+  font-size: clamp(0.72rem, 1vw, 0.92rem);
+  font-weight: 900;
+  line-height: 1.1;
+}
+.workflow-diagram {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(8, 16, 0, 0.04);
+  border: 1px solid var(--line);
+}
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.slide-progress .progress-bar {
+  height: 8px;
+  background: var(--panel-2);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 20rem;
+}
+.slide-progress .fill {
+  height: 8px;
+  background: var(--lime);
+  box-shadow: 0 8px 32px rgba(183, 255, 26, 0.18);
+}
+.agent-scene-small {
+  min-height: 220px;
+}
+
+/* Presentation mode styles */
+.pitchdeck-open main {
+  background: var(--bg);
+}
+.pitchdeck {
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+}
+.pitch-shell {
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 280px;
+  gap: 0;
+  margin: 0;
+  overflow: hidden;
+  /* neutralize section-shell max-width */
+  max-width: none;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+.pitch-canvas {
+  grid-row: 2;
+  height: 280px;
+  border-top: 1px solid var(--line);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--panel);
+  margin-top: 20rem;
+}
+.pitch-content {
+  grid-row: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+.pitch-slide {
+  width: min(1100px, 90vw);
+  height: min(78vh, 760px);
+  max-height: calc(100vh - 150px);
+  padding: clamp(18px, 3.2vw, 40px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  overflow: hidden;
+  margin: 0 auto;
+}
+.pitch-slide header {
+  text-align: center;
+}
+.pitch-slide h3 {
+  font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+  line-height: 1.1;
+  margin: 0 0 16px 0;
+  font-weight: 950;
+}
+.pitch-slide .subhead {
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  color: var(--soft);
+  margin: 0 0 20px 0;
+  font-weight: 600;
+}
+.pitch-slide .slide-body {
+  width: min(100%, 1000px);
+  max-width: 1000px;
+  display: grid;
+  gap: clamp(10px, 1.4vw, 16px);
+  margin: clamp(10px, 1.8vw, 20px) 0 0 0;
+}
+.pitch-slide p {
+  font-size: clamp(1rem, 1.8vw, 1.4rem);
+  color: var(--soft);
+  line-height: 1.6;
+  margin: 0;
+}
+.pitch-slide ol,
+.pitch-slide ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+  text-align: left;
+  margin-left: auto;
+  margin-right: auto;
+}
+.pitch-slide li {
+  font-size: clamp(0.95rem, 1.7vw, 1.2rem);
+  color: var(--soft);
+  line-height: 1.5;
+}
+.pitch-slide blockquote {
+  max-width: 700px;
+  margin: clamp(8px, 1.2vw, 16px) auto 0;
+  font-size: clamp(0.95rem, 1.45vw, 1.2rem);
+}
+
+.pitch-slide .badge-row {
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.pitch-stats {
+  width: min(900px, 100%);
+  margin: clamp(12px, 1.8vw, 22px) auto 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pitch-stat {
+  min-height: 86px;
+  padding: 14px 16px;
+  border: 1px solid rgba(183, 255, 26, 0.28);
+  border-radius: 20px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(183, 255, 26, 0.22), transparent 52%),
+    rgba(183, 255, 26, 0.06);
+  box-shadow: 0 18px 55px rgba(183, 255, 26, 0.08);
+}
+
+.pitch-stat strong {
+  color: var(--lime);
+  font-size: clamp(1.35rem, 3vw, 2.5rem);
+  line-height: 0.9;
+  font-weight: 950;
+}
+
+.pitch-stat span {
+  color: var(--soft);
+  font-size: clamp(0.72rem, 1vw, 0.88rem);
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.pitch-mini-graphic {
+  width: min(720px, 100%);
+  min-height: 78px;
+  margin: 0 auto;
+  border: 1px solid rgba(183, 255, 26, 0.22);
+  border-radius: 999px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background:
+    linear-gradient(90deg, rgba(183, 255, 26, 0.14), transparent 45%, rgba(183, 255, 26, 0.12)),
+    var(--panel);
+  overflow: hidden;
+  position: relative;
+}
+
+.pitch-mini-graphic::before {
+  content: "";
+  position: absolute;
+  left: -20%;
+  top: 50%;
+  width: 26%;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--lime);
+  box-shadow: 0 0 30px rgba(183, 255, 26, 0.7);
+  animation: flow 3.6s linear infinite;
+}
+
+.pitch-mini-graphic span {
+  min-height: 46px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--soft);
+  font-size: 0.82rem;
+  font-weight: 950;
+  z-index: 1;
+}
+
+.pitch-mini-graphic span:nth-child(1)::after { content: "Business context"; }
+.pitch-mini-graphic span:nth-child(2)::after { content: "Payment execution"; }
+.pitch-mini-graphic span:nth-child(3)::after { content: "Verified record"; }
+.pitch-mini-graphic--onramp span:nth-child(1)::after { content: "Card / bank / cash"; }
+.pitch-mini-graphic--onramp span:nth-child(2)::after { content: "Stablecoin settlement"; }
+.pitch-mini-graphic--onramp span:nth-child(3)::after { content: "MXN cash-out path"; }
+.pitch-mini-graphic--whatsapp span:nth-child(1)::after { content: "WhatsApp quote"; }
+.pitch-mini-graphic--whatsapp span:nth-child(2)::after { content: "PayGrid request"; }
+.pitch-mini-graphic--whatsapp span:nth-child(3)::after { content: "Yacamba order"; }
+.pitch-mini-graphic--payments span:nth-child(1)::after { content: "External agent"; }
+.pitch-mini-graphic--payments span:nth-child(2)::after { content: "PayGrid MCP"; }
+.pitch-mini-graphic--payments span:nth-child(3)::after { content: "Yacamba business"; }
+
+.pitch-slide--4 {
+  justify-content: flex-start;
+  gap: clamp(8px, 1.1vw, 14px);
+  padding-top: clamp(34px, 5.8vw, 102px);
+}
+
+.pitch-slide--4 header {
+  max-width: 980px;
+}
+
+.pitch-slide--4 .pitch-stats {
+  width: min(620px, 100%);
+  margin-top: clamp(8px, 1vw, 12px);
+}
+
+.pitch-slide--4 .pitch-stat {
+  min-height: 58px;
+  padding: 9px 12px;
+}
+
+.pitch-slide--4 .pitch-stat strong {
+  font-size: clamp(1.05rem, 2vw, 1.55rem);
+}
+
+.pitch-slide--4 h3 {
+  max-width: 980px;
+  font-size: clamp(1.95rem, 4.7vw, 4.25rem);
+  line-height: 0.98;
+  margin-bottom: clamp(10px, 1.5vw, 18px);
+}
+
+.pitch-slide--4 .slide-body {
+  width: min(820px, 100%);
+  gap: clamp(10px, 1.2vw, 14px);
+  margin-top: 0rem;
+}
+
+.pitch-slide--4 ol {
+  width: min(560px, 100%);
+  gap: clamp(6px, 0.9vw, 10px);
+}
+
+.pitch-slide--4 li {
+  font-size: clamp(0.9rem, 1.35vw, 1.08rem);
+  line-height: 1.35;
+}
+
+.pitch-slide--4 blockquote {
+  width: min(700px, 100%);
+  max-height: none;
+  padding: clamp(12px, 1.4vw, 16px) clamp(14px, 1.8vw, 20px);
+  font-size: clamp(0.88rem, 1.22vw, 1.08rem);
+  line-height: 1.38;
+}
+
+.deck-nav {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  z-index: 60;
+  margin-top: 20rem;
+}
+
+.slide-progress {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 90px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.slide-progress .progress-bar {
+  width: 520px;
+}
+
+.deck-nav button {
+  opacity: 0.98;
+}
+
+@media (max-width: 1024px) {
+  .pitch-shell {
+    grid-template-rows: 1fr 240px;
+  }
+  .pitch-canvas {
+    height: 240px;
+  }
+  .pitch-slide {
+    height: min(78vh, 700px);
+    padding: 30px;
+    width: min(900px, 88vw);
+  }
+  .pitch-slide h3 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+  }
+  .slide-progress .progress-bar {
+    width: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pitch-shell {
+    grid-template-rows: 1fr 200px;
+  }
+  .pitch-canvas {
+    height: 200px;
+    padding: 12px;
+  }
+  .pitch-slide {
+    height: min(76vh, 640px);
+    padding: 20px;
+    width: min(90vw, 100%);
+  }
+  .pitch-slide--4 {
+    padding-top: clamp(28px, 5vw, 44px);
+  }
+  .pitch-slide--4 h3 {
+    font-size: clamp(1.65rem, 6.2vw, 2.8rem);
+  }
+  .pitch-stats {
+    grid-template-columns: 1fr;
+  }
+  .pitch-stat {
+    min-height: 68px;
+  }
+  .pitch-mini-graphic {
+    border-radius: 24px;
+    grid-template-columns: 1fr;
+  }
+  .payment-flow-strip {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .pitch-slide h3 {
+    font-size: clamp(1.6rem, 4.5vw, 2.8rem);
+  }
+  .pitch-slide p {
+    font-size: clamp(0.95rem, 1.6vw, 1.2rem);
+  }
+  .deck-nav {
+    bottom: 20px;
+  }
+  .slide-progress {
+    bottom: 70px;
+  }
+  .slide-progress .progress-bar {
+    width: 280px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pitch-shell {
+    grid-template-rows: 1fr 160px;
+  }
+  .pitch-canvas {
+    height: 160px;
+  }
+  .pitch-slide {
+    height: min(76vh, 590px);
+    padding: 12px;
+  }
+  .pitch-slide--4 {
+    padding-top: 22px;
+  }
+  .pitch-slide--4 .slide-body {
+    gap: 7px;
+  }
+  .pitch-slide--4 ol {
+    gap: 5px;
+  }
+  .pitch-stats {
+    gap: 6px;
+  }
+  .pitch-stat {
+    min-height: 58px;
+    padding: 9px 10px;
+  }
+  .pitch-mini-graphic {
+    min-height: 0;
+    padding: 6px;
+    gap: 5px;
+  }
+  .pitch-mini-graphic span {
+    min-height: 32px;
+    font-size: 0.7rem;
+  }
+  .payment-flow-strip {
+    gap: 5px;
+  }
+  .payment-flow-strip span {
+    min-height: 34px;
+    padding: 0 6px;
+  }
+  .pitch-slide--4 blockquote {
+    padding: 10px 12px;
+  }
+  .pitch-slide h3 {
+    font-size: 1.5rem;
+  }
+  .pitch-slide p {
+    font-size: 1rem;
+  }
+  .slide-progress .progress-bar {
+    width: 200px;
+  }
+}
