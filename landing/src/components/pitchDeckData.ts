@@ -3,69 +3,69 @@ export const slides = [
     id: 0,
     title: "Celo PayGrid + Yacamba",
     subtitle:
-      "Agent collections, reconciliation and swap-enabled settlement for real businesses in Mexico and LatAm.",
+      "Programmable USD stablecoin infrastructure embedded inside ERP/CRM systems and operated by agents.",
     isIntro: true,
     badges: [
       "Celo Mainnet",
       "Remote MCP",
+      "Business Agent Accounts",
       "Yacamba ERP/CRM",
-      "Agent Collections",
-      "Mento + Uniswap routes",
+      "Mento-routed settlement",
     ],
     stats: [
+      {
+        value: "Intent -> Payment",
+        label: "agentic business workflows",
+      },
       {
         value: "MCP",
         label: "agent execution layer",
       },
       {
-        value: "Intent → Payment",
-        label: "agentic business workflows",
-      },
-      {
-        value: "Any stablecoin",
-        label: "Mento-routed auto-swaps",
+        value: "Business Agent Accounts",
+        label: "USDC, USDT, USDm",
       },
     ],
   },
   {
     id: 1,
-    title: "The wedge is business operations.",
+    title: "The wedge is invisible business finance.",
     subtitle:
-      "Agent payments become useful when they collect invoices and reconcile records inside ERP/CRM workflows.",
-    badges: ["Business workflows", "Agent infrastructure", "Swap routing"],
+      "Companies should use digital dollars through the software they already run, not through a crypto experience.",
+    badges: ["ERP/CRM workflows", "Agent infrastructure", "Celo settlement"],
     stats: [
       {
         value: "ERP",
-        label: "business workflows",
+        label: "business context",
       },
       {
         value: "MCP",
-        label: "agent infrastructure",
+        label: "agent execution",
       },
       {
-        value: "Mento",
-        label: "auto-swap route",
+        value: "Celo",
+        label: "programmable USD rails",
       },
     ],
-    body: "Yacamba is building an agent-managed CRM, ERP and business control center for SMEs in Mexico and LatAm. Together, Yacamba and PayGrid enable the next generation of agentic business workflows.",
+    body: "Yacamba is building an agent-managed CRM, ERP and business control center for SMEs in Mexico and LatAm. PayGrid adds the financial infrastructure layer: agent-managed balances, payment execution, swaps, policies and reconciliation.",
     scene: "distribution",
   },
   {
     id: 2,
     title: "Mexico is mobile-first, but business payments are still hard to reconcile.",
     subtitle:
-      "The opportunity is cleaner payment operations for SMEs: collect faster, match payments correctly and update business records automatically.",
+      "The adoption hook is not crypto. It is faster payment operations for SMEs: collect, match and update records automatically.",
     body: "Agentic payment adoption will come from business automation systems that do not feel like crypto: agents collecting, verifying and updating records inside the workflows companies already use.",
     columns: {
       left: [
         "Millions of Mexican SMEs",
         "WhatsApp as daily commerce channel",
-        "Fragmented payment habits",
+        "Cross-border payment friction",
       ],
       right: [
         "Manual reconciliation is common",
         "Agents need trusted payment evidence",
-        "Celo stablecoins create fast settlement rails",
+        "Celo stablecoins create fast USD rails",
       ],
     },
     stats: [
@@ -74,8 +74,8 @@ export const slides = [
         label: "core market",
       },
       {
-        value: "WhatsApp",
-        label: "daily workflow",
+        value: "USD",
+        label: "international payments",
       },
       {
         value: "ERP records",
@@ -86,16 +86,16 @@ export const slides = [
   {
     id: 3,
     title: "Yacamba Agent Collections.",
-    subtitle: "An agent that can collect, not just remind.",
+    subtitle: "The first adoption path: an agent that can collect, verify and reconcile.",
     steps: [
       "Detect overdue invoice or pending deposit",
-      "Create PayGrid payment intent",
-      "Customer pays with available rail",
-      "Verify Celo settlement",
-      "Update Yacamba receivables",
+      "Create a PayGrid payment workflow",
+      "Customer pays with the best available rail",
+      "PayGrid verifies Celo settlement",
+      "Yacamba updates receivables automatically",
     ],
     example:
-      "The invoice closes with a transaction hash, net amount and status instead of a screenshot.",
+      "The invoice closes with a transaction hash, net amount and status instead of a screenshot or manual bank match.",
     stats: [
       {
         value: "5",
@@ -137,29 +137,29 @@ export const slides = [
     id: 5,
     title: "Business Agent Accounts.",
     subtitle:
-      "ERP, CRM and agent platforms need programmable balances their agents can operate safely.",
-    body: "PayGrid can expose agent-managed stablecoin accounts as infrastructure for business software and autonomous agents: receive payments, hold balances, route swaps, enforce spending policies and reconcile activity back into the system of record.",
+      "Stablecoin business accounts embedded inside ERP/CRM systems and operated by agents.",
+    body: "Businesses can receive international payments and manage USD stablecoin balances through their existing business software. PayGrid handles wallets, settlement, swaps, policies and reconciliation behind the scenes, so companies use Celo without needing to feel like crypto users.",
     stats: [
       {
-        value: "Balances",
+        value: "Digital dollars",
         label: "USDC, USDT, USDm",
       },
       {
-        value: "Policies",
-        label: "limits and approvals",
+        value: "Cross-border",
+        label: "faster business settlement",
       },
       {
-        value: "ERP-linked",
-        label: "agent-managed treasury",
+        value: "Invisible crypto",
+        label: "agents operate the rails",
       },
     ],
     items: [
-      "receive stablecoin payments",
-      "track business balances",
+      "receive USD stablecoin payments",
+      "hold business balances",
       "route Mento auto-swaps",
-      "set spend limits",
-      "request human approval",
-      "sync ERP records",
+      "enforce spending policies",
+      "request human approvals",
+      "sync ERP/CRM records",
     ],
     highlight:
       "This becomes a reusable financial operating layer for agents, with Yacamba as the first ERP/CRM adoption path rather than the only integration.",
@@ -169,8 +169,8 @@ export const slides = [
     id: 6,
     title: "One command to connect agents to Celo commerce.",
     subtitle:
-      "PayGrid can become the MCP onboarding layer for agents beyond Yacamba.",
-    body: "The next builder-facing milestone is a CLI that configures the existing remote Celo PayGrid MCP server inside compatible agent clients, so developers can connect payment execution, swaps and settlement verification without manual setup.",
+      "The MCP layer turns PayGrid into infrastructure other builders and agents can install.",
+    body: "A future CLI can configure the existing remote Celo PayGrid MCP server inside compatible agent clients, so developers can connect payment execution, Business Agent Accounts, swaps and settlement verification without manual setup.",
     stats: [
       {
         value: "npx init",
@@ -200,9 +200,9 @@ export const slides = [
   },
   {
     id: 7,
-    title: "Swaps become agent spend infrastructure.",
+    title: "Swaps make USD balances usable by agents.",
     subtitle:
-      "Starting with payments. Expanding into standalone agent swap tools.",
+      "Businesses can settle in one token while payers and agents use another.",
     stats: [
       {
         value: "Mento",
@@ -214,7 +214,7 @@ export const slides = [
       },
       {
         value: "Policy",
-        label: "future guardrails",
+        label: "limits and allowlists",
       },
     ],
     items: [
@@ -222,7 +222,7 @@ export const slides = [
       "prepare payWithSwap",
       "verify settlement",
       "quote standalone swap",
-      "prepare standalone swap",
+      "prepare agent swap",
       "enforce slippage",
     ],
     scene: "intents",
@@ -230,8 +230,8 @@ export const slides = [
   {
     id: 8,
     title: "On/offramp orchestration expands reach.",
-    subtitle: "Customers should not need to understand stablecoins.",
-    body: "The agent can present the best available rail: stablecoin, card-funded checkout, bank/cash provider or future MiniPay card rails. Yacamba receives a reconciled record.",
+    subtitle: "Customers and businesses should not need to understand stablecoins.",
+    body: "An agent can present the best available rail: stablecoin, card-funded checkout, bank/cash provider, future MiniPay card rails or future MXN cash-out paths. The business receives a reconciled record, not a crypto support burden.",
     stats: [
       {
         value: "Card",
@@ -250,10 +250,10 @@ export const slides = [
   },
   {
     id: 9,
-    title: "Make Yacamba companies payable by agents.",
+    title: "ERP/CRM systems become reachable by agents.",
     subtitle:
-      "External agents can pay invoices, book services or trigger business actions.",
-    body: "PayGrid becomes the payment and verification interface between autonomous agents and real-world companies that use Yacamba.",
+      "External agents can pay invoices, fund accounts, book services or trigger business actions.",
+    body: "PayGrid becomes the payment execution and verification interface between autonomous agents and real-world companies using Yacamba or any future ERP/CRM integration.",
     stats: [
       {
         value: "A2B",
@@ -265,20 +265,20 @@ export const slides = [
       },
       {
         value: "x402",
-        label: "paid APIs",
+        label: "paid agent services",
       },
     ],
     scene: "payments",
   },
   {
     id: 10,
-    title: "Frontier roadmap: agent commerce infrastructure.",
+    title: "Frontier roadmap: Business Agent Accounts.",
     subtitle:
-      "Milestones focused on tools other builders, ERPs, CRMs and agents can actually depend on.",
+      "Milestones focused on infrastructure other builders, ERPs, CRMs and agents can actually depend on.",
     stats: [
       {
-        value: "MCP",
-        label: "agent integration surface",
+        value: "Accounts",
+        label: "agent-managed balances",
       },
       {
         value: "ERC-8004",
@@ -291,8 +291,8 @@ export const slides = [
     ],
     roadmap: [
       {
-        title: "1. Agent onboarding CLI",
-        body: "npx init for Claude Code, Codex, VS Code and future MCP clients.",
+        title: "1. Business Agent Accounts",
+        body: "USD stablecoin balances embedded in ERP/CRM systems and operated by agents.",
       },
       {
         title: "2. ERP/CRM adapters",
@@ -303,23 +303,23 @@ export const slides = [
         body: "Create, collect, verify and close invoices through agent-readable workflows.",
       },
       {
-        title: "4. Business Agent Accounts",
-        body: "Stablecoin balances, policy-controlled spend and ERP-linked reconciliation.",
-      },
-      {
-        title: "5. Swap-aware spend",
+        title: "4. Swap-aware spend",
         body: "Mento-first routes, Uniswap fallback and standalone swap tools for agents.",
       },
       {
-        title: "6. Spending policies",
+        title: "5. Spending policies",
         body: "Limits, approvals, token allowlists and human confirmation thresholds.",
+      },
+      {
+        title: "6. Agent onboarding CLI",
+        body: "npx init for Claude Code, Codex, VS Code and future MCP clients.",
       },
       {
         title: "7. Paid agent services",
         body: "Agents can charge, unlock and consume services through x402-gated workflows.",
       },
       {
-        title: "8. Agent reputation ledger",
+        title: "8. Reputation ledger",
         body: "Turn successful settlements into portable trust signals for agents and businesses.",
       },
     ],
@@ -327,24 +327,24 @@ export const slides = [
   },
   {
     id: 11,
-    title: "Activation path: 10 workflows → 100 businesses.",
-    subtitle: "Yacamba gives PayGrid a real distribution channel.",
+    title: "Activation path: 10 workflows -> 100 businesses.",
+    subtitle: "Yacamba gives PayGrid a real distribution channel into SME operations.",
     roadmap: [
       {
         title: "1. Collections pilot",
         body: "Overdue invoices, deposits and renewals.",
       },
       {
-        title: "2. Reconciliation loop",
-        body: "Invoice, tx hash, fee, net amount and status.",
+        title: "2. Business balances",
+        body: "Receive, hold and reconcile USDC, USDT and USDm.",
       },
       {
         title: "3. Swap abstraction",
-        body: "Mento-first routing, Uniswap fallback, standalone swap tools and MXN local-stablecoin readiness if/when a Celo MXN asset becomes available.",
+        body: "Mento-first routing, Uniswap fallback and MXN local-stablecoin readiness if/when a Celo MXN asset becomes available.",
       },
       {
         title: "4. Builder distribution",
-        body: "MCP docs, agent card and Yacamba integration examples.",
+        body: "MCP docs, agent card, CLI onboarding and Yacamba integration examples.",
       },
     ],
     stats: [
@@ -368,7 +368,7 @@ export const slides = [
     title: "One ERP integration can activate a business network.",
     subtitle:
       "Yacamba turns PayGrid from infrastructure demo into adoption engine.",
-    body: "Each participating business becomes reachable by agents, payable through Celo rails and auditable through settlement evidence.",
+    body: "Each participating business can receive digital dollars, become reachable by agents, settle through Celo rails and keep auditable records inside its existing business software.",
     stats: [
       {
         value: "1",
@@ -376,7 +376,7 @@ export const slides = [
       },
       {
         value: "N",
-        label: "business workflows",
+        label: "business accounts",
       },
       {
         value: "∞",

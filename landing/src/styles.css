@@ -1747,10 +1747,48 @@ blockquote {
   }
 }
 
+
+/* Compact Frontier roadmap slide: 8 cards must fit as a 4x2 grid */
 .pitch-slide--10 .roadmap-cards {
-  margin-top: clamp(14px, 2.2vh, 28px);
+  margin-top: clamp(8px, 1.4vh, 16px);
+  width: min(1040px, 100%);
+}
+
+.pitch-slide--10 .roadmap-note {
+  font-size: clamp(0.74rem, 0.95vw, 0.9rem);
+  line-height: 1.25;
+  margin-bottom: clamp(8px, 1.2vh, 14px);
 }
 
 .pitch-slide--10 .roadmap-cards .card-grid {
-  margin-top: clamp(10px, 1.8vh, 22px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 0;
+}
+
+.pitch-slide--10 .roadmap-cards .panel-card {
+  min-height: 122px;
+  padding: 12px 10px;
+  border-radius: 18px;
+  display: grid;
+  align-content: center;
+  gap: 5px;
+}
+
+.pitch-slide--10 .roadmap-cards h4 {
+  margin: 0;
+  font-size: clamp(0.78rem, 0.95vw, 0.98rem);
+  line-height: 1.15;
+}
+
+.pitch-slide--10 .roadmap-cards p {
+  margin: 0;
+  font-size: clamp(0.72rem, 0.88vw, 0.9rem);
+  line-height: 1.28;
+}
+
+@media (max-width: 1024px) {
+  .pitch-slide--10 .roadmap-cards .card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
