@@ -268,8 +268,8 @@ p {
 h1 {
   margin-bottom: 22px;
   max-width: 760px;
-  font-size: clamp(3.5rem, 8vw, 7.8rem);
-  line-height: 0.88;
+  font-size: clamp(2.9rem, 6.2vw, 5.9rem);
+  line-height: 0.92;
   font-weight: 950;
 }
 
@@ -1002,7 +1002,7 @@ blockquote {
   }
 
   h1 {
-    font-size: clamp(3rem, 17vw, 4.9rem);
+    font-size: clamp(2.65rem, 13vw, 4rem);
   }
 
   .hero-actions,

@@ -21,7 +21,7 @@ export const site = {
   name: "Celo PayGrid",
   title: "Celo PayGrid for AI Agents | MCP Payments on Celo",
   description:
-    "Connect AI agents to Celo PayGrid through MCP to create payment requests, quote stablecoin swaps, coordinate payment workflows and verify settlement on Celo Mainnet.",
+    "Connect AI agents, ERP/CRM systems and builders to programmable USD stablecoin infrastructure on Celo through Celo PayGrid MCP.",
   url: "https://web.celopaygrid.xyz",
   canonical: "https://www.celopaygrid.xyz",
   mcpEndpoint: "https://mcp.celopaygrid.xyz/mcp",
@@ -40,12 +40,12 @@ export const navItems = [
   { label: "FAQ", href: "#faq" },
 ];
 
-export const badges = ["Live on Celo Mainnet", "Mento swaps", "Remote MCP", "Verifiable Settlement"];
+export const badges = ["Live on Celo Mainnet", "Remote MCP", "Business Agent Accounts", "Mento swaps"];
 
 export const capabilities = [
   {
-    title: "Create payment requests",
-    body: "Generate payment links for services, invoices, creators, merchants or human work.",
+    title: "Create business payment workflows",
+    body: "Create agent-readable payment workflows for invoices, services, business balances and collections.",
     tool: "create_payment_request",
     icon: Link2,
   },
@@ -68,9 +68,9 @@ export const capabilities = [
     icon: CreditCard,
   },
   {
-    title: "Review payment activity",
-    body: "Inspect payment requests associated with an agent or workflow.",
-    tool: "list_agent_requests",
+    title: "Business Agent Accounts",
+    body: "Roadmap primitive for ERP/CRM systems: USD stablecoin balances, policies and reconciliation operated by agents.",
+    tool: "agent-managed balances",
     icon: Activity,
   },
   {
@@ -89,13 +89,13 @@ export const capabilities = [
 
 export const useCases = [
   {
-    title: "Agent-to-human payments",
-    body: "An agent generates a payment request for a freelancer, creator, consultant, merchant or service provider.",
+    title: "Business Agent Accounts",
+    body: "ERP/CRM systems can embed USD stablecoin infrastructure that agents operate behind the scenes.",
     icon: Bot,
   },
   {
     title: "AI-assisted collections",
-    body: "An agent helps a business generate and track payment requests.",
+    body: "An agent collects invoices, verifies settlement and updates business records automatically.",
     icon: FileSearch,
   },
   {
@@ -109,8 +109,8 @@ export const useCases = [
     icon: Sparkles,
   },
   {
-    title: "Service payments",
-    body: "Agents can generate payment links for digital work, subscriptions or professional services.",
+    title: "Cross-border business payments",
+    body: "Companies can receive USDC, USDT or USDm through business software without feeling like crypto users.",
     icon: CircleDollarSign,
   },
 ];
@@ -126,18 +126,23 @@ export const mainnetStatus = [
 
 export const roadmap = [
   {
-    title: "Yacamba ERP/CRM integration",
-    body: "Agent-assisted collections, payment request generation and reconciliation workflows inside Yacamba.",
+    title: "Business Agent Accounts",
+    body: "Programmable USD stablecoin balances embedded inside ERP/CRM systems and operated by agents.",
+    status: "Frontier milestone",
+  },
+  {
+    title: "Yacamba ERP/CRM adapter",
+    body: "First adoption path for agent collections, business balances and automatic reconciliation in Mexico and LatAm.",
     status: "Roadmap",
   },
   {
     title: "Spending policies",
-    body: "Limits, approvals, token allowlists and human confirmation thresholds.",
+    body: "Limits, approvals, token allowlists and human confirmation thresholds for agent-managed business funds.",
     status: "Planned",
   },
   {
-    title: "Enterprise reconciliation",
-    body: "Deeper links between payment requests, invoices and business records.",
+    title: "Open ERP/CRM adapters",
+    body: "MCP and API primitives that let other business systems plug into PayGrid reconciliation and settlement flows.",
     status: "Roadmap",
   },
 ];
@@ -156,11 +161,11 @@ export const securityItems = [
 export const faqs = [
   {
     q: "What is Celo PayGrid?",
-    a: "Celo PayGrid is an MCP-based payment execution and verification layer for AI agents on Celo Mainnet.",
+    a: "Celo PayGrid is programmable USD stablecoin infrastructure for AI agents, ERP/CRM systems and business software on Celo Mainnet.",
   },
   {
     q: "What can an AI agent do with Celo PayGrid?",
-    a: "An AI agent can discover Celo PayGrid capabilities, create payment requests, quote supported stablecoin swaps, inspect payment activity and verify completed transactions.",
+    a: "An AI agent can discover Celo PayGrid capabilities, create payment workflows, quote supported stablecoin swaps, inspect activity, verify settlement and interact with roadmap Business Agent Account primitives.",
   },
   { q: "What is the Celo PayGrid MCP endpoint?", a: site.mcpEndpoint },
   { q: "How does an agent discover Celo PayGrid tools?", a: "The agent can call get_agent_capabilities." },
@@ -169,6 +174,10 @@ export const faqs = [
   {
     q: "Can Celo PayGrid be used for agent-to-human payments?",
     a: "Yes. An agent can generate payment requests for freelancers, creators, consultants, merchants or service providers.",
+  },
+  {
+    q: "What are Business Agent Accounts?",
+    a: "Business Agent Accounts are roadmap infrastructure for ERP/CRM systems: programmable USD stablecoin balances that agents can operate with policies, swaps and reconciliation. Yacamba is the first planned adoption path.",
   },
   {
     q: "Does Celo PayGrid support ERP integration?",
@@ -237,7 +246,7 @@ Tool call: verify_payment
 Result: Payment confirmed. Transaction: 0x8f3... Network: Celo Mainnet.`;
 
 export const stackLayers = [
-  { title: "MCP", body: "Agent interaction layer", icon: Terminal },
-  { title: "Celo PayGrid", body: "Payment orchestration, swaps and verification layer", icon: CreditCard },
-  { title: "Celo Mainnet", body: "Settlement layer", icon: ShieldCheck },
+  { title: "MCP", body: "Agent execution and integration layer", icon: Terminal },
+  { title: "Business Agent Accounts", body: "USD balances, policies, swaps and reconciliation", icon: CreditCard },
+  { title: "Celo Mainnet", body: "Verifiable settlement layer", icon: ShieldCheck },
 ];

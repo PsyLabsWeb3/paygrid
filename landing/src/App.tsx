@@ -153,7 +153,7 @@ function Hero() {
           animate="show"
           variants={fadeUp}
         >
-          The financial execution layer for AI agents.
+          Programmable business finance for AI agents.
         </motion.p>
         <motion.h1
           initial="hidden"
@@ -161,8 +161,8 @@ function Hero() {
           variants={fadeUp}
           transition={{ delay: 0.05 }}
         >
-          Your agent can think.
-          <span>Now let it transact.</span>
+          Business agents can think.
+          <span>Now let them manage USD accounts.</span>
         </motion.h1>
         <motion.p
           className="hero-subhead"
@@ -171,8 +171,8 @@ function Hero() {
           variants={fadeUp}
           transition={{ delay: 0.1 }}
         >
-          Connect AI agents to real-world payment workflows through one MCP
-          endpoint on Celo Network.
+          Embed programmable USD stablecoin infrastructure into ERP/CRM
+          workflows through one MCP endpoint on Celo.
         </motion.p>
         {/* <motion.p
           className="geo-definition"
@@ -259,7 +259,7 @@ function InteractiveDemo() {
     if (paused) return;
     const id = window.setInterval(
       () => setStep((value) => (value + 1) % demoSteps.length),
-      1450
+      1450,
     );
     return () => window.clearInterval(id);
   }, [paused]);
@@ -328,7 +328,7 @@ function Capabilities() {
     <section className="section-shell" id="capabilities">
       <div className="section-heading">
         <p className="eyebrow">Capabilities</p>
-        <h2>One MCP connection. Multiple payment capabilities.</h2>
+        <h2>One MCP connection. Business payment infrastructure.</h2>
       </div>
       <div className="card-grid">
         {capabilities.map((capability) => {
@@ -354,7 +354,7 @@ function HowItWorks() {
     "User request",
     "AI Agent",
     "Celo PayGrid MCP",
-    "Payment request",
+    "Business workflow",
     "Celo Mainnet",
     "Verified result",
   ];
@@ -362,7 +362,7 @@ function HowItWorks() {
     <section className="section-shell" id="how-it-works">
       <div className="section-heading">
         <p className="eyebrow">How it works</p>
-        <h2>From intent to onchain settlement</h2>
+        <h2>From business intent to verified settlement</h2>
       </div>
       <div className="flow-strip" aria-label="Payment flow">
         {nodes.map((node, index) => (
@@ -384,7 +384,7 @@ function HowItWorks() {
           ],
           [
             "3. Execute",
-            "Create payment requests and verify completed transactions.",
+            "Create payment workflows, route settlement and verify completed transactions.",
           ],
         ].map(([title, body]) => (
           <article className="panel-card" key={title}>
@@ -523,10 +523,10 @@ function Differentiation() {
     <section className="section-shell split-section">
       <div>
         <p className="eyebrow">Differentiation</p>
-        <h2>More than a payment link</h2>
+        <h2>Business Agent Accounts, not just payment requests</h2>
         <p className="large-copy">
-          Celo PayGrid connects agent reasoning with verifiable payment
-          execution.
+          Celo PayGrid gives agents programmable USD stablecoin infrastructure
+          for balances, swaps, policies and ERP/CRM reconciliation.
         </p>
       </div>
       <div className="stack-diagram">
@@ -567,7 +567,7 @@ function StatusAndSecurity() {
       <div>
         <div className="section-heading left">
           <p className="eyebrow">Security</p>
-          <h2>Built for transparent agent payment workflows</h2>
+          <h2>Built for transparent agent-managed business funds</h2>
         </div>
         <ul className="check-list">
           {securityItems.map((item) => (
@@ -586,10 +586,10 @@ function Roadmap() {
     <section className="section-shell" id="roadmap">
       <div className="section-heading">
         <p className="eyebrow">Roadmap</p>
-        <h2>What's next</h2>
+        <h2>Business Agent Accounts roadmap</h2>
         <p>
-          These features are planned and are shown separately from current
-          production capabilities.
+          These roadmap milestones extend the current MCP and mainnet payment
+          layer into ERP/CRM-embedded Business Agent Accounts.
         </p>
       </div>
       <div className="card-grid">
@@ -627,10 +627,11 @@ function FAQ() {
 function FinalCTA() {
   return (
     <section className="final-cta section-shell">
-      <h2>Give your agent a payment layer.</h2>
+      <h2>Give your agent a business finance layer.</h2>
       <p>
-        Connect Celo PayGrid and let your agent create payment requests, verify
-        settlement and participate in the agent economy on Celo Mainnet.
+        Connect Celo PayGrid and let your agent create business payment
+        workflows, verify settlement and prepare for agent-managed USD
+        stablecoin accounts on Celo Mainnet.
       </p>
       <div className="hero-actions">
         <a className="primary-action" href="#developers">
@@ -673,7 +674,10 @@ function Footer() {
           />
           <span>Celo PayGrid</span>
         </a>
-        <p>MCP-based payment infrastructure for AI agents on Celo Mainnet.</p>
+        <p>
+          MCP-based USD stablecoin infrastructure for AI agents and ERP/CRM
+          systems on Celo Mainnet.
+        </p>
         <small>
           Current production capabilities and roadmap features are shown
           separately.
@@ -713,7 +717,7 @@ export default function App() {
       setShowPitch(
         p.endsWith("/pitchdeck") ||
           h.includes("pitchdeck") ||
-          h.startsWith("#pitch-")
+          h.startsWith("#pitch-"),
       );
     };
     window.addEventListener("popstate", onPop);
