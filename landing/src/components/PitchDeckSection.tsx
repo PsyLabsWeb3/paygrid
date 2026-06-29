@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion, motion } from "framer-motion";
 import { slides } from "./pitchDeckData";
 import PitchSlide from "./PitchSlide";
-import DeckNavigation from "./DeckNavigation";
 import SlideProgress from "./SlideProgress";
 
 export default function PitchDeckSection() {
@@ -108,6 +107,7 @@ export default function PitchDeckSection() {
           <SlideProgress index={index} total={total} />
           <motion.div
             key={slides[index].id}
+            className={`pitch-frame pitch-frame--slide-${slides[index].id} ${index === 0 ? "pitch-frame--intro" : "pitch-frame--inner"}`}
             initial={{ opacity: 0, x: 24 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -12 }}
@@ -115,7 +115,6 @@ export default function PitchDeckSection() {
           >
             <PitchSlide slide={slides[index]} />
           </motion.div>
-          <DeckNavigation index={index} setIndex={setIndex} total={total} />
         </div>
       </div>
     </section>

@@ -4,42 +4,33 @@ export default function DistributionNetwork() {
   return (
     <div className="distribution-network" aria-hidden>
       <div className="network-legend">
-        <span>Celo PayGrid</span>
-        <span>→</span>
+        <span>PayGrid</span>
         <span>Yacamba</span>
-        <span>→</span>
-        <span>business agents</span>
-        <span>→</span>
-        <span>companies</span>
-        <span>→</span>
-        <span>customers</span>+{" "}
+        <span>Agents</span>
+        <span>Businesses</span>
+        <span>Customers</span>
       </div>
-      +{" "}
       <div className="network-graph">
-        + {/* simple accessible SVG fallback */}+{" "}
         <svg
           width="100%"
-          height="120"
-          viewBox="0 0 600 120"
+          height="100"
+          viewBox="0 0 600 100"
           preserveAspectRatio="xMidYMid meet"
           role="img"
           aria-hidden
         >
-          +{" "}
           <g fill="none" stroke="#b7ff1a" strokeWidth="2">
-            + <circle cx="40" cy="60" r="8" fill="#b7ff1a" />
-            + <circle cx="160" cy="30" r="6" fill="#b7ff1a" />
-            + <circle cx="280" cy="60" r="6" fill="#b7ff1a" />
-            + <circle cx="400" cy="30" r="6" fill="#b7ff1a" />
-            + <circle cx="520" cy="60" r="8" fill="#b7ff1a" />
-            + <path d="M48 60 L154 32" />
-            + <path d="M166 32 L274 60" />
-            + <path d="M286 60 L394 32" />
-            + <path d="M406 32 L512 60" />+{" "}
+            <circle cx="50" cy="56" r="8" fill="#b7ff1a" />
+            <circle cx="175" cy="28" r="6" fill="#b7ff1a" />
+            <circle cx="300" cy="56" r="6" fill="#b7ff1a" />
+            <circle cx="425" cy="28" r="6" fill="#b7ff1a" />
+            <circle cx="550" cy="56" r="8" fill="#b7ff1a" />
+            <path d="M58 56 L169 30" />
+            <path d="M181 30 L294 56" />
+            <path d="M306 56 L419 30" />
+            <path d="M431 30 L542 56" />
           </g>
-          +{" "}
         </svg>
-        +{" "}
       </div>
     </div>
   );

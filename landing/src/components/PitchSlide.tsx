@@ -117,7 +117,7 @@ export default function PitchSlide({
         {slide.roadmap ? (
           <RoadmapCards items={slide.roadmap} note={slide.note} />
         ) : null}
-        {["onramp", "reconciliation", "whatsapp", "payments"].includes(slide.scene || "") ? (
+        {["onramp", "reconciliation", "whatsapp", "payments", "swaps"].includes(slide.scene || "") ? (
           <div className={`pitch-mini-graphic pitch-mini-graphic--${slide.scene}`} aria-hidden>
             <span />
             <span />
@@ -130,16 +130,6 @@ export default function PitchSlide({
           <p className="highlight">{slide.highlight}</p>
         ) : null}
       </div>
-      {slide.cta ? (
-        <footer className="slide-cta">
-          <a className="primary-action" href="#developers">
-            Connect Celo PayGrid MCP
-          </a>
-          <a className="secondary-action" href="#docs">
-            Explore the roadmap
-          </a>
-        </footer>
-      ) : null}
     </article>
   );
 }

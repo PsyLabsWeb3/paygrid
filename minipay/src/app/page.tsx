@@ -53,13 +53,14 @@ export default function HomePage() {
         <section className="panel panel-pad">
           <div className="split-row">
             <div>
-              <p className="fine muted">Frontier track</p>
-              <h2 className="top-title">Agent-ready checkout</h2>
+              <p className="fine muted">Live Agent Infrastructure</p>
+              <h2 className="top-title">Mento-powered auto-swaps</h2>
             </div>
             <ArrowUpRight size={22} color="var(--lime)" />
           </div>
           <p className="fine muted" style={{ marginTop: 10 }}>
-            Built for payment requests that can be created by humans today and agents next.
+            Agents and humans can automatically convert supported assets into
+            the required settlement currency and complete payments on Celo.
           </p>
         </section>
       </div>

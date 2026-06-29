@@ -102,7 +102,7 @@ main {
   width: min(1160px, calc(100% - 28px));
   min-height: 68px;
   margin: 14px auto 0;
-  padding: 10px;
+  padding: 8px;
   display: grid;
   grid-template-columns: auto 1fr auto auto;
   align-items: center;
@@ -252,7 +252,7 @@ main {
 .eyebrow {
   margin: 0 0 13px;
   color: var(--lime);
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -288,7 +288,7 @@ h2 {
 h3 {
   margin-bottom: 10px;
   font-size: 1.2rem;
-  line-height: 1.1;
+  line-height: 1.02;
   font-weight: 900;
 }
 
@@ -302,7 +302,7 @@ h3 {
 }
 
 .geo-definition {
-  max-width: 700px;
+  max-width: 640px;
   margin-bottom: 32px;
   padding: 20px 24px;
   border: 1px solid rgba(183, 255, 26, 0.22);
@@ -330,7 +330,7 @@ h3 {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--panel);
@@ -503,7 +503,7 @@ pre {
 .faq-list p,
 .roadmap-card p {
   color: var(--muted);
-  line-height: 1.6;
+  line-height: 1.35;
 }
 
 .card-grid {
@@ -748,7 +748,7 @@ pre {
 
 blockquote {
   margin: 18px 0;
-  padding: 14px 16px;
+  padding: 10px 12px;
   border-left: 4px solid var(--lime);
   border-radius: 16px;
   background: var(--panel-2);
@@ -1170,9 +1170,9 @@ blockquote {
 }
 .pitch-slide {
   width: min(1100px, 90vw);
-  height: min(78vh, 760px);
+  height: min(72vh, 700px);
   max-height: calc(100vh - 150px);
-  padding: clamp(18px, 3.2vw, 40px);
+  padding: clamp(14px, 2.4vw, 30px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1189,26 +1189,26 @@ blockquote {
   text-align: center;
 }
 .pitch-slide h3 {
-  font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+  font-size: clamp(1.9rem, 4.4vw, 3.45rem);
   line-height: 1.1;
   margin: 0 0 16px 0;
   font-weight: 950;
 }
 .pitch-slide .subhead {
-  font-size: clamp(1rem, 2vw, 1.5rem);
+  font-size: clamp(0.92rem, 1.55vw, 1.2rem);
   color: var(--soft);
-  margin: 0 0 20px 0;
+  margin: 0 0 12px 0;
   font-weight: 600;
 }
 .pitch-slide .slide-body {
   width: min(100%, 1000px);
   max-width: 1000px;
   display: grid;
-  gap: clamp(10px, 1.4vw, 16px);
-  margin: clamp(10px, 1.8vw, 20px) 0 0 0;
+  gap: clamp(7px, 1vw, 12px);
+  margin: clamp(6px, 1vw, 12px) 0 0 0;
 }
 .pitch-slide p {
-  font-size: clamp(1rem, 1.8vw, 1.4rem);
+  font-size: clamp(0.88rem, 1.25vw, 1.08rem);
   color: var(--soft);
   line-height: 1.6;
   margin: 0;
@@ -1225,31 +1225,31 @@ blockquote {
   margin-right: auto;
 }
 .pitch-slide li {
-  font-size: clamp(0.95rem, 1.7vw, 1.2rem);
+  font-size: clamp(0.84rem, 1.15vw, 1rem);
   color: var(--soft);
-  line-height: 1.5;
+  line-height: 1.28;
 }
 .pitch-slide blockquote {
   max-width: 700px;
   margin: clamp(8px, 1.2vw, 16px) auto 0;
-  font-size: clamp(0.95rem, 1.45vw, 1.2rem);
+  font-size: clamp(0.82rem, 1.05vw, 0.98rem);
 }
 
 .pitch-slide .badge-row {
   justify-content: center;
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
 .pitch-stats {
   width: min(900px, 100%);
-  margin: clamp(12px, 1.8vw, 22px) auto 0;
+  margin: clamp(8px, 1vw, 14px) auto 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
 .pitch-stat {
-  min-height: 86px;
+  min-height: 64px;
   padding: 14px 16px;
   border: 1px solid rgba(183, 255, 26, 0.28);
   border-radius: 20px;
@@ -1257,14 +1257,18 @@ blockquote {
   align-content: center;
   gap: 4px;
   background:
-    radial-gradient(circle at 20% 0%, rgba(183, 255, 26, 0.22), transparent 52%),
+    radial-gradient(
+      circle at 20% 0%,
+      rgba(183, 255, 26, 0.22),
+      transparent 52%
+    ),
     rgba(183, 255, 26, 0.06);
   box-shadow: 0 18px 55px rgba(183, 255, 26, 0.08);
 }
 
 .pitch-stat strong {
   color: var(--lime);
-  font-size: clamp(1.35rem, 3vw, 2.5rem);
+  font-size: clamp(1.05rem, 2.2vw, 1.9rem);
   line-height: 0.9;
   font-weight: 950;
 }
@@ -1278,7 +1282,7 @@ blockquote {
 
 .pitch-mini-graphic {
   width: min(720px, 100%);
-  min-height: 78px;
+  min-height: 56px;
   margin: 0 auto;
   border: 1px solid rgba(183, 255, 26, 0.22);
   border-radius: 999px;
@@ -1288,7 +1292,12 @@ blockquote {
   gap: 8px;
   padding: 10px;
   background:
-    linear-gradient(90deg, rgba(183, 255, 26, 0.14), transparent 45%, rgba(183, 255, 26, 0.12)),
+    linear-gradient(
+      90deg,
+      rgba(183, 255, 26, 0.14),
+      transparent 45%,
+      rgba(183, 255, 26, 0.12)
+    ),
     var(--panel);
   overflow: hidden;
   position: relative;
@@ -1308,7 +1317,7 @@ blockquote {
 }
 
 .pitch-mini-graphic span {
-  min-height: 46px;
+  min-height: 34px;
   border-radius: 999px;
   display: grid;
   place-items: center;
@@ -1319,67 +1328,109 @@ blockquote {
   z-index: 1;
 }
 
-.pitch-mini-graphic span:nth-child(1)::after { content: "Business context"; }
-.pitch-mini-graphic span:nth-child(2)::after { content: "Payment execution"; }
-.pitch-mini-graphic span:nth-child(3)::after { content: "Verified record"; }
-.pitch-mini-graphic--onramp span:nth-child(1)::after { content: "Card / bank / cash"; }
-.pitch-mini-graphic--onramp span:nth-child(2)::after { content: "Stablecoin settlement"; }
-.pitch-mini-graphic--onramp span:nth-child(3)::after { content: "MXN cash-out path"; }
-.pitch-mini-graphic--whatsapp span:nth-child(1)::after { content: "WhatsApp quote"; }
-.pitch-mini-graphic--whatsapp span:nth-child(2)::after { content: "PayGrid request"; }
-.pitch-mini-graphic--whatsapp span:nth-child(3)::after { content: "Yacamba order"; }
-.pitch-mini-graphic--payments span:nth-child(1)::after { content: "External agent"; }
-.pitch-mini-graphic--payments span:nth-child(2)::after { content: "PayGrid MCP"; }
-.pitch-mini-graphic--payments span:nth-child(3)::after { content: "Yacamba business"; }
+.pitch-mini-graphic span:nth-child(1)::after {
+  content: "Business context";
+}
+.pitch-mini-graphic span:nth-child(2)::after {
+  content: "Payment execution";
+}
+.pitch-mini-graphic span:nth-child(3)::after {
+  content: "Verified record";
+}
+.pitch-mini-graphic--reconciliation span:nth-child(1)::after {
+  content: "Invoice / customer";
+}
+.pitch-mini-graphic--reconciliation span:nth-child(2)::after {
+  content: "Celo tx proof";
+}
+.pitch-mini-graphic--reconciliation span:nth-child(3)::after {
+  content: "ERP record";
+}
+.pitch-mini-graphic--onramp span:nth-child(1)::after {
+  content: "Card / bank / cash";
+}
+.pitch-mini-graphic--onramp span:nth-child(2)::after {
+  content: "Stablecoin settlement";
+}
+.pitch-mini-graphic--onramp span:nth-child(3)::after {
+  content: "MXN cash-out path";
+}
+.pitch-mini-graphic--whatsapp span:nth-child(1)::after {
+  content: "WhatsApp quote";
+}
+.pitch-mini-graphic--whatsapp span:nth-child(2)::after {
+  content: "PayGrid request";
+}
+.pitch-mini-graphic--whatsapp span:nth-child(3)::after {
+  content: "Yacamba order";
+}
+.pitch-mini-graphic--payments span:nth-child(1)::after {
+  content: "External agent";
+}
+.pitch-mini-graphic--payments span:nth-child(2)::after {
+  content: "PayGrid MCP";
+}
+.pitch-mini-graphic--payments span:nth-child(3)::after {
+  content: "Yacamba business";
+}
+.pitch-mini-graphic--swaps span:nth-child(1)::after {
+  content: "Payer token";
+}
+.pitch-mini-graphic--swaps span:nth-child(2)::after {
+  content: "Mento / Uniswap";
+}
+.pitch-mini-graphic--swaps span:nth-child(3)::after {
+  content: "Settlement token";
+}
 
-.pitch-slide--4 {
+.pitch-slide--3 {
   justify-content: flex-start;
   gap: clamp(8px, 1.1vw, 14px);
   padding-top: clamp(34px, 5.8vw, 102px);
 }
 
-.pitch-slide--4 header {
+.pitch-slide--3 header {
   max-width: 980px;
 }
 
-.pitch-slide--4 .pitch-stats {
+.pitch-slide--3 .pitch-stats {
   width: min(620px, 100%);
   margin-top: clamp(8px, 1vw, 12px);
 }
 
-.pitch-slide--4 .pitch-stat {
+.pitch-slide--3 .pitch-stat {
   min-height: 58px;
   padding: 9px 12px;
 }
 
-.pitch-slide--4 .pitch-stat strong {
+.pitch-slide--3 .pitch-stat strong {
   font-size: clamp(1.05rem, 2vw, 1.55rem);
 }
 
-.pitch-slide--4 h3 {
+.pitch-slide--3 h3 {
   max-width: 980px;
   font-size: clamp(1.95rem, 4.7vw, 4.25rem);
   line-height: 0.98;
   margin-bottom: clamp(10px, 1.5vw, 18px);
 }
 
-.pitch-slide--4 .slide-body {
+.pitch-slide--3 .slide-body {
   width: min(820px, 100%);
   gap: clamp(10px, 1.2vw, 14px);
   margin-top: 0rem;
 }
 
-.pitch-slide--4 ol {
+.pitch-slide--3 ol {
   width: min(560px, 100%);
   gap: clamp(6px, 0.9vw, 10px);
 }
 
-.pitch-slide--4 li {
+.pitch-slide--3 li {
   font-size: clamp(0.9rem, 1.35vw, 1.08rem);
   line-height: 1.35;
 }
 
-.pitch-slide--4 blockquote {
+.pitch-slide--3 blockquote {
   width: min(700px, 100%);
   max-height: none;
   padding: clamp(12px, 1.4vw, 16px) clamp(14px, 1.8vw, 20px);
@@ -1453,10 +1504,10 @@ blockquote {
     padding: 20px;
     width: min(90vw, 100%);
   }
-  .pitch-slide--4 {
+  .pitch-slide--3 {
     padding-top: clamp(28px, 5vw, 44px);
   }
-  .pitch-slide--4 h3 {
+  .pitch-slide--3 h3 {
     font-size: clamp(1.65rem, 6.2vw, 2.8rem);
   }
   .pitch-stats {
@@ -1500,13 +1551,13 @@ blockquote {
     height: min(76vh, 590px);
     padding: 12px;
   }
-  .pitch-slide--4 {
+  .pitch-slide--3 {
     padding-top: 22px;
   }
-  .pitch-slide--4 .slide-body {
+  .pitch-slide--3 .slide-body {
     gap: 7px;
   }
-  .pitch-slide--4 ol {
+  .pitch-slide--3 ol {
     gap: 5px;
   }
   .pitch-stats {
@@ -1532,7 +1583,7 @@ blockquote {
     min-height: 34px;
     padding: 0 6px;
   }
-  .pitch-slide--4 blockquote {
+  .pitch-slide--3 blockquote {
     padding: 10px 12px;
   }
   .pitch-slide h3 {
@@ -1544,4 +1595,162 @@ blockquote {
   .slide-progress .progress-bar {
     width: 200px;
   }
+}
+
+/* Presentation-mode pitch deck refinements */
+.pitch-slide--1 h3,
+.pitch-slide--2 h3,
+.pitch-slide--5 h3,
+.pitch-slide--7 h3,
+.pitch-slide--8 h3,
+.pitch-slide--10 h3,
+.pitch-slide--11 h3 {
+  max-width: 980px;
+  font-size: clamp(1.85rem, 4vw, 3.25rem);
+}
+
+.pitch-slide--1 .slide-body,
+.pitch-slide--2 .slide-body,
+.pitch-slide--5 .slide-body,
+.pitch-slide--7 .slide-body,
+.pitch-slide--8 .slide-body,
+.pitch-slide--11 .slide-body {
+  width: min(820px, 100%);
+}
+
+.pitch-slide--11 .slide-body {
+  width: min(920px, 100%);
+}
+
+.pitch-slide--2 .two-col {
+  margin-top: clamp(14px, 2.2vh, 28px);
+}
+
+.pitch-slide--2 .two-col li {
+  position: relative;
+  padding-left: 18px;
+}
+
+.pitch-slide--2 .two-col li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--lime);
+  box-shadow: 0 0 16px rgba(183, 255, 26, 0.65);
+}
+
+.distribution-network {
+  display: grid;
+  gap: 6px;
+  width: min(680px, 100%);
+  margin: 0 auto;
+}
+
+.network-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--soft);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.network-legend span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.network-graph {
+  height: 76px;
+}
+
+.deck-nav {
+  display: none;
+}
+
+.slide-progress {
+  bottom: 42px;
+}
+
+.slide-progress .progress-bar {
+  margin-top: 0;
+}
+
+/* Lower pitch content for presentation capture */
+.pitch-frame--intro {
+  transform: none;
+}
+
+.pitch-frame--inner {
+  transform: translateY(clamp(78px, 8.4vh, 112px));
+}
+
+.pitch-slide {
+  height: min(66vh, 650px);
+  max-height: calc(100vh - 230px);
+}
+
+.slide-progress {
+  bottom: 30px;
+}
+
+@media (max-width: 1024px) {
+  .pitch-frame--inner {
+    transform: translateY(clamp(58px, 7vh, 82px));
+  }
+
+  .pitch-slide {
+    height: min(66vh, 620px);
+    max-height: calc(100vh - 210px);
+  }
+}
+
+@media (max-width: 768px) {
+  .pitch-frame--inner {
+    transform: translateY(46px);
+  }
+
+  .pitch-slide {
+    height: min(66vh, 560px);
+    max-height: calc(100vh - 190px);
+  }
+
+  .slide-progress {
+    bottom: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pitch-frame--inner {
+    transform: translateY(30px);
+  }
+
+  .pitch-slide {
+    height: min(68vh, 520px);
+    max-height: calc(100vh - 160px);
+  }
+}
+/* Extra clearance for slide 11 under the fixed navbar */
+.pitch-frame--slide-11 {
+  transform: translateY(clamp(10rem, 20vh, 20rem));
+}
+
+@media (max-width: 768px) {
+  .pitch-frame--slide-11 {
+    transform: translateY(5rem);
+  }
+}
+
+.pitch-slide--10 .roadmap-cards {
+  margin-top: clamp(14px, 2.2vh, 28px);
+}
+
+.pitch-slide--10 .roadmap-cards .card-grid {
+  margin-top: clamp(10px, 1.8vh, 22px);
 }
