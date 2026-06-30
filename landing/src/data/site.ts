@@ -25,7 +25,8 @@ export const site = {
   url: "https://web.celopaygrid.xyz",
   canonical: "https://www.celopaygrid.xyz",
   mcpEndpoint: "https://mcp.celopaygrid.xyz/mcp",
-  metadataEndpoint: "https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json",
+  metadataEndpoint:
+    "https://mcp.celopaygrid.xyz/.well-known/paygrid-agent.json",
   docsUrl: "/docs/overview.html",
   chainId: "42220",
 };
@@ -40,7 +41,12 @@ export const navItems = [
   { label: "FAQ", href: "#faq" },
 ];
 
-export const badges = ["Live on Celo Mainnet", "Remote MCP", "Business Agent Accounts", "Mento swaps"];
+export const badges = [
+  "Live on Celo Mainnet",
+  "Remote MCP",
+  "Business Agent Accounts",
+  "Mento swaps",
+];
 
 export const capabilities = [
   {
@@ -128,7 +134,7 @@ export const roadmap = [
   {
     title: "Business Agent Accounts",
     body: "Programmable USD stablecoin balances embedded inside ERP/CRM systems and operated by agents.",
-    status: "Frontier milestone",
+    status: "Roadmap",
   },
   {
     title: "Yacamba ERP/CRM adapter",
@@ -168,9 +174,18 @@ export const faqs = [
     a: "An AI agent can discover Celo PayGrid capabilities, create payment workflows, quote supported stablecoin swaps, inspect activity, verify settlement and interact with roadmap Business Agent Account primitives.",
   },
   { q: "What is the Celo PayGrid MCP endpoint?", a: site.mcpEndpoint },
-  { q: "How does an agent discover Celo PayGrid tools?", a: "The agent can call get_agent_capabilities." },
-  { q: "Is Celo PayGrid live on Mainnet?", a: "Yes. Celo PayGrid is deployed on Celo Mainnet." },
-  { q: "What network does Celo PayGrid use?", a: "Celo PayGrid currently uses Celo Mainnet, chain ID 42220." },
+  {
+    q: "How does an agent discover Celo PayGrid tools?",
+    a: "The agent can call get_agent_capabilities.",
+  },
+  {
+    q: "Is Celo PayGrid live on Mainnet?",
+    a: "Yes. Celo PayGrid is deployed on Celo Mainnet.",
+  },
+  {
+    q: "What network does Celo PayGrid use?",
+    a: "Celo PayGrid currently uses Celo Mainnet, chain ID 42220.",
+  },
   {
     q: "Can Celo PayGrid be used for agent-to-human payments?",
     a: "Yes. An agent can generate payment requests for freelancers, creators, consultants, merchants or service providers.",
@@ -246,7 +261,19 @@ Tool call: verify_payment
 Result: Payment confirmed. Transaction: 0x8f3... Network: Celo Mainnet.`;
 
 export const stackLayers = [
-  { title: "MCP", body: "Agent execution and integration layer", icon: Terminal },
-  { title: "Business Agent Accounts", body: "USD balances, policies, swaps and reconciliation", icon: CreditCard },
-  { title: "Celo Mainnet", body: "Verifiable settlement layer", icon: ShieldCheck },
+  {
+    title: "MCP",
+    body: "Agent execution and integration layer",
+    icon: Terminal,
+  },
+  {
+    title: "Business Agent Accounts",
+    body: "USD balances, policies, swaps and reconciliation",
+    icon: CreditCard,
+  },
+  {
+    title: "Celo Mainnet",
+    body: "Verifiable settlement layer",
+    icon: ShieldCheck,
+  },
 ];

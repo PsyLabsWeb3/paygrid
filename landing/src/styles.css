@@ -973,6 +973,8 @@ blockquote {
 
   .hero-visual {
     min-height: 430px;
+    margin-top: 28px;
+    transform: none;
   }
 
   .card-grid,
@@ -1032,6 +1034,8 @@ blockquote {
 
   .hero-visual {
     min-height: 330px;
+    margin-top: 34px;
+    transform: none;
   }
 
   .scene-layer-labels {
