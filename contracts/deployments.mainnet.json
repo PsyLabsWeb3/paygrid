@@ -1,0 +1,32 @@
+{
+  "chainId": 42220,
+  "network": "celo-mainnet",
+  "deployer": "0x0AcF80b591eA0fE2cf9b1108ba9E4b278f3330Ce",
+  "treasury": "0xc0C019DCeCE7a3a235Ab520F394A57c132F90cD6",
+  "owner": "0xc0C019DCeCE7a3a235Ab520F394A57c132F90cD6",
+  "claimSigner": "0xF29000C2301Ebc67d63054A574DCcb5772494f04",
+  "contracts": [
+    {
+      "name": "PaygridLink",
+      "address": "0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89"
+    },
+    {
+      "name": "PaygridRouter",
+      "address": "0x2924FEf3eF7c3ADBFF22b286C42764a96c53f9f4"
+    },
+    {
+      "name": "PaygridRouterV2",
+      "address": "0x8d290c97100f0e87e04Efd1a790F27004fA3f08B"
+    },
+    {
+      "name": "PaygridGiftVault",
+      "address": "0x81aC59B707862CaD6200d66874D505f7590244cf",
+      "tx": "0x6c8bf015eb38af31dd9674f3c6f48a6afb6c9accb3bb5064a96941dd6a224bbe"
+    },
+    {
+      "name": "PaygridGiftRouter",
+      "address": "0xa8A8cC58B3F1a102977923773fAD46cA5296307d",
+      "tx": "0xf09a53575d0bae87e0d43f81d1b7d76dfdd3f1d32475977c2ae372fa2c72a482"
+    }
+  ]
+}
