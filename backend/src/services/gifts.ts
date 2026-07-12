@@ -5,7 +5,6 @@ import {
   erc20Abi,
   formatUnits,
   keccak256,
-  parseUnits,
   toBytes,
   type Address,
   type Hex,
@@ -16,7 +15,7 @@ import { getSupabase } from "../db/supabase.js";
 import { createChainClients } from "../lib/chain.js";
 import { ApiError } from "../lib/errors.js";
 import { giftRouterAbi, giftVaultAbi, requireGiftContracts } from "../lib/gifts.js";
-import { getTokenAddress, TOKEN_DECIMALS, type Stablecoin } from "../lib/tokens.js";
+import { getTokenAddress, parseHumanAmount, TOKEN_DECIMALS, type Stablecoin } from "../lib/tokens.js";
 import { buildSwapExecution, quoteStablecoinAmount } from "./swaps.js";
 
 const MIN_GIFT_USD = 0.5;
@@ -39,6 +38,10 @@ export function cleanGiftText(value: string, maxLength: number) {
 
 export function hashGiftSecret(secret: string) {
   return keccak256(toBytes(secret)).toLowerCase();
+}
+
+export function parseStoredGiftAmount(value: string | number, token: Stablecoin) {
+  return parseHumanAmount(value, token);
 }
 
 function hashSessionToken(token: string) {
@@ -148,7 +151,7 @@ export async function buildGiftFundingTx(
     throw new ApiError(409, "GIFT_UNAVAILABLE", `Gift is ${gift.status}`);
   }
 
-  const giftAmount = parseUnits(gift.amount, TOKEN_DECIMALS[gift.token]);
+  const giftAmount = parseStoredGiftAmount(gift.amount, gift.token);
   const { publicClient } = createChainClients(env);
   const feeBps = await publicClient.readContract({
     address: contracts.router,

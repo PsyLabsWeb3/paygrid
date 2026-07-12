@@ -78,7 +78,7 @@ export type GiftRow = {
   sender_alias: string;
   recipient_alias: string;
   message: string;
-  amount: string;
+  amount: string | number;
   token: "USDm" | "USDC" | "USDT";
   payer_token: "USDm" | "USDC" | "USDT" | null;
   claim_hash: string;
