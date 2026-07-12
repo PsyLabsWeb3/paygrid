@@ -10,6 +10,7 @@ import { paymentsRoutes } from "./routes/payments.js";
 import { fonbnkRoutes } from "./routes/onramp/fonbnk.js";
 import { rampRoutes } from "./routes/onramp/ramp.js";
 import { x402Routes } from "./routes/x402.js";
+import { giftsRoutes } from "./routes/gifts.js";
 
 const defaultCorsOrigins = [
   "http://localhost:3000",
@@ -74,6 +75,7 @@ export function createApp(env: Env) {
   );
   app.use("/api/*", rateLimit);
   app.route("/api/links", linksRoutes(env));
+  app.route("/api/gifts", giftsRoutes(env));
   app.route("/api/payments", paymentsRoutes(env));
   app.route("/api/onramp/fonbnk", fonbnkRoutes(env));
   app.route("/api/onramp/ramp", rampRoutes(env));

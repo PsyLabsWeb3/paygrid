@@ -3,6 +3,7 @@ import { appConfig } from "@/lib/env";
 import type { Stablecoin } from "@/lib/tokens";
 
 export type LinkStatus = "active" | "paid" | "expired" | "cancelled";
+export type GiftStatus = "draft" | "funding" | "active" | "claimed" | "cancelled" | "expired" | "refunded";
 
 export type PaymentLink = {
   id: string;
@@ -154,4 +155,99 @@ export function createRampSession(id: string, input: { finalUrl?: string } = {})
     method: "POST",
     body: JSON.stringify({ method: "ramp", ...input }),
   });
+}
+
+export type Gift = {
+  id: string;
+  onChainGiftId: string | null;
+  senderAlias: string;
+  recipientAlias: string;
+  message: string;
+  amount: string;
+  token: Stablecoin;
+  status: GiftStatus;
+  usedSwap: boolean;
+  referralCode: string;
+  fundingTxHash: Hex | null;
+  claimTxHash: Hex | null;
+  refundTxHash: Hex | null;
+  expiresAt: string;
+  claimedAt: string | null;
+  createdAt: string;
+  reference: string;
+};
+
+export type CreateGiftInput = {
+  senderAddress: Address;
+  senderAlias: string;
+  recipientAlias: string;
+  message: string;
+  amount: string;
+  token: Stablecoin;
+  claimHash: Hex;
+  expiresAt: string;
+  sourceReferralCode?: string;
+};
+
+export function createGift(input: CreateGiftInput) {
+  return requestJson<Gift & { metadataHash: Hex; shareUrl: string }>("/api/gifts/minipay", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function getGift(id: string) {
+  return requestJson<Gift>(`/api/gifts/${id}/public`);
+}
+
+export function prepareGiftFunding(id: string, input: { payerToken: Stablecoin; slippageBps?: number }) {
+  return requestJson<{
+    gift: Gift;
+    quote: SwapQuote & {
+      giftAmount: string;
+      fee: string;
+      totalSettlement: string;
+      displayFee: string;
+      displayTotal: string;
+      displayAmountInMax: string;
+    };
+    approveTx: { to: Address; data: Hex; value: string; amount: string; token: Stablecoin };
+    fundTx: { to: Address; data: Hex; value: string };
+  }>(`/api/gifts/${id}/funding-tx`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function createGiftClaimSession(id: string, secret: string) {
+  return requestJson<{ token: string; expiresAt: string }>(`/api/gifts/${id}/claim-session`, {
+    method: "POST",
+    body: JSON.stringify({ secret }),
+  });
+}
+
+export function prepareGiftClaim(id: string, sessionToken: string, recipientAddress: Address) {
+  return requestJson<{
+    tx: { to: Address; data: Hex; value: string };
+    authorization: { nonce: string; deadline: string };
+  }>(`/api/gifts/${id}/claim-authorization`, {
+    method: "POST",
+    body: JSON.stringify({ sessionToken, recipientAddress }),
+  });
+}
+
+export function getGiftLeaderboard() {
+  return requestJson<{
+    entries: Array<{
+      rank: number;
+      accountHint: string;
+      claimedGifts: number;
+      uniqueRecipients: number;
+      claimedVolume: string;
+      swapGifts: number;
+      referralConversions: number;
+    }>;
+    prizePoolUsd: number;
+    updatedAt: string;
+  }>("/api/gifts/leaderboard");
 }

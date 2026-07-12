@@ -8,7 +8,7 @@ export default function PayPage() {
   const params = useParams<{ id: string }>();
 
   return (
-    <AppShell active="pay">
+    <AppShell active="request">
       <CheckoutView id={params.id} />
     </AppShell>
   );

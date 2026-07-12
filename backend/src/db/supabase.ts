@@ -70,6 +70,32 @@ export type OnrampSessionRow = {
   confirmed_at: string | null;
 };
 
+export type GiftRow = {
+  id: string;
+  on_chain_gift_id: string | null;
+  sender_address: string;
+  claimant_address: string | null;
+  sender_alias: string;
+  recipient_alias: string;
+  message: string;
+  amount: string;
+  token: "USDm" | "USDC" | "USDT";
+  payer_token: "USDm" | "USDC" | "USDT" | null;
+  claim_hash: string;
+  metadata_hash: string;
+  status: "draft" | "funding" | "active" | "claimed" | "cancelled" | "expired" | "refunded";
+  funding_tx_hash: string | null;
+  claim_tx_hash: string | null;
+  refund_tx_hash: string | null;
+  used_swap: boolean;
+  referral_code: string;
+  source_referral_code: string | null;
+  expires_at: string;
+  funded_at: string | null;
+  claimed_at: string | null;
+  created_at: string;
+};
+
 let client: SupabaseClient | null = null;
 
 export function getSupabase(env: Env): SupabaseClient {

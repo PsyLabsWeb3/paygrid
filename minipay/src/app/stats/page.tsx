@@ -3,7 +3,7 @@ import { AppShell } from "@/components/app-shell";
 
 export default function StatsPage() {
   return (
-    <AppShell active="stats">
+    <AppShell active="leaderboard">
       <section className="hero-band">
         <div className="top-bar">
           <button className="icon-button" aria-label="Stats">

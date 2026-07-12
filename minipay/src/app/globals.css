@@ -318,6 +318,18 @@ a {
   font-weight: 900;
 }
 
+.campaign-title {
+  max-width: 360px;
+  margin: 6px 0 0;
+  font-size: clamp(2rem, 10vw, 3.25rem);
+  line-height: 0.98;
+  font-weight: 900;
+}
+
+.claim-frame {
+  padding-bottom: 30px;
+}
+
 .token-chip {
   min-height: 42px;
   padding: 0 14px;

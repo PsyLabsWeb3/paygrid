@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { http, createConfig, useAccount, useConnect, useSwitchChain } from "wagmi";
 import { celo, celoAlfajores } from "wagmi/chains";
 import { defineChain } from "viem";
-import { injected } from "wagmi/connectors";
+import { injected, walletConnect } from "wagmi/connectors";
 import { appConfig } from "@/lib/env";
 import { isMiniPayEnvironment } from "@/lib/minipay";
 
@@ -38,7 +38,21 @@ const chains = isProduction
 
 export const wagmiConfig = createConfig({
   chains,
-  connectors: [injected()],
+  connectors: [
+    injected(),
+    ...(appConfig.walletConnectProjectId
+      ? [walletConnect({
+          projectId: appConfig.walletConnectProjectId,
+          metadata: {
+            name: "Celo PayGrid",
+            description: "Claim and send gifts on Celo",
+            url: "https://www.celopaygrid.xyz",
+            icons: ["https://web.celopaygrid.xyz/PaygridIconLime.png"],
+          },
+          showQrModal: true,
+        })]
+      : []),
+  ],
   ssr: true,
   transports: {
     [celo.id]: http(appConfig.rpcUrl),
@@ -53,9 +67,9 @@ export function useAutoConnect() {
 
   useEffect(() => {
     if (isConnected || status === "pending") return;
+    if (!isMiniPayEnvironment()) return;
     const connector = connectors.find((item) => item.id === "injected") ?? connectors[0];
     if (!connector) return;
-    if (!isMiniPayEnvironment() && typeof window === "undefined") return;
     connect({ connector });
   }, [connect, connectors, isConnected, status]);
 }

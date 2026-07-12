@@ -11,7 +11,9 @@
     "test": "node --test --import tsx src/__tests__/*.test.ts"
   },
   "dependencies": {
+    "@celo/attribution-tags": "^0.3.0",
     "@tanstack/react-query": "^5.62.7",
+    "@walletconnect/ethereum-provider": "^2.23.10",
     "lucide-react": "^0.468.0",
     "next": "16.2.9",
     "react": "19.2.0",

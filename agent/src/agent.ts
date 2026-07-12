@@ -9,8 +9,24 @@ import { payX402Endpoint } from "./tools/pay-x402-endpoint";
 import { executeTreasuryReport } from "./tools/treasury-report";
 import { quotePaymentRequest } from "./tools/quote-payment-request";
 import { payPaymentRequest } from "./tools/pay-payment-request";
+import {
+  createGift,
+  getGift,
+  getGiftLeaderboard,
+  prepareGiftFunding,
+  prepareGiftRefund,
+  quoteGiftFunding,
+  verifyGiftClaim,
+} from "./tools/gifts";
 
 const agentTools = {
+  createGift,
+  quoteGiftFunding,
+  prepareGiftFunding,
+  getGift,
+  verifyGiftClaim,
+  prepareGiftRefund,
+  getGiftLeaderboard,
   createPaymentLink,
   checkPaymentStatus,
   getBalance,
@@ -24,7 +40,7 @@ const agentTools = {
 export async function runAgent(prompt: string) {
   const { text, toolCalls, toolResults } = await generateText({
     model: openai("gpt-4o-mini"),
-    system: "You are the Paygrid Agent. You manage payments, create links, and summarize treasury data. You operate autonomously.",
+    system: "You are the Paygrid Agent. You turn human intent into policy-aware payments and personal claimable gifts, prepare stablecoin routes, verify settlement, and summarize treasury data. You never sign for a human wallet and always ask for confirmation before preparing a value-moving transaction.",
     prompt,
     tools: agentTools,
   });

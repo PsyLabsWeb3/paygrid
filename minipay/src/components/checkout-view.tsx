@@ -10,6 +10,7 @@ import { buildPayTx, createRampSession, getPaymentLink, quotePaymentLink, type P
 import { redirectToMiniPayDeposit } from "@/lib/minipay";
 import { paymentTokens, tokenDecimals, tokenAddresses, type Stablecoin } from "@/lib/tokens";
 import { useQuery } from "@tanstack/react-query";
+import { withAttribution } from "@/lib/attribution";
 
 function getPaymentErrorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : "";
@@ -154,7 +155,7 @@ export function CheckoutView({ id }: { id: string }) {
         const approvalHash = prepared.approveTx
           ? await sendTransactionAsync({
               to: prepared.approveTx.to,
-              data: prepared.approveTx.data,
+              data: withAttribution(prepared.approveTx.data),
               value: BigInt(prepared.approveTx.value),
             })
           : await writeContractAsync({
@@ -170,7 +171,7 @@ export function CheckoutView({ id }: { id: string }) {
       toast.message("Sending payment");
       const paymentHash = await sendTransactionAsync({
         to: payTx.to,
-        data: payTx.data,
+        data: withAttribution(payTx.data),
         value: BigInt(payTx.value),
       });
       toast.message("Confirming payment");

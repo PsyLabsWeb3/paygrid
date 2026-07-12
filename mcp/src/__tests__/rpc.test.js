@@ -12,6 +12,9 @@ test("lists Paygrid MCP tools", async () => {
   assert.ok(result.result.tools.some((tool) => tool.name === "get_celo_defi_context"));
   assert.ok(result.result.tools.some((tool) => tool.name === "quote_payment_request"));
   assert.ok(result.result.tools.some((tool) => tool.name === "pay_payment_request"));
+  assert.ok(result.result.tools.some((tool) => tool.name === "create_gift"));
+  assert.ok(result.result.tools.some((tool) => tool.name === "verify_gift_claim"));
+  assert.ok(result.result.tools.some((tool) => tool.name === "get_gift_leaderboard"));
 });
 
 test("blocks remote write tools without API key", async () => {

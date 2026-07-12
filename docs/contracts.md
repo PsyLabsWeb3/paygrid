@@ -1,5 +1,9 @@
 # Contracts Spec
 
+## Gift contracts
+
+`PaygridGiftVault` provides claimable escrow with EIP-712 recipient authorization, cancellation, expiration refunds, signer rotation, and emergency pause. `PaygridGiftRouter` funds the vault with USDC, USDT, or USDm and can route payer assets through authorized Mento or Uniswap targets. See [gifts.md](./gifts.md).
+
 ## Overview
 
 Paygrid uses two core contracts on Celo:

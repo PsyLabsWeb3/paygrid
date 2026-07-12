@@ -1,5 +1,7 @@
 # API Spec
 
+Gift Agent endpoints and lifecycle are documented in [gifts.md](./gifts.md).
+
 Base URL: `https://api.celopaygrid.xyz` (TBD)
 
 ## Authentication

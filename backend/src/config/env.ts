@@ -19,6 +19,20 @@ const optionalAddress = () =>
 
 const requiredString = () => z.string().trim().min(1);
 
+const optionalPrivateKey = () =>
+  z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().optional().transform((value) => {
+      if (!value) return undefined;
+      const trimmed = value.trim();
+      const hex = trimmed.startsWith("0x") ? trimmed : `0x${trimmed}`;
+      if (!/^0x[a-fA-F0-9]{64}$/.test(hex)) {
+        throw new Error("Private key must be 32 bytes hex");
+      }
+      return hex as `0x${string}`;
+    }),
+  );
+
 const rawEnvSchema = z.object({
   SUPABASE_URL: z.string().url(),
   SUPABASE_SERVICE_ROLE_KEY: requiredString(),
@@ -63,6 +77,9 @@ const rawEnvSchema = z.object({
     .regex(/^0x[a-fA-F0-9]{40}$/)
     .optional()
     .transform((v) => (v ? (v as `0x${string}`) : undefined)),
+  PAYGRID_GIFT_VAULT_ADDRESS: optionalAddress(),
+  PAYGRID_GIFT_ROUTER_ADDRESS: optionalAddress(),
+  GIFT_CLAIM_SIGNER_PRIVATE_KEY: optionalPrivateKey(),
   BACKEND_WALLET_PRIVATE_KEY: z
     .string()
     .min(1)
@@ -75,6 +92,7 @@ const rawEnvSchema = z.object({
       return hex as `0x${string}`;
     }),
   PORT: z.coerce.number().default(3001),
+  INDEXER_START_BLOCK: z.coerce.number().int().nonnegative().optional(),
 });
 
 const envSchema = rawEnvSchema.transform((env, ctx) => {

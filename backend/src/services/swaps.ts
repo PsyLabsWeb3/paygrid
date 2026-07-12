@@ -142,12 +142,22 @@ export async function quoteCryptoPayment(env: Env, link: PaymentLinkRow, input: 
   ensureCryptoPayable(link);
   const settlementToken = link.token as Stablecoin;
   const amountOut = parseHumanAmount(link.amount, settlementToken);
+  return quoteStablecoinAmount(env, input.payerToken, settlementToken, amountOut, input.slippageBps);
+}
+
+export async function quoteStablecoinAmount(
+  env: Env,
+  payerToken: Stablecoin,
+  settlementToken: Stablecoin,
+  amountOut: bigint,
+  slippageBpsInput?: number,
+): Promise<CryptoQuote> {
   const expiresAt = new Date(Date.now() + 60_000).toISOString();
 
-  if (input.payerToken === settlementToken) {
+  if (payerToken === settlementToken) {
     return {
       paymentMode: "exact",
-      payerToken: input.payerToken,
+      payerToken,
       settlementToken,
       amountOut: amountOut.toString(),
       amountIn: amountOut.toString(),
@@ -160,13 +170,13 @@ export async function quoteCryptoPayment(env: Env, link: PaymentLinkRow, input: 
     };
   }
 
-  const slippageBps = normalizeSlippage(env, input.slippageBps);
+  const slippageBps = normalizeSlippage(env, slippageBpsInput);
 
   try {
-    const { mento, amountIn } = await findMentoAmountIn(env, input.payerToken, settlementToken, amountOut);
+    const { mento, amountIn } = await findMentoAmountIn(env, payerToken, settlementToken, amountOut);
     return {
       paymentMode: "swap",
-      payerToken: input.payerToken,
+      payerToken,
       settlementToken,
       amountOut: amountOut.toString(),
       amountIn: amountIn.toString(),
@@ -185,7 +195,7 @@ export async function quoteCryptoPayment(env: Env, link: PaymentLinkRow, input: 
     }
 
     const { publicClient } = createChainClients(env);
-    const path = getExactOutputPath(env, input.payerToken, settlementToken);
+    const path = getExactOutputPath(env, payerToken, settlementToken);
     let quotedAmountIn: bigint;
     try {
       const quote = await publicClient.readContract({
@@ -204,7 +214,7 @@ export async function quoteCryptoPayment(env: Env, link: PaymentLinkRow, input: 
 
     return {
       paymentMode: "swap",
-      payerToken: input.payerToken,
+      payerToken,
       settlementToken,
       amountOut: amountOut.toString(),
       amountIn: quotedAmountIn.toString(),
@@ -216,6 +226,50 @@ export async function quoteCryptoPayment(env: Env, link: PaymentLinkRow, input: 
       expiresAt,
     };
   }
+}
+
+export async function buildSwapExecution(
+  env: Env,
+  quote: CryptoQuote,
+  recipient: Address,
+  slippageBps?: number,
+): Promise<{ target: Address; data: Hex; deadline: bigint }> {
+  if (quote.paymentMode !== "swap" || !quote.swapTarget) {
+    throw new Error("Swap execution requested for exact-token quote");
+  }
+
+  const deadline = BigInt(Math.floor(new Date(quote.expiresAt).getTime() / 1000));
+  const tokenInAddress = getTokenAddress(env, quote.payerToken);
+  const tokenOutAddress = getTokenAddress(env, quote.settlementToken);
+  if (quote.protocol === "mento") {
+    const mento = await createMento(env);
+    const swap = await mento.swap.buildSwapParams(
+      tokenInAddress,
+      tokenOutAddress,
+      BigInt(quote.amountInMax),
+      recipient,
+      {
+        slippageTolerance: (slippageBps ?? (env.MAX_SWAP_SLIPPAGE_BPS ?? 100)) / 100,
+        deadline: deadlineFromMinutes(1),
+      },
+    );
+    return { target: swap.params.to as Address, data: swap.params.data as Hex, deadline };
+  }
+
+  return {
+    target: quote.swapTarget,
+    data: encodeFunctionData({
+      abi: uniswapSwapRouterAbi,
+      functionName: "exactOutput",
+      args: [{
+        path: getExactOutputPath(env, quote.payerToken, quote.settlementToken),
+        recipient,
+        amountOut: BigInt(quote.amountOut),
+        amountInMaximum: BigInt(quote.amountInMax),
+      }],
+    }),
+    deadline,
+  };
 }
 
 export async function buildPreparedCryptoPayTx(env: Env, link: PaymentLinkRow, input: SwapQuoteInput) {

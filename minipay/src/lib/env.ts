@@ -16,6 +16,13 @@ function publicAddress(name: string, fallback: Address): Address {
   return value;
 }
 
+function optionalPublicAddress(name: string): Address | undefined {
+  const value = process.env[name];
+  if (!value) return undefined;
+  if (!isAddress(value)) throw new Error(`${name} must be an EVM address`);
+  return value;
+}
+
 const isProductionEnv = (process.env.NEXT_PUBLIC_APP_ENV ?? process.env.NODE_ENV) === "production";
 
 export const appConfig = {
@@ -40,6 +47,11 @@ export const appConfig = {
       ? "0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89"
       : "0x86D9B260F96873e82852B476ff7B0c93bD755597",
   ),
+  giftVaultAddress: optionalPublicAddress("NEXT_PUBLIC_PAYGRID_GIFT_VAULT_ADDRESS"),
+  giftRouterAddress: optionalPublicAddress("NEXT_PUBLIC_PAYGRID_GIFT_ROUTER_ADDRESS"),
+  walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
+  miniPayDeepLinkEnabled: process.env.NEXT_PUBLIC_MINIPAY_DEEPLINK_ENABLED === "true",
+  attributionCode: process.env.NEXT_PUBLIC_CELO_ATTRIBUTION_CODE,
   usdcAddress: publicAddress(
     "NEXT_PUBLIC_USDC_ADDRESS",
     isProductionEnv

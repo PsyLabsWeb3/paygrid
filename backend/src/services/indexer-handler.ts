@@ -84,3 +84,115 @@ export async function handlePaymentReceived(
     token: tokenSymbol,
   });
 }
+
+export async function handleGiftCreated(
+  env: Env,
+  event: {
+    giftId: bigint;
+    sender: `0x${string}`;
+    claimHash: `0x${string}`;
+    transactionHash: `0x${string}`;
+  },
+) {
+  const supabase = getSupabase(env);
+  const now = new Date().toISOString();
+  const { data: gift, error } = await supabase
+    .from("gifts")
+    .update({
+      on_chain_gift_id: event.giftId.toString(),
+      sender_address: event.sender.toLowerCase(),
+      status: "active",
+      funding_tx_hash: event.transactionHash,
+      funded_at: now,
+    })
+    .eq("claim_hash", event.claimHash.toLowerCase())
+    .select("*")
+    .maybeSingle();
+  if (error || !gift) {
+    console.warn("[indexer] no gift draft for claim hash", event.claimHash, error?.message);
+    return;
+  }
+
+  await supabase.from("gift_leaderboard_events").upsert({
+    gift_id: gift.id,
+    address: event.sender.toLowerCase(),
+    event_type: "funded",
+    amount: gift.amount,
+  }, { onConflict: "gift_id,address,event_type" });
+
+  if (gift.source_referral_code) {
+    const { data: sourceGift } = await supabase
+      .from("gifts")
+      .select("id,sender_address")
+      .eq("referral_code", gift.source_referral_code)
+      .maybeSingle();
+    if (sourceGift && sourceGift.sender_address !== event.sender.toLowerCase()) {
+      await supabase.from("gift_referrals").upsert({
+        referrer_address: sourceGift.sender_address,
+        referred_address: event.sender.toLowerCase(),
+        source_gift_id: sourceGift.id,
+        conversion_gift_id: gift.id,
+        converted_at: now,
+      }, { onConflict: "referrer_address,referred_address" });
+      await supabase.from("gift_leaderboard_events").upsert({
+        gift_id: gift.id,
+        address: sourceGift.sender_address,
+        event_type: "referral_conversion",
+        amount: 0,
+      }, { onConflict: "gift_id,address,event_type" });
+    }
+  }
+}
+
+export async function handleGiftClaimed(
+  env: Env,
+  event: {
+    giftId: bigint;
+    recipient: `0x${string}`;
+    transactionHash: `0x${string}`;
+  },
+) {
+  const supabase = getSupabase(env);
+  const now = new Date().toISOString();
+  const { data: gift, error } = await supabase
+    .from("gifts")
+    .update({
+      claimant_address: event.recipient.toLowerCase(),
+      status: "claimed",
+      claim_tx_hash: event.transactionHash,
+      claimed_at: now,
+    })
+    .eq("on_chain_gift_id", event.giftId.toString())
+    .select("*")
+    .maybeSingle();
+  if (error || !gift) {
+    console.warn("[indexer] no DB gift for claim", event.giftId.toString(), error?.message);
+    return;
+  }
+  await supabase
+    .from("gift_claim_sessions")
+    .update({ consumed_at: now })
+    .eq("gift_id", gift.id)
+    .is("consumed_at", null);
+  if (gift.sender_address === event.recipient.toLowerCase()) return;
+  await supabase.from("gift_leaderboard_events").upsert({
+    gift_id: gift.id,
+    address: gift.sender_address,
+    event_type: "claimed",
+    amount: gift.amount,
+  }, { onConflict: "gift_id,address,event_type" });
+}
+
+export async function handleGiftClosed(
+  env: Env,
+  event: {
+    giftId: bigint;
+    status: "cancelled" | "refunded";
+    transactionHash: `0x${string}`;
+  },
+) {
+  const update = event.status === "refunded"
+    ? { status: event.status, refund_tx_hash: event.transactionHash }
+    : { status: event.status };
+  await getSupabase(env).from("gifts").update(update).eq("on_chain_gift_id", event.giftId.toString());
+}

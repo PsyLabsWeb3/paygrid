@@ -19,6 +19,13 @@ function publicAgentMetadata() {
   const docsUrl = "https://web.celopaygrid.xyz/docs/overview.html";
   const iconUrl = "https://web.celopaygrid.xyz/PaygridIconLime.png";
   const mcpTools = [
+    "create_gift",
+    "quote_gift_funding",
+    "prepare_gift_funding",
+    "get_gift",
+    "verify_gift_claim",
+    "prepare_gift_refund",
+    "get_gift_leaderboard",
     "create_payment_request",
     "verify_payment",
     "list_agent_requests",
@@ -106,6 +113,12 @@ function publicAgentMetadata() {
     ],
     skills: [
       {
+        id: "claimable_gifts",
+        name: "Claimable Stablecoin Gifts",
+        description: "Create personal gifts, route funding through supported stablecoins and verify claims on Celo.",
+        tags: ["gifts", "referrals", "stablecoins", "agent-to-human", "minipay"],
+      },
+      {
         id: "digital_payments",
         name: "Digital Payments",
         description: "Create and verify stablecoin payment requests on Celo for agent-to-human and business workflows.",
@@ -190,10 +203,14 @@ function publicAgentMetadata() {
       "paygridLink.celoMainnet": "0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89",
       "paygridRouterV2.celoMainnet": "0x8d290c97100f0e87e04Efd1a790F27004fA3f08B",
       "treasurySafe.celoMainnet": "0xc0C019DCeCE7a3a235Ab520F394A57c132F90cD6",
+      ...(config.giftVaultAddress ? { "paygridGiftVault.celoMainnet": config.giftVaultAddress } : {}),
+      ...(config.giftRouterAddress ? { "paygridGiftRouter.celoMainnet": config.giftRouterAddress } : {}),
     },
     framework: "Node.js MCP HTTP server, Hono/TypeScript backend, Foundry smart contracts, Supabase indexer, Next.js MiniPay checkout",
     capabilities: [
       "stablecoin-payment-requests",
+      "claimable-stablecoin-gifts",
+      "referral-payment-loops",
       "agent-to-human-payments",
       "payment-verification",
       "agentic-collections",

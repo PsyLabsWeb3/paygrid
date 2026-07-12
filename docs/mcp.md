@@ -2,6 +2,18 @@
 
 Paygrid MCP exposes Paygrid as agent spend infrastructure on Celo.
 
+## Claimable gift tools
+
+- `create_gift`
+- `quote_gift_funding`
+- `prepare_gift_funding`
+- `get_gift`
+- `verify_gift_claim`
+- `prepare_gift_refund`
+- `get_gift_leaderboard`
+
+`create_gift` returns a bearer claim URL. Agents must not log it publicly or expose it outside the intended delivery channel.
+
 ## Transports
 
 - Local stdio: for builders and agents that keep their own ERC-8004 signing key locally.

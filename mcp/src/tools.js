@@ -1,4 +1,6 @@
 import { paygridRequest, createAgentSigner } from "./paygrid-client.js";
+import { randomBytes } from "node:crypto";
+import { keccak256, toBytes } from "viem";
 
 const CELO_MAINNET_DEFI = {
   chainId: 42220,
@@ -63,6 +65,77 @@ function getSupportedTrust(config) {
 }
 
 export const toolDefinitions = [
+  {
+    name: "create_gift",
+    description: "Create a claimable, personal stablecoin gift draft for a human recipient.",
+    write: true,
+    inputSchema: {
+      type: "object",
+      required: ["senderAddress", "senderAlias", "recipientAlias", "message", "amount", "token"],
+      properties: {
+        senderAddress: { type: "string" },
+        senderAlias: { type: "string" },
+        recipientAlias: { type: "string" },
+        message: { type: "string" },
+        amount: { type: "string" },
+        token: { type: "string", enum: ["USDC", "USDT", "USDm"] },
+        expiresAt: { type: "string" },
+        sourceReferralCode: { type: "string" },
+      },
+    },
+  },
+  {
+    name: "quote_gift_funding",
+    description: "Quote exact-token or Mento-routed funding for a Paygrid gift.",
+    write: false,
+    inputSchema: {
+      type: "object",
+      required: ["id", "payerToken"],
+      properties: {
+        id: { type: "string" },
+        payerToken: { type: "string", enum: ["USDC", "USDT", "USDm"] },
+        slippageBps: { type: "number" },
+      },
+    },
+  },
+  {
+    name: "prepare_gift_funding",
+    description: "Prepare approval and funding transactions for a Paygrid gift.",
+    write: true,
+    inputSchema: {
+      type: "object",
+      required: ["id", "payerToken"],
+      properties: {
+        id: { type: "string" },
+        payerToken: { type: "string", enum: ["USDC", "USDT", "USDm"] },
+        slippageBps: { type: "number" },
+      },
+    },
+  },
+  {
+    name: "get_gift",
+    description: "Fetch the public state and verifiable settlement evidence for a gift.",
+    write: false,
+    inputSchema: { type: "object", required: ["id"], properties: { id: { type: "string" } } },
+  },
+  {
+    name: "verify_gift_claim",
+    description: "Verify whether a gift was claimed and return its settlement transaction.",
+    write: false,
+    inputSchema: { type: "object", required: ["id"], properties: { id: { type: "string" } } },
+  },
+  {
+    name: "prepare_gift_refund",
+    description: "Prepare a permissionless refund transaction for an expired gift.",
+    write: true,
+    inputSchema: { type: "object", required: ["id"], properties: { id: { type: "string" } } },
+  },
+  {
+    name: "get_gift_leaderboard",
+    description: "Return the live gift campaign leaderboard and referral metrics.",
+    write: false,
+    inputSchema: { type: "object", properties: {} },
+  },
   {
     name: "create_payment_request",
     description: "Create an agent-owned Paygrid payment request on Celo.",
@@ -225,6 +298,63 @@ export function getToolDefinition(name) {
 
 export async function callTool(config, name, args = {}) {
   switch (name) {
+    case "create_gift": {
+      const secret = randomBytes(32).toString("hex");
+      const payload = {
+        senderAddress: requireString(args, "senderAddress"),
+        senderAlias: requireString(args, "senderAlias"),
+        recipientAlias: requireString(args, "recipientAlias"),
+        message: requireString(args, "message"),
+        amount: requireString(args, "amount"),
+        token: requireString(args, "token"),
+        claimHash: keccak256(toBytes(secret)),
+        expiresAt: args.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60_000).toISOString(),
+        sourceReferralCode: args.sourceReferralCode,
+      };
+      const gift = await paygridRequest(config, "/api/gifts/minipay", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }, { agentAuth: true });
+      return text({
+        ...gift,
+        claimUrl: `${gift.shareUrl}#k=${secret}`,
+        warning: "Treat claimUrl as a bearer invitation and share it only with the intended recipient.",
+      });
+    }
+    case "quote_gift_funding":
+      return text(await paygridRequest(config, `/api/gifts/${encodeURIComponent(requireString(args, "id"))}/quote`, {
+        method: "POST",
+        body: JSON.stringify({
+          payerToken: requireString(args, "payerToken"),
+          slippageBps: args.slippageBps ?? 100,
+        }),
+      }));
+    case "prepare_gift_funding":
+      return text(await paygridRequest(config, `/api/gifts/${encodeURIComponent(requireString(args, "id"))}/funding-tx`, {
+        method: "POST",
+        body: JSON.stringify({
+          payerToken: requireString(args, "payerToken"),
+          slippageBps: args.slippageBps ?? 100,
+        }),
+      }, { agentAuth: true }));
+    case "get_gift":
+      return text(await paygridRequest(config, `/api/gifts/${encodeURIComponent(requireString(args, "id"))}/public`));
+    case "verify_gift_claim": {
+      const gift = await paygridRequest(config, `/api/gifts/${encodeURIComponent(requireString(args, "id"))}/status`);
+      return text({
+        id: gift.id,
+        status: gift.status,
+        claimed: gift.status === "claimed",
+        claimTxHash: gift.claimTxHash,
+        claimedAt: gift.claimedAt,
+      });
+    }
+    case "prepare_gift_refund":
+      return text(await paygridRequest(config, `/api/gifts/${encodeURIComponent(requireString(args, "id"))}/refund-tx`, {
+        method: "POST",
+      }, { agentAuth: true }));
+    case "get_gift_leaderboard":
+      return text(await paygridRequest(config, "/api/gifts/leaderboard"));
     case "create_payment_request": {
       const payload = {
         amount: requireString(args, "amount"),
@@ -334,6 +464,8 @@ export async function callTool(config, name, args = {}) {
           planned: ["per-agent API keys", "scoped permissions", "daily spend limits", "token allowlists", "max slippage"],
         },
         primaryFlows: [
+          "agent creates a personal claimable gift and prepares exact-token or swap-routed funding",
+          "recipient claims a gift and agents verify its onchain settlement",
           "agent creates a payment request and receives Celo stablecoins",
           "agent verifies whether a payment request is paid",
           "agent prepares card-funded checkout for humans",

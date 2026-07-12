@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChartNoAxesCombined, CircleDollarSign, History, Plus } from "lucide-react";
+import { Gift, History, Plus, Trophy } from "lucide-react";
 
-type NavKey = "request" | "pay" | "activity" | "stats";
+type NavKey = "request" | "gifts" | "activity" | "leaderboard";
 
 type Props = {
   active: NavKey;
@@ -13,9 +13,9 @@ type Props = {
 
 const nav = [
   { key: "request", href: "/", label: "Create request", icon: Plus },
-  { key: "pay", href: "/", label: "Pay", icon: CircleDollarSign },
+  { key: "gifts", href: "/gifts", label: "Gifts", icon: Gift },
   { key: "activity", href: "/activity", label: "Activity", icon: History },
-  { key: "stats", href: "/stats", label: "Stats", icon: ChartNoAxesCombined },
+  { key: "leaderboard", href: "/leaderboard", label: "Leaderboard", icon: Trophy },
 ] satisfies Array<{
   key: NavKey;
   href: string;
