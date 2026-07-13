@@ -436,6 +436,38 @@ async function getFeeCurrencyGasPrice(publicClient: ReturnType<typeof createChai
   return BigInt(result);
 }
 
+export function buildFeeCurrencyCaps(gasPrice: bigint, maxPriorityFeePerGas: bigint) {
+  // Celo produces one-second blocks. A wider cap avoids a freshly prepared
+  // CIP-64 transaction becoming stale before it reaches the next block.
+  const maxFeePerGas = gasPrice * 2n;
+  return {
+    maxFeePerGas: maxFeePerGas > maxPriorityFeePerGas ? maxFeePerGas : maxPriorityFeePerGas,
+    maxPriorityFeePerGas,
+  };
+}
+
+async function getFeeCurrencyCaps(
+  publicClient: ReturnType<typeof createChainClients>["publicClient"],
+  feeCurrency: Address,
+) {
+  const [gasPrice, priorityResult] = await Promise.all([
+    getFeeCurrencyGasPrice(publicClient, feeCurrency),
+    publicClient.request({
+      method: "eth_maxPriorityFeePerGas",
+      params: [feeCurrency],
+    } as never) as Promise<unknown>,
+  ]);
+  if (typeof priorityResult !== "string" || !/^0x[0-9a-f]+$/i.test(priorityResult)) {
+    throw new Error("Invalid fee currency priority fee");
+  }
+  return buildFeeCurrencyCaps(gasPrice, BigInt(priorityResult));
+}
+
+function isFeeCapTooLow(error: unknown) {
+  return error instanceof Error
+    && /fee cap.*lower than the block base fee|max fee per gas less than block base fee|transaction is outdated/i.test(error.message);
+}
+
 async function estimateClaimGas(
   publicClient: ReturnType<typeof createChainClients>["publicClient"],
   recipient: Address,
@@ -552,13 +584,24 @@ async function sponsorClaimFee(
       functionName: "transfer",
       args: [recipient, reservedAmount],
     }));
-    hash = await sponsor.walletClient.sendTransaction({
-      account: sponsor.account,
-      to: usdm,
-      data: transferData,
-      value: 0n,
-      feeCurrency: usdm,
-    });
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const feeCaps = await getFeeCurrencyCaps(sponsor.publicClient, usdm);
+      try {
+        hash = await sponsor.walletClient.sendTransaction({
+          account: sponsor.account,
+          to: usdm,
+          data: transferData,
+          value: 0n,
+          feeCurrency: usdm,
+          ...feeCaps,
+        });
+        break;
+      } catch (error) {
+        if (attempt === 0 && isFeeCapTooLow(error)) continue;
+        throw error;
+      }
+    }
+    if (!hash) throw new Error("Sponsor transfer was not submitted");
     await markSponsorship(env, sponsorship.id, {
       status: "submitted",
       tx_hash: hash,

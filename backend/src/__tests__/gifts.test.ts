@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   applyGasSafety,
+  buildFeeCurrencyCaps,
   cleanGiftText,
   feeAmountForSixDecimalToken,
   hashGiftSecret,
@@ -37,6 +38,17 @@ test("sponsored fee calculation applies safety and rounds up to one micro USDm",
 test("fee abstraction converts 18-decimal fee units to six-decimal token units conservatively", () => {
   assert.equal(feeAmountForSixDecimalToken(1_000_000_000_000n), 1n);
   assert.equal(feeAmountForSixDecimalToken(1_000_000_000_001n), 2n);
+});
+
+test("fee currency caps tolerate a base fee increase between Celo blocks", () => {
+  assert.deepEqual(buildFeeCurrencyCaps(15n, 2n), {
+    maxFeePerGas: 30n,
+    maxPriorityFeePerGas: 2n,
+  });
+  assert.deepEqual(buildFeeCurrencyCaps(0n, 2n), {
+    maxFeePerGas: 2n,
+    maxPriorityFeePerGas: 2n,
+  });
 });
 
 test("claim fee selection prefers CELO, then stablecoin adapters, then sponsorship", () => {
