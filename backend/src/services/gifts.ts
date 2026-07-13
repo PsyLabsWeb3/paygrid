@@ -10,8 +10,9 @@ import {
   type Hex,
 } from "viem";
 import type { Env } from "../config/env.js";
-import type { GiftRow } from "../db/supabase.js";
+import type { GiftGasSponsorshipRow, GiftRow } from "../db/supabase.js";
 import { getSupabase } from "../db/supabase.js";
+import { withServerAttribution } from "../lib/attribution.js";
 import { createChainClients } from "../lib/chain.js";
 import { ApiError } from "../lib/errors.js";
 import { giftRouterAbi, giftVaultAbi, requireGiftContracts } from "../lib/gifts.js";
@@ -19,6 +20,9 @@ import { getTokenAddress, parseHumanAmount, TOKEN_DECIMALS, type Stablecoin } fr
 import { buildSwapExecution, quoteStablecoinAmount } from "./swaps.js";
 
 const MIN_GIFT_USD = 0.5;
+const GAS_AMOUNT_GRANULARITY = 10n ** 12n; // 0.000001 USDm
+const MAINNET_USDC_FEE_ADAPTER = "0x2F25deB3848C207fc8E0c34035B3Ba7fC157602B" as Address;
+const MAINNET_USDT_FEE_ADAPTER = "0x0e2a3e05bc9a16f5292a6170456a710cb89c6f72" as Address;
 
 type CreateGiftInput = {
   senderAddress: Address;
@@ -271,11 +275,16 @@ export async function createClaimSession(env: Env, giftId: string, secret: strin
   return { token, expiresAt };
 }
 
-export async function buildClaimAuthorization(
-  env: Env,
-  giftId: string,
-  input: { sessionToken: string; recipientAddress: Address },
-) {
+type ClaimInput = { sessionToken: string; recipientAddress: Address };
+
+type ClaimAuthorization = {
+  gift: GiftRow;
+  sessionId: string;
+  tx: { to: Address; data: Hex; value: "0" };
+  authorization: { nonce: string; deadline: string };
+};
+
+async function createClaimAuthorization(env: Env, giftId: string, input: ClaimInput): Promise<ClaimAuthorization> {
   const contracts = requireGiftContracts(env);
   const gift = await getGiftRow(env, giftId);
   if (gift.status !== "active" || !gift.on_chain_gift_id) {
@@ -299,6 +308,39 @@ export async function buildClaimAuthorization(
   if (error) throw new ApiError(500, "INTERNAL_ERROR", error.message);
   if (!session || new Date(session.expires_at).getTime() <= Date.now()) {
     throw new ApiError(403, "INVALID_SESSION", "Claim session is invalid or expired");
+  }
+
+  const { data: sponsorship, error: sponsorshipError } = await getSupabase(env)
+    .from("gift_gas_sponsorships")
+    .select("recipient_address")
+    .eq("gift_id", gift.id)
+    .maybeSingle();
+  if (sponsorshipError && sponsorshipError.code !== "42P01") {
+    throw new ApiError(500, "INTERNAL_ERROR", sponsorshipError.message);
+  }
+  if (sponsorship && String(sponsorship.recipient_address).toLowerCase() !== input.recipientAddress.toLowerCase()) {
+    throw new ApiError(409, "GIFT_UNAVAILABLE", "Gift claim is already bound to another account");
+  }
+
+  const { publicClient } = createChainClients(env);
+  const onchainGift = await publicClient.readContract({
+    address: contracts.vault,
+    abi: giftVaultAbi,
+    functionName: "getGift",
+    args: [BigInt(gift.on_chain_gift_id)],
+  });
+  const expectedAmount = parseStoredGiftAmount(gift.amount, gift.token);
+  const expectedToken = getTokenAddress(env, gift.token);
+  if (
+    onchainGift.id !== BigInt(gift.on_chain_gift_id)
+    || onchainGift.status !== 1
+    || onchainGift.sender.toLowerCase() !== gift.sender_address.toLowerCase()
+    || onchainGift.token.toLowerCase() !== expectedToken.toLowerCase()
+    || onchainGift.amount !== expectedAmount
+    || onchainGift.claimHash.toLowerCase() !== gift.claim_hash.toLowerCase()
+    || onchainGift.expiresAt <= BigInt(Math.floor(Date.now() / 1000))
+  ) {
+    throw new ApiError(409, "GIFT_UNAVAILABLE", "Gift funding could not be verified onchain");
   }
 
   const signerKey = env.GIFT_CLAIM_SIGNER_PRIVATE_KEY ?? env.BACKEND_WALLET_PRIVATE_KEY;
@@ -335,8 +377,297 @@ export async function buildClaimAuthorization(
     args: [BigInt(gift.on_chain_gift_id), nonce, deadline, signature],
   });
   return {
+    gift,
+    sessionId: String(session.id),
     tx: { to: contracts.vault, data, value: "0" },
     authorization: { nonce: nonce.toString(), deadline: deadline.toString() },
+  };
+}
+
+export async function buildClaimAuthorization(env: Env, giftId: string, input: ClaimInput) {
+  const prepared = await createClaimAuthorization(env, giftId, input);
+  return { tx: prepared.tx, authorization: prepared.authorization };
+}
+
+export function roundUp(value: bigint, granularity: bigint) {
+  if (granularity <= 0n) throw new Error("Granularity must be positive");
+  return ((value + granularity - 1n) / granularity) * granularity;
+}
+
+export function applyGasSafety(value: bigint, safetyBps: number) {
+  return (value * BigInt(10_000 + safetyBps) + 9_999n) / 10_000n;
+}
+
+export function feeAmountForSixDecimalToken(feeAmount18: bigint) {
+  return (feeAmount18 + GAS_AMOUNT_GRANULARITY - 1n) / GAS_AMOUNT_GRANULARITY;
+}
+
+export function selectClaimFeeSource(input: {
+  nativeBalance: bigint;
+  nativeRequired: bigint;
+  stablecoinBalances: Record<Stablecoin, bigint>;
+  stablecoinRequirements: Partial<Record<Stablecoin, bigint>>;
+}): "native" | Stablecoin | "sponsor" | "deposit" {
+  if (input.nativeBalance >= input.nativeRequired) return "native";
+  for (const token of ["USDm", "USDC", "USDT"] as const) {
+    const required = input.stablecoinRequirements[token];
+    if (required !== undefined && input.stablecoinBalances[token] >= required) return token;
+  }
+  return Object.values(input.stablecoinBalances).every((balance) => balance === 0n)
+    ? "sponsor"
+    : "deposit";
+}
+
+function getFeeAdapters(env: Env) {
+  return {
+    USDC: env.USDC_FEE_CURRENCY_ADDRESS ?? (env.CHAIN_ID === 42220 ? MAINNET_USDC_FEE_ADAPTER : undefined),
+    USDT: env.USDT_FEE_CURRENCY_ADDRESS ?? (env.CHAIN_ID === 42220 ? MAINNET_USDT_FEE_ADAPTER : undefined),
+  };
+}
+
+async function getFeeCurrencyGasPrice(publicClient: ReturnType<typeof createChainClients>["publicClient"], feeCurrency: Address) {
+  const result = await publicClient.request({
+    method: "eth_gasPrice",
+    params: [feeCurrency],
+  } as never) as unknown;
+  if (typeof result !== "string" || !/^0x[0-9a-f]+$/i.test(result)) {
+    throw new Error("Invalid fee currency gas price");
+  }
+  return BigInt(result);
+}
+
+async function estimateClaimGas(
+  publicClient: ReturnType<typeof createChainClients>["publicClient"],
+  recipient: Address,
+  tx: ClaimAuthorization["tx"],
+  fallback: bigint,
+  feeCurrency?: Address,
+) {
+  try {
+    return await publicClient.estimateGas({
+      account: recipient,
+      to: tx.to,
+      data: tx.data,
+      value: 0n,
+      ...(feeCurrency ? { feeCurrency } : {}),
+    } as never);
+  } catch {
+    return fallback;
+  }
+}
+
+async function markSponsorship(
+  env: Env,
+  id: string,
+  values: Partial<Pick<GiftGasSponsorshipRow, "status" | "tx_hash" | "failure_reason" | "submitted_at" | "confirmed_at">>,
+) {
+  const { error } = await getSupabase(env)
+    .from("gift_gas_sponsorships")
+    .update({ ...values, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw new ApiError(500, "INTERNAL_ERROR", error.message);
+}
+
+async function waitForSponsoredTransfer(env: Env, sponsorship: GiftGasSponsorshipRow) {
+  if (!sponsorship.tx_hash) return sponsorship;
+  const { publicClient } = createChainClients(env);
+  try {
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash: sponsorship.tx_hash as Hex,
+      timeout: 60_000,
+    });
+    if (receipt.status !== "success") {
+      await markSponsorship(env, sponsorship.id, { status: "failed", failure_reason: "Transaction reverted" });
+      throw new ApiError(503, "SPONSOR_UNAVAILABLE", "Account preparation is temporarily unavailable");
+    }
+    await markSponsorship(env, sponsorship.id, {
+      status: "confirmed",
+      confirmed_at: new Date().toISOString(),
+      failure_reason: null,
+    });
+    return { ...sponsorship, status: "confirmed" as const };
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(503, "SPONSOR_UNAVAILABLE", "Account preparation is still confirming");
+  }
+}
+
+async function sponsorClaimFee(
+  env: Env,
+  gift: GiftRow,
+  recipient: Address,
+  amount: bigint,
+) {
+  if (env.GIFT_GAS_SPONSOR_ENABLED !== "true" || !env.GIFT_GAS_SPONSOR_PRIVATE_KEY) {
+    throw new ApiError(402, "INSUFFICIENT_NETWORK_FEE", "This account needs a small deposit before claiming");
+  }
+  const maxPerClaim = parseHumanAmount(env.GIFT_GAS_SPONSOR_MAX_PER_CLAIM_USDM ?? "0.01", "USDm");
+  if (amount > maxPerClaim) {
+    throw new ApiError(503, "SPONSOR_UNAVAILABLE", "Account preparation exceeds the configured safety limit");
+  }
+
+  const amountDisplay = formatUnits(amount, TOKEN_DECIMALS.USDm);
+  const { data, error } = await getSupabase(env).rpc("reserve_gift_gas_sponsorship", {
+    p_gift_id: gift.id,
+    p_recipient_address: recipient.toLowerCase(),
+    p_amount: amountDisplay,
+    p_daily_amount_limit: env.GIFT_GAS_SPONSOR_DAILY_LIMIT_USDM ?? "2",
+    p_daily_claim_limit: env.GIFT_GAS_SPONSOR_DAILY_CLAIM_LIMIT ?? 100,
+  });
+  if (error) {
+    if (error.message.includes("SPONSOR_DAILY_LIMIT")) {
+      throw new ApiError(429, "SPONSOR_LIMIT_REACHED", "Account preparation is temporarily at capacity");
+    }
+    if (error.message.includes("RECIPIENT_ALREADY_SPONSORED") || error.message.includes("SPONSORED_RECIPIENT_MISMATCH")) {
+      throw new ApiError(409, "SPONSOR_UNAVAILABLE", "This account is not eligible for another preparation credit");
+    }
+    throw new ApiError(500, "INTERNAL_ERROR", error.message);
+  }
+  const sponsorship = (Array.isArray(data) ? data[0] : data) as GiftGasSponsorshipRow | null;
+  if (!sponsorship) throw new ApiError(500, "INTERNAL_ERROR", "Sponsorship reservation failed");
+  if (sponsorship.status === "confirmed") return sponsorship;
+  if (sponsorship.status === "submitted") return waitForSponsoredTransfer(env, sponsorship);
+  if (sponsorship.status !== "reserved") {
+    throw new ApiError(503, "SPONSOR_UNAVAILABLE", "Account preparation is temporarily unavailable");
+  }
+
+  const sponsor = createChainClients(env, env.GIFT_GAS_SPONSOR_PRIVATE_KEY);
+  const usdm = getTokenAddress(env, "USDm");
+  const reservedAmount = parseHumanAmount(sponsorship.amount, "USDm");
+  const balance = await sponsor.publicClient.readContract({
+    address: usdm,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [sponsor.account.address],
+  });
+  if (balance < reservedAmount) {
+    await markSponsorship(env, sponsorship.id, { status: "failed", failure_reason: "Sponsor balance unavailable" });
+    throw new ApiError(503, "SPONSOR_UNAVAILABLE", "Account preparation is temporarily unavailable");
+  }
+
+  let hash: Hex | undefined;
+  try {
+    const transferData = withServerAttribution(env, encodeFunctionData({
+      abi: erc20Abi,
+      functionName: "transfer",
+      args: [recipient, reservedAmount],
+    }));
+    hash = await sponsor.walletClient.sendTransaction({
+      account: sponsor.account,
+      to: usdm,
+      data: transferData,
+      value: 0n,
+      feeCurrency: usdm,
+    });
+    await markSponsorship(env, sponsorship.id, {
+      status: "submitted",
+      tx_hash: hash,
+      submitted_at: new Date().toISOString(),
+    });
+    return waitForSponsoredTransfer(env, { ...sponsorship, status: "submitted", tx_hash: hash });
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    if (!hash) {
+      await markSponsorship(env, sponsorship.id, {
+        status: "failed",
+        failure_reason: error instanceof Error ? error.message.slice(0, 240) : "Transfer failed",
+      });
+    }
+    throw new ApiError(503, "SPONSOR_UNAVAILABLE", "Account preparation is temporarily unavailable");
+  }
+}
+
+export async function buildClaimPreparation(env: Env, giftId: string, input: ClaimInput) {
+  const prepared = await createClaimAuthorization(env, giftId, input);
+  const tx = { ...prepared.tx, data: withServerAttribution(env, prepared.tx.data) };
+  const { publicClient } = createChainClients(env);
+  const fallbackGas = BigInt(env.GIFT_CLAIM_GAS_FALLBACK ?? 250_000);
+  const estimatedNativeGas = await estimateClaimGas(publicClient, input.recipientAddress, tx, fallbackGas);
+  const gas = applyGasSafety(estimatedNativeGas, env.GIFT_GAS_SPONSOR_SAFETY_BPS ?? 2500);
+  const nativeGasPrice = await publicClient.getGasPrice();
+  const nativeBalance = await publicClient.getBalance({ address: input.recipientAddress });
+
+  let feeCurrency: Address | undefined;
+  let sponsorship: GiftGasSponsorshipRow | undefined;
+  if (nativeBalance < gas * nativeGasPrice) {
+    const tokenAddresses = {
+      USDm: getTokenAddress(env, "USDm"),
+      USDC: getTokenAddress(env, "USDC"),
+      USDT: getTokenAddress(env, "USDT"),
+    };
+    const [usdmBalance, usdcBalance, usdtBalance] = await Promise.all(
+      (["USDm", "USDC", "USDT"] as const).map((token) => publicClient.readContract({
+        address: tokenAddresses[token],
+        abi: erc20Abi,
+        functionName: "balanceOf",
+        args: [input.recipientAddress],
+      })),
+    );
+    const balances = { USDm: usdmBalance, USDC: usdcBalance, USDT: usdtBalance };
+    const adapters = getFeeAdapters(env);
+    const candidates = [
+      { token: "USDm" as const, feeCurrency: tokenAddresses.USDm },
+      ...(adapters.USDC ? [{ token: "USDC" as const, feeCurrency: adapters.USDC }] : []),
+      ...(adapters.USDT ? [{ token: "USDT" as const, feeCurrency: adapters.USDT }] : []),
+    ];
+
+    const stablecoinRequirements: Partial<Record<Stablecoin, bigint>> = {};
+    const feeCurrencies: Partial<Record<Stablecoin, Address>> = {};
+    for (const candidate of candidates) {
+      try {
+        const candidateGasPrice = await getFeeCurrencyGasPrice(publicClient, candidate.feeCurrency);
+        const needed18 = gas * candidateGasPrice;
+        stablecoinRequirements[candidate.token] = candidate.token === "USDm"
+          ? needed18
+          : feeAmountForSixDecimalToken(needed18);
+        feeCurrencies[candidate.token] = candidate.feeCurrency;
+      } catch {
+        // Continue to the next supported fee currency.
+      }
+    }
+
+    const feeSource = selectClaimFeeSource({
+      nativeBalance,
+      nativeRequired: gas * nativeGasPrice,
+      stablecoinBalances: balances,
+      stablecoinRequirements,
+    });
+    if (feeSource === "deposit") {
+      throw new ApiError(402, "INSUFFICIENT_NETWORK_FEE", "This account needs a small deposit before claiming");
+    }
+    if (feeSource === "sponsor") {
+      const usdmGasPrice = await getFeeCurrencyGasPrice(publicClient, tokenAddresses.USDm);
+      const stipend = roundUp(gas * usdmGasPrice, GAS_AMOUNT_GRANULARITY);
+      sponsorship = await sponsorClaimFee(env, prepared.gift, input.recipientAddress, stipend);
+      feeCurrency = tokenAddresses.USDm;
+    } else if (feeSource !== "native") {
+      feeCurrency = feeCurrencies[feeSource];
+    }
+  }
+
+  const { error: consumeError } = await getSupabase(env)
+    .from("gift_claim_sessions")
+    .update({ consumed_at: new Date().toISOString() })
+    .eq("id", prepared.sessionId)
+    .is("consumed_at", null);
+  if (consumeError) throw new ApiError(500, "INTERNAL_ERROR", consumeError.message);
+
+  return {
+    tx: {
+      ...tx,
+      gas: gas.toString(),
+      ...(feeCurrency ? { feeCurrency } : {}),
+    },
+    authorization: prepared.authorization,
+    sponsorship: sponsorship
+      ? {
+          required: true,
+          status: "confirmed",
+          amount: sponsorship.amount,
+          token: "USDm",
+          txHash: sponsorship.tx_hash,
+        }
+      : { required: false, status: "not_needed", amount: "0", token: "USDm", txHash: null },
   };
 }
 

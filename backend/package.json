@@ -13,6 +13,7 @@
     "db:migrate": "tsx scripts/migrate.ts"
   },
   "dependencies": {
+    "@celo/attribution-tags": "^0.3.0",
     "@hono/node-server": "^1.14.1",
     "@mento-protocol/mento-sdk": "^3.2.8",
     "@privy-io/node": "^0.19.0",

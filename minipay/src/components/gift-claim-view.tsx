@@ -6,8 +6,7 @@ import { CheckCircle2, Download, ExternalLink, Gift, Loader2, ShieldCheck, Walle
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount, useConnect, usePublicClient, useSendTransaction } from "wagmi";
-import { createGiftClaimSession, getGift, prepareGiftClaim } from "@/lib/api";
-import { withAttribution } from "@/lib/attribution";
+import { createGiftClaimSession, getGift, prepareGiftClaimWithAccount } from "@/lib/api";
 import { appConfig } from "@/lib/env";
 
 const GOOGLE_PLAY_URL = "https://play.google.com/store/apps/details?id=com.opera.minipay";
@@ -22,6 +21,7 @@ export function GiftClaimView({ id }: { id: string }) {
   const [resumeToken, setResumeToken] = useState("");
   const [isClaiming, setIsClaiming] = useState(false);
   const [isOpeningMiniPay, setIsOpeningMiniPay] = useState(false);
+  const [claimProgress, setClaimProgress] = useState<"idle" | "preparing" | "confirming">("idle");
 
   const query = useQuery({
     queryKey: ["gift", id],
@@ -50,13 +50,18 @@ export function GiftClaimView({ id }: { id: string }) {
   async function claimGift() {
     if (!address || !publicClient || !canClaim) return;
     setIsClaiming(true);
+    setClaimProgress("preparing");
     try {
       const sessionToken = resumeToken || (await createGiftClaimSession(id, secret)).token;
-      const prepared = await prepareGiftClaim(id, sessionToken, address);
+      toast.message("Preparing your account");
+      const prepared = await prepareGiftClaimWithAccount(id, sessionToken, address);
+      setClaimProgress("confirming");
       const hash = await sendTransactionAsync({
         to: prepared.tx.to,
-        data: withAttribution(prepared.tx.data),
+        data: prepared.tx.data,
         value: 0n,
+        gas: BigInt(prepared.tx.gas),
+        ...(prepared.tx.feeCurrency ? { feeCurrency: prepared.tx.feeCurrency } : {}),
       });
       toast.message("Confirming your gift");
       await publicClient.waitForTransactionReceipt({ hash });
@@ -64,9 +69,15 @@ export function GiftClaimView({ id }: { id: string }) {
       toast.success("Gift claimed");
       await query.refetch();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gift claim failed");
+      const message = error instanceof Error ? error.message : "Gift claim failed";
+      toast.error(
+        /deposit|preparation|capacity|network fee/i.test(message)
+          ? "Account preparation is temporarily unavailable. Deposit a small amount and try again."
+          : message,
+      );
     } finally {
       setIsClaiming(false);
+      setClaimProgress("idle");
     }
   }
 
@@ -139,7 +150,7 @@ export function GiftClaimView({ id }: { id: string }) {
           ) : (
             <button className="primary-button" type="button" disabled={!canClaim || isClaiming} onClick={() => void claimGift()}>
               {isClaiming ? <Loader2 size={20} className="animate-spin" /> : <Gift size={20} />}
-              Claim gift
+              {claimProgress === "preparing" ? "Preparing your account" : claimProgress === "confirming" ? "Confirm claim" : "Claim gift"}
             </button>
           )}
 

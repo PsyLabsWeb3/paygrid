@@ -80,6 +80,19 @@ const rawEnvSchema = z.object({
   PAYGRID_GIFT_VAULT_ADDRESS: optionalAddress(),
   PAYGRID_GIFT_ROUTER_ADDRESS: optionalAddress(),
   GIFT_CLAIM_SIGNER_PRIVATE_KEY: optionalPrivateKey(),
+  GIFT_GAS_SPONSOR_ENABLED: z.enum(["true", "false"]).optional(),
+  GIFT_GAS_SPONSOR_PRIVATE_KEY: optionalPrivateKey(),
+  GIFT_GAS_SPONSOR_DAILY_LIMIT_USDM: z.string().regex(/^\d+(\.\d+)?$/).optional(),
+  GIFT_GAS_SPONSOR_DAILY_CLAIM_LIMIT: z.coerce.number().int().positive().optional(),
+  GIFT_GAS_SPONSOR_MAX_PER_CLAIM_USDM: z.string().regex(/^\d+(\.\d+)?$/).optional(),
+  GIFT_GAS_SPONSOR_SAFETY_BPS: z.coerce.number().int().min(0).max(10000).optional(),
+  GIFT_CLAIM_GAS_FALLBACK: z.coerce.number().int().positive().optional(),
+  CELO_ATTRIBUTION_CODE: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().regex(/^[a-z0-9_]{1,32}$/).optional(),
+  ),
+  USDC_FEE_CURRENCY_ADDRESS: optionalAddress(),
+  USDT_FEE_CURRENCY_ADDRESS: optionalAddress(),
   BACKEND_WALLET_PRIVATE_KEY: z
     .string()
     .min(1)
@@ -102,6 +115,14 @@ const envSchema = rawEnvSchema.transform((env, ctx) => {
       code: z.ZodIssueCode.custom,
       path: ["CELO_RPC_URL"],
       message: "CELO_RPC_URL is required",
+    });
+    return z.NEVER;
+  }
+  if (env.GIFT_GAS_SPONSOR_ENABLED === "true" && !env.GIFT_GAS_SPONSOR_PRIVATE_KEY) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["GIFT_GAS_SPONSOR_PRIVATE_KEY"],
+      message: "GIFT_GAS_SPONSOR_PRIVATE_KEY is required when gift gas sponsorship is enabled",
     });
     return z.NEVER;
   }

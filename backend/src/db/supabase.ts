@@ -96,6 +96,22 @@ export type GiftRow = {
   created_at: string;
 };
 
+export type GiftGasSponsorshipRow = {
+  id: string;
+  gift_id: string;
+  recipient_address: string;
+  amount: string;
+  token: "USDm";
+  status: "reserved" | "submitted" | "confirmed" | "failed";
+  attempt_count: number;
+  tx_hash: string | null;
+  failure_reason: string | null;
+  created_at: string;
+  submitted_at: string | null;
+  confirmed_at: string | null;
+  updated_at: string;
+};
+
 let client: SupabaseClient | null = null;
 
 export function getSupabase(env: Env): SupabaseClient {

@@ -106,19 +106,17 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const data = (await res.json().catch(() => null)) as unknown;
 
   if (!res.ok) {
-    const errorBody =
-      data && typeof data === "object" ? (data as { error?: string; message?: string }) : null;
+    const errorBody = data && typeof data === "object"
+      ? (data as { error?: string | { message?: string }; message?: string })
+      : null;
     console.error("Paygrid API request failed", {
       path,
       status: res.status,
       body: data,
     });
-    const message =
-      errorBody?.message
-        ? errorBody.message
-        : errorBody?.error
-          ? errorBody.error
-          : "Request failed";
+    const message = errorBody?.message
+      ?? (typeof errorBody?.error === "string" ? errorBody.error : errorBody?.error?.message)
+      ?? "Request failed";
     throw new Error(message);
   }
 
@@ -231,6 +229,23 @@ export function prepareGiftClaim(id: string, sessionToken: string, recipientAddr
     tx: { to: Address; data: Hex; value: string };
     authorization: { nonce: string; deadline: string };
   }>(`/api/gifts/${id}/claim-authorization`, {
+    method: "POST",
+    body: JSON.stringify({ sessionToken, recipientAddress }),
+  });
+}
+
+export function prepareGiftClaimWithAccount(id: string, sessionToken: string, recipientAddress: Address) {
+  return requestJson<{
+    tx: { to: Address; data: Hex; value: string; gas: string; feeCurrency?: Address };
+    authorization: { nonce: string; deadline: string };
+    sponsorship: {
+      required: boolean;
+      status: "not_needed" | "confirmed";
+      amount: string;
+      token: "USDm";
+      txHash: Hex | null;
+    };
+  }>(`/api/gifts/${id}/claim-preparation`, {
     method: "POST",
     body: JSON.stringify({ sessionToken, recipientAddress }),
   });

@@ -60,4 +60,14 @@ After MiniPay approval, enable the official `https://link.minipay.xyz/browse?url
 - A referral conversion requires a claimant to fund a subsequent gift to a new recipient.
 - Leaderboard transactions should include the assigned hackathon attribution code using `NEXT_PUBLIC_CELO_ATTRIBUTION_CODE`.
 
+## Claim account preparation
+
+`POST /api/gifts/:id/claim-preparation` prepares a claim without exposing network-fee details in the MiniPay UI. The backend checks the claimant's CELO, USDm, USDC and USDT balances. It uses CELO when available, otherwise Celo fee abstraction through USDm or the verified USDC/USDT fee-currency adapters.
+
+When the account has insufficient CELO and exactly zero supported stablecoin balance, PayGrid may send a minimal USDm preparation credit from a dedicated sponsor wallet. The credit is calculated from estimated claim gas plus a 25% safety margin, rounded up to `0.000001 USDm`, and capped at `0.01 USDm`.
+
+Sponsorship is disabled by default. Its Supabase reservation is atomic, limited to one gift and one lifetime credit per recipient, capped at `$2 USDm` and 100 claims per UTC day, and limited to two attempts only when no transfer was submitted. The sponsor wallet must have no contract roles and should keep only a small manually refilled operating balance.
+
+Both the preparation transfer and claim calldata include `CELO_ATTRIBUTION_CODE`. The legacy `claim-authorization` endpoint remains available for compatibility.
+
 The reward pool is distributed manually from the PayGrid Safe after reviewing the final leaderboard for circular or coordinated abuse.

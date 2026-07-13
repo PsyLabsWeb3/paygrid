@@ -12,8 +12,8 @@ import paygridRouterAbi from "./contracts/PaygridRouter.json" with { type: "json
 export const paygridLinkAbiConst = paygridLinkAbi as readonly unknown[];
 export const paygridRouterAbiConst = paygridRouterAbi as readonly unknown[];
 
-export function createChainClients(env: Env) {
-  const account = privateKeyToAccount(env.BACKEND_WALLET_PRIVATE_KEY);
+export function createChainClients(env: Env, privateKey = env.BACKEND_WALLET_PRIVATE_KEY) {
+  const account = privateKeyToAccount(privateKey);
   const chain = {
     ...celoSepolia,
     id: env.CHAIN_ID,

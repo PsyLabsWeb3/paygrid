@@ -216,6 +216,12 @@ NEXT_PUBLIC_USDC_ADDRESS=0xcebA9300f2b948710d2653dD7B07f33A8B32118C
 
 The backend and MCP containers also require `PAYGRID_GIFT_VAULT_ADDRESS` and `PAYGRID_GIFT_ROUTER_ADDRESS`. The backend requires a dedicated `GIFT_CLAIM_SIGNER_PRIVATE_KEY`; its address must match the signer passed to `DeployGifts.s.sol`.
 
+### Optional sponsored gift claims
+
+Apply migration `20260713000006_gift_gas_sponsorships.sql` before enabling claim sponsorship. Deploy the backend first with `GIFT_GAS_SPONSOR_ENABLED=false`, create a dedicated sponsor key with no administrative roles, fund it with a small USDm operating balance, and only then set the flag to `true` and recreate the backend container.
+
+Required settings are documented in `backend/.env.example`. For Celo mainnet, the verified fee-currency adapters are `0x2F25deB3848C207fc8E0c34035B3Ba7fC157602B` for USDC and `0x0e2a3e05bc9a16f5292a6170456a710cb89c6f72` for USDT. Keep the daily amount, daily count and per-claim caps at their conservative defaults for the first smoke tests.
+
 ## MCP HTTP
 
 Public endpoints:
