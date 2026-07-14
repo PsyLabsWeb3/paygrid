@@ -679,8 +679,8 @@ export async function buildClaimPreparation(env: Env, giftId: string, input: Cla
       throw new ApiError(402, "INSUFFICIENT_NETWORK_FEE", "This account needs a small deposit before claiming");
     }
     if (feeSource === "sponsor") {
-      const usdmGasPrice = await getFeeCurrencyGasPrice(publicClient, tokenAddresses.USDm);
-      const stipend = roundUp(gas * usdmGasPrice, GAS_AMOUNT_GRANULARITY);
+      const usdmFeeCaps = await getFeeCurrencyCaps(publicClient, tokenAddresses.USDm);
+      const stipend = roundUp(gas * usdmFeeCaps.maxFeePerGas, GAS_AMOUNT_GRANULARITY);
       sponsorship = await sponsorClaimFee(env, prepared.gift, input.recipientAddress, stipend);
       feeCurrency = tokenAddresses.USDm;
     } else if (feeSource !== "native") {

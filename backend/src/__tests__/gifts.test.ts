@@ -33,6 +33,11 @@ test("sponsored fee calculation applies safety and rounds up to one micro USDm",
   const safeGas = applyGasSafety(estimatedGas, 2500);
   assert.equal(safeGas, 250_000n);
   assert.equal(roundUp(1_000_000_000_000_001n, 1_000_000_000_000n), 1_001_000_000_000_000n);
+  const feeCaps = buildFeeCurrencyCaps(4_000_000_000n, 100_000_000n);
+  assert.equal(
+    roundUp(safeGas * feeCaps.maxFeePerGas, 1_000_000_000_000n),
+    2_000_000_000_000_000n,
+  );
 });
 
 test("fee abstraction converts 18-decimal fee units to six-decimal token units conservatively", () => {
