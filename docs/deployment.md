@@ -218,7 +218,7 @@ The backend and MCP containers also require `PAYGRID_GIFT_VAULT_ADDRESS` and `PA
 
 ### Optional sponsored gift claims
 
-Apply migration `20260713000006_gift_gas_sponsorships.sql` before enabling claim sponsorship. Deploy the backend first with `GIFT_GAS_SPONSOR_ENABLED=false`, create a dedicated sponsor key with no administrative roles, fund it with a small USDm operating balance, and only then set the flag to `true` and recreate the backend container.
+Apply migration `20260713000006_gift_gas_sponsorships.sql` before enabling claim sponsorship. Deploy the backend first with `GIFT_GAS_SPONSOR_ENABLED=false`, create a dedicated sponsor key with no administrative roles, fund it with small CELO and USDm operating balances, and only then set the flag to `true` and recreate the backend container. The sponsor pays its own stipend-transfer fee in CELO; recipients receive USDm for the claim fee.
 
 Required settings are documented in `backend/.env.example`. For Celo mainnet, the verified fee-currency adapters are `0x2F25deB3848C207fc8E0c34035B3Ba7fC157602B` for USDC and `0x0e2a3e05bc9a16f5292a6170456a710cb89c6f72` for USDT. Keep the daily amount, daily count and per-claim caps at their conservative defaults for the first smoke tests.
 

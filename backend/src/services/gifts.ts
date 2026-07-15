@@ -463,11 +463,6 @@ async function getFeeCurrencyCaps(
   return buildFeeCurrencyCaps(gasPrice, BigInt(priorityResult));
 }
 
-function isFeeCapTooLow(error: unknown) {
-  return error instanceof Error
-    && /fee cap.*lower than the block base fee|max fee per gas less than block base fee|transaction is outdated/i.test(error.message);
-}
-
 async function estimateClaimGas(
   publicClient: ReturnType<typeof createChainClients>["publicClient"],
   recipient: Address,
@@ -584,24 +579,15 @@ async function sponsorClaimFee(
       functionName: "transfer",
       args: [recipient, reservedAmount],
     }));
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      const feeCaps = await getFeeCurrencyCaps(sponsor.publicClient, usdm);
-      try {
-        hash = await sponsor.walletClient.sendTransaction({
-          account: sponsor.account,
-          to: usdm,
-          data: transferData,
-          value: 0n,
-          feeCurrency: usdm,
-          ...feeCaps,
-        });
-        break;
-      } catch (error) {
-        if (attempt === 0 && isFeeCapTooLow(error)) continue;
-        throw error;
-      }
-    }
-    if (!hash) throw new Error("Sponsor transfer was not submitted");
+    // The sponsor pays its own transaction fee in CELO. Using the USDm
+    // stipend as fee currency here creates a bootstrap dependency and its
+    // CIP-64 fee cap can become stale before the one-second Celo block lands.
+    hash = await sponsor.walletClient.sendTransaction({
+      account: sponsor.account,
+      to: usdm,
+      data: transferData,
+      value: 0n,
+    });
     await markSponsorship(env, sponsorship.id, {
       status: "submitted",
       tx_hash: hash,
