@@ -172,6 +172,26 @@ Paygrid MCP now exposes live swap-aware payment tools. Agents can quote and prep
 | `get_agent_spend_limits` | planned | Show per-agent token, slippage and daily-volume guardrails. |
 | `set_agent_spend_policy` | planned | Admin-only policy configuration for autonomous spend. |
 
+## Treasury Quant Agent
+
+PayGrid now includes a guarded treasury automation surface for builders and
+operators:
+
+- TradingView `LONG` / `ENTRY` signals are accepted without changing the
+  existing webhook JSON and deduplicated by `externalSignalId`.
+- The worker defaults to paper mode and supports one position per configured
+  asset, bounded position size, total exposure, daily loss, slippage and entry
+  deviation.
+- CELO uses Mento when an executable route exists and falls back to configured
+  Uniswap V3 liquidity. ORO remains disabled until a verified token address and
+  route are configured.
+- Every approval and swap receives the PayGrid/Celo attribution suffix.
+- MCP exposes read-only status, positions and signals plus protected pause,
+  resume and full-position close tools.
+
+The hackathon deployment uses a dedicated executor wallet. User-owned treasury
+accounts and delegated wallet policies remain a later phase.
+
 Mainnet proof:
 
 - Flow: USDT payer token to USDC settlement token.

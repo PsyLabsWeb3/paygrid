@@ -34,6 +34,9 @@ npm run dev
 
 # Event indexer (separate terminal)
 npm run indexer
+
+# Treasury Quant Agent signal/TP/SL worker (separate terminal)
+npm run treasury:worker
 ```
 
 ## Test
@@ -76,6 +79,34 @@ npm test
 | GET | `/api/links/:id` | Link detail + payments |
 | POST | `/api/links/:id/pay` | Crypto tx params (`method: "crypto"`) |
 | POST | `/api/links/:id/pay` | Fonbnk session (`method: "fonbnk"`) |
+
+## Treasury Quant Agent
+
+The TradingView webhook accepts the existing signal JSON without adding fields:
+
+```text
+POST /api/treasury/signals/tradingview?key=<TREASURY_SIGNAL_SECRET>
+```
+
+Signals are deduplicated by `externalSignalId` and processed asynchronously by
+`npm run treasury:worker`. The worker defaults to `paper` mode. `live` mode
+requires a dedicated `TREASURY_EXECUTOR_PRIVATE_KEY`.
+
+Public read routes:
+
+```text
+GET /api/treasury/status
+GET /api/treasury/signals
+GET /api/treasury/positions
+```
+
+Operator routes require `X-Treasury-Admin-Key`:
+
+```text
+POST /api/treasury/control/pause
+POST /api/treasury/control/resume
+POST /api/treasury/positions/:id/close
+```
 
 ## Contracts (Sepolia)
 

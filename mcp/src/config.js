@@ -18,6 +18,7 @@ export function loadConfig() {
     chainId: Number(process.env.CHAIN_ID ?? process.env.CELO_CHAIN_ID ?? "11142220"),
     celoRpcUrl: process.env.CELO_RPC_URL ?? "https://forno.celo-sepolia.celo-testnet.org",
     mcpApiKey: process.env.PAYGRID_MCP_API_KEY,
+    treasuryAdminApiKey: process.env.TREASURY_ADMIN_API_KEY,
     httpPort: Number(process.env.MCP_HTTP_PORT ?? "3002"),
     publicBaseUrl: optionalEnv("MCP_PUBLIC_BASE_URL", "https://mcp.celopaygrid.xyz").replace(/\/$/, ""),
     giftVaultAddress: process.env.PAYGRID_GIFT_VAULT_ADDRESS,

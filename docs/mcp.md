@@ -35,6 +35,12 @@ Paygrid MCP exposes Paygrid as agent spend infrastructure on Celo.
 - `get_celo_defi_context`
 - `get_agent_profile`
 - `treasury_report`
+- `get_treasury_quant_status`
+- `list_treasury_quant_positions`
+- `list_treasury_quant_signals`
+- `pause_treasury_quant_agent`
+- `resume_treasury_quant_agent`
+- `close_treasury_quant_position`
 
 ## Stablecoin swaps
 

@@ -266,3 +266,95 @@ export function getGiftLeaderboard() {
     updatedAt: string;
   }>("/api/gifts/leaderboard");
 }
+
+export type TreasurySignal = {
+  id: string;
+  externalSignalId: string;
+  timeframe: string;
+  entryPrice: string;
+  slPrice: string;
+  tpPrice: string;
+  strategy: { code: string; name: string; description: string | null };
+  symbol: { code: string; baseAsset: "CELO" | "ORO"; quoteAsset: Stablecoin };
+  status: "pending" | "processing" | "executed" | "rejected" | "failed";
+  positionId: string | null;
+  reason: string | null;
+  receivedAt: string;
+  processedAt: string | null;
+};
+
+export type TreasuryPosition = {
+  id: string;
+  signalId: string;
+  asset: "CELO" | "ORO";
+  quoteToken: Stablecoin;
+  mode: "paper" | "live";
+  route: "paper" | "mento" | "uniswap-v3";
+  status: "open" | "closing" | "closed" | "failed";
+  amountAsset: string;
+  costQuote: string;
+  entryPrice: string;
+  currentPrice: string;
+  slPrice: string;
+  tpPrice: string;
+  pnlQuote: string;
+  entryTxHash: Hex | null;
+  exitTxHash: Hex | null;
+  closeReason: string | null;
+  closeRequestedAt: string | null;
+  openedAt: string;
+  closedAt: string | null;
+  lastCheckedAt: string | null;
+};
+
+export type TreasuryQuantStatus = {
+  name: string;
+  enabled: boolean;
+  mode: "paper" | "live";
+  paused: boolean;
+  pauseReason: string | null;
+  executorConfigured: boolean;
+  assets: {
+    CELO: { enabled: boolean };
+    ORO: { enabled: boolean; symbol: string };
+  };
+  limits: {
+    defaultPositionUsd: string;
+    maxPerTradeUsd: string;
+    maxTotalExposureUsd: string;
+    dailyLossLimitUsd: string;
+    maxSlippageBps: number;
+  };
+  balances: Partial<Record<Stablecoin | "CELO" | "ORO", string>>;
+  metrics: {
+    openPositions: number;
+    totalExposureUsd: string;
+    pendingSignals: number;
+  };
+  recentSignals: TreasurySignal[];
+  positions: TreasuryPosition[];
+};
+
+export function getTreasuryQuantStatus() {
+  return requestJson<TreasuryQuantStatus>("/api/treasury/status");
+}
+
+function treasuryControl(path: string, operatorKey: string, body?: Record<string, unknown>) {
+  return requestJson<{ paused?: boolean; reason?: string | null } | TreasuryPosition>(path, {
+    method: "POST",
+    headers: { "x-treasury-admin-key": operatorKey },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+export function pauseTreasuryQuantAgent(operatorKey: string, reason?: string) {
+  return treasuryControl("/api/treasury/control/pause", operatorKey, { reason });
+}
+
+export function resumeTreasuryQuantAgent(operatorKey: string) {
+  return treasuryControl("/api/treasury/control/resume", operatorKey);
+}
+
+export function closeTreasuryPosition(id: string, operatorKey: string) {
+  return treasuryControl(`/api/treasury/positions/${id}/close`, operatorKey);
+}

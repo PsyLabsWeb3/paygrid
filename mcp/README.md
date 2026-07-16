@@ -31,6 +31,10 @@ Remote write tools require `Authorization: Bearer <PAYGRID_MCP_API_KEY>` or `X-A
 
 Read-only tools can be called without a key.
 
+Treasury Quant Agent tools include status, positions and signal inspection.
+Pause, resume and manual-close tools additionally require
+`TREASURY_ADMIN_API_KEY` in the MCP service environment.
+
 ## Public metadata
 
 Hosted deployments expose:

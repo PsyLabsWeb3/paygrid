@@ -112,6 +112,55 @@ export type GiftGasSponsorshipRow = {
   updated_at: string;
 };
 
+export type TreasurySignalRow = {
+  id: string;
+  external_signal_id: string;
+  source: string;
+  timeframe: string;
+  side: "LONG";
+  signal_type: "ENTRY";
+  entry_price: string;
+  sl_price: string;
+  tp_price: string;
+  strategy_code: string;
+  strategy_name: string;
+  strategy_description: string | null;
+  symbol_code: string;
+  base_asset: "CELO" | "ORO";
+  quote_asset: "USDC" | "USDT" | "USDm";
+  payload: Record<string, unknown>;
+  status: "pending" | "processing" | "executed" | "rejected" | "failed";
+  position_id: string | null;
+  rejection_reason: string | null;
+  received_at: string;
+  processing_started_at: string | null;
+  processed_at: string | null;
+};
+
+export type TreasuryPositionRow = {
+  id: string;
+  signal_id: string;
+  asset: "CELO" | "ORO";
+  quote_token: "USDC" | "USDT" | "USDm";
+  mode: "paper" | "live";
+  route: "paper" | "mento" | "uniswap-v3";
+  status: "open" | "closing" | "closed" | "failed";
+  amount_asset: string;
+  cost_quote: string;
+  entry_price: string;
+  current_price: string;
+  sl_price: string;
+  tp_price: string;
+  pnl_quote: string;
+  entry_tx_hash: string | null;
+  exit_tx_hash: string | null;
+  close_reason: string | null;
+  close_requested_at: string | null;
+  opened_at: string;
+  closed_at: string | null;
+  last_checked_at: string | null;
+};
+
 let client: SupabaseClient | null = null;
 
 export function getSupabase(env: Env): SupabaseClient {

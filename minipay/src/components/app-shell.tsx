@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gift, History, Plus, Trophy } from "lucide-react";
+import { ChartCandlestick, Gift, History, Plus, Trophy } from "lucide-react";
 
-type NavKey = "request" | "gifts" | "activity" | "leaderboard";
+type NavKey = "request" | "gifts" | "treasury" | "activity" | "leaderboard";
 
 type Props = {
   active: NavKey;
@@ -14,6 +14,7 @@ type Props = {
 const nav = [
   { key: "request", href: "/", label: "Create request", icon: Plus },
   { key: "gifts", href: "/gifts", label: "Gifts", icon: Gift },
+  { key: "treasury", href: "/treasury", label: "Treasury", icon: ChartCandlestick },
   { key: "activity", href: "/activity", label: "Activity", icon: History },
   { key: "leaderboard", href: "/leaderboard", label: "Leaderboard", icon: Trophy },
 ] satisfies Array<{

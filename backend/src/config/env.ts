@@ -87,6 +87,22 @@ const rawEnvSchema = z.object({
   GIFT_GAS_SPONSOR_MAX_PER_CLAIM_USDM: z.string().regex(/^\d+(\.\d+)?$/).optional(),
   GIFT_GAS_SPONSOR_SAFETY_BPS: z.coerce.number().int().min(0).max(10000).optional(),
   GIFT_CLAIM_GAS_FALLBACK: z.coerce.number().int().positive().optional(),
+  TREASURY_QUANT_ENABLED: z.enum(["true", "false"]).optional(),
+  TREASURY_QUANT_MODE: z.enum(["paper", "live"]).optional(),
+  TREASURY_SIGNAL_SECRET: optionalString(),
+  TREASURY_ADMIN_API_KEY: optionalString(),
+  TREASURY_EXECUTOR_PRIVATE_KEY: optionalPrivateKey(),
+  TREASURY_EXECUTOR_ADDRESS: optionalAddress(),
+  TREASURY_DEFAULT_POSITION_USD: z.string().regex(/^\d+(\.\d+)?$/).optional(),
+  TREASURY_MAX_PER_TRADE_USD: z.string().regex(/^\d+(\.\d+)?$/).optional(),
+  TREASURY_MAX_TOTAL_EXPOSURE_USD: z.string().regex(/^\d+(\.\d+)?$/).optional(),
+  TREASURY_DAILY_LOSS_LIMIT_USD: z.string().regex(/^\d+(\.\d+)?$/).optional(),
+  TREASURY_MAX_SLIPPAGE_BPS: z.coerce.number().int().min(1).max(2000).optional(),
+  TREASURY_MAX_ENTRY_DEVIATION_BPS: z.coerce.number().int().min(1).max(5000).optional(),
+  TREASURY_POLL_INTERVAL_MS: z.coerce.number().int().min(5000).optional(),
+  TREASURY_CELO_ADDRESS: optionalAddress(),
+  TREASURY_ORO_ADDRESS: optionalAddress(),
+  TREASURY_ORO_SYMBOL: z.string().trim().min(1).max(16).optional(),
   CELO_ATTRIBUTION_CODE: z.preprocess(
     (value) => (value === "" ? undefined : value),
     z.string().regex(/^[a-z0-9_]{1,32}$/).optional(),
@@ -123,6 +139,41 @@ const envSchema = rawEnvSchema.transform((env, ctx) => {
       code: z.ZodIssueCode.custom,
       path: ["GIFT_GAS_SPONSOR_PRIVATE_KEY"],
       message: "GIFT_GAS_SPONSOR_PRIVATE_KEY is required when gift gas sponsorship is enabled",
+    });
+    return z.NEVER;
+  }
+  if (env.TREASURY_QUANT_ENABLED === "true" && !env.TREASURY_SIGNAL_SECRET) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["TREASURY_SIGNAL_SECRET"],
+      message: "TREASURY_SIGNAL_SECRET is required when Treasury Quant Agent is enabled",
+    });
+    return z.NEVER;
+  }
+  if (env.TREASURY_QUANT_ENABLED === "true" && !env.TREASURY_ADMIN_API_KEY) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["TREASURY_ADMIN_API_KEY"],
+      message: "TREASURY_ADMIN_API_KEY is required when Treasury Quant Agent is enabled",
+    });
+    return z.NEVER;
+  }
+  if (env.TREASURY_QUANT_MODE === "live" && !env.TREASURY_EXECUTOR_PRIVATE_KEY) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["TREASURY_EXECUTOR_PRIVATE_KEY"],
+      message: "TREASURY_EXECUTOR_PRIVATE_KEY is required in live mode",
+    });
+    return z.NEVER;
+  }
+  if (
+    env.TREASURY_QUANT_MODE === "live"
+    && env.TREASURY_EXECUTOR_PRIVATE_KEY === env.BACKEND_WALLET_PRIVATE_KEY
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["TREASURY_EXECUTOR_PRIVATE_KEY"],
+      message: "Treasury executor must use a dedicated wallet, not BACKEND_WALLET_PRIVATE_KEY",
     });
     return z.NEVER;
   }

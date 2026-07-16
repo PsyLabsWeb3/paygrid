@@ -39,6 +39,15 @@ services:
       NODE_ENV: production
     command: ["npm", "run", "indexer:start"]
 
+  treasury-worker:
+    <<: *backend-image
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+    command: ["npm", "run", "treasury:worker:start"]
+
   mcp-http:
     <<: *mcp-image
     restart: unless-stopped

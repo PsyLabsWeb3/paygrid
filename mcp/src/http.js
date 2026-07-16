@@ -19,6 +19,12 @@ function publicAgentMetadata() {
   const docsUrl = "https://web.celopaygrid.xyz/docs/overview.html";
   const iconUrl = "https://web.celopaygrid.xyz/PaygridIconLime.png";
   const mcpTools = [
+    "get_treasury_quant_status",
+    "list_treasury_quant_positions",
+    "list_treasury_quant_signals",
+    "pause_treasury_quant_agent",
+    "resume_treasury_quant_agent",
+    "close_treasury_quant_position",
     "create_gift",
     "quote_gift_funding",
     "prepare_gift_funding",
@@ -112,6 +118,12 @@ function publicAgentMetadata() {
       ...(address ? [{ name: "DID", type: "did", endpoint: `did:pkh:${chainRef}:${address}`, version: "v1" }] : []),
     ],
     skills: [
+      {
+        id: "treasury_quant_agent",
+        name: "Treasury Quant Agent",
+        description: "Consumes TradingView LONG signals, routes guarded CELO/ORO swaps and closes positions through verifiable TP/SL policies.",
+        tags: ["defai", "treasury", "tradingview", "risk-controls", "celo"],
+      },
       {
         id: "claimable_gifts",
         name: "Claimable Stablecoin Gifts",
@@ -210,6 +222,9 @@ function publicAgentMetadata() {
     capabilities: [
       "stablecoin-payment-requests",
       "claimable-stablecoin-gifts",
+      "guarded-treasury-automation",
+      "tradingview-signal-execution",
+      "defai-long-positions",
       "referral-payment-loops",
       "agent-to-human-payments",
       "payment-verification",

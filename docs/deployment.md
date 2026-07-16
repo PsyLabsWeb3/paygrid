@@ -10,7 +10,7 @@ Paygrid production has three public surfaces:
 | `https://api.celopaygrid.xyz` | VPS + Nginx | `backend` Docker service |
 | `https://mcp.celopaygrid.xyz` | VPS + Nginx | `mcp-http` Docker service |
 
-The same VPS also runs the private `indexer` Docker service. The indexer has no public port.
+The same VPS also runs the private `indexer` and `treasury-worker` Docker services. Neither has a public port.
 
 The current agent runtime in `agent/` is CLI-based. The remote agent/builder interface is the MCP HTTP service, which signs Paygrid backend requests as an ERC-8004 agent when configured with `AGENT_PRIVATE_KEY` and `ERC8004_AGENT_ID`.
 
@@ -75,7 +75,7 @@ forge script script/Deploy.s.sol:Deploy --rpc-url celo-mainnet --broadcast
 5. Rebuild and restart VPS services:
 
 ```bash
-sudo docker compose -f docker-compose.prod.yml up -d --build backend indexer mcp-http
+sudo docker compose -f docker-compose.prod.yml up -d --build backend indexer treasury-worker mcp-http
 sudo docker compose -f docker-compose.prod.yml ps
 ```
 
@@ -129,6 +129,7 @@ Start:
 sudo docker compose -f docker-compose.prod.yml up -d --build
 sudo docker compose -f docker-compose.prod.yml logs -f backend
 sudo docker compose -f docker-compose.prod.yml logs -f indexer
+sudo docker compose -f docker-compose.prod.yml logs -f treasury-worker
 sudo docker compose -f docker-compose.prod.yml logs -f mcp-http
 ```
 
@@ -215,6 +216,30 @@ NEXT_PUBLIC_USDC_ADDRESS=0xcebA9300f2b948710d2653dD7B07f33A8B32118C
 ```
 
 The backend and MCP containers also require `PAYGRID_GIFT_VAULT_ADDRESS` and `PAYGRID_GIFT_ROUTER_ADDRESS`. The backend requires a dedicated `GIFT_CLAIM_SIGNER_PRIVATE_KEY`; its address must match the signer passed to `DeployGifts.s.sol`.
+
+### Treasury Quant Agent
+
+Apply `20260716000007_treasury_quant_agent.sql` before starting the
+`treasury-worker`. Deploy with:
+
+```text
+TREASURY_QUANT_ENABLED=false
+TREASURY_QUANT_MODE=paper
+```
+
+Then configure `TREASURY_SIGNAL_SECRET`, `TREASURY_ADMIN_API_KEY`, conservative
+risk limits and an optional paper-mode executor address. Enable paper mode and
+send a TradingView signal to:
+
+```text
+POST https://api.celopaygrid.xyz/api/treasury/signals/tradingview?key=<secret>
+```
+
+Only switch to `live` after paper signals, Mento quotes, pause/resume, manual
+close and TP/SL monitoring have been verified. Live mode requires a dedicated
+execution wallet with no contract ownership or treasury roles. Keep its balance
+limited to the active risk budget. Every approval and swap uses
+`CELO_ATTRIBUTION_CODE`.
 
 ### Optional sponsored gift claims
 
