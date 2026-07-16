@@ -5,9 +5,11 @@ import type { Env } from "../config/env.js";
 import {
   calculateEntryDeviationBps,
   calculatePaperAssetAmount,
+  calculatePriceDivergenceBps,
   evaluateTreasuryRisk,
   getTreasuryCloseReason,
   getStaleSignalRecoveryAction,
+  isOraclePriceFresh,
   parseTradingViewSignal,
 } from "../lib/treasury.js";
 
@@ -126,7 +128,27 @@ test("TP, SL and manual close triggers are deterministic", () => {
 
 test("entry deviation and paper sizing remain bounded", () => {
   assert.equal(calculateEntryDeviationBps(100, 101), 100);
+  assert.equal(calculatePriceDivergenceBps(100, 99), 100);
+  assert.equal(calculatePriceDivergenceBps(0, 99), Number.POSITIVE_INFINITY);
   assert.equal(calculatePaperAssetAmount(1, 0.5), "2");
+});
+
+test("oracle freshness rejects stale, future and invalid observations", () => {
+  assert.equal(isOraclePriceFresh({
+    updatedAtSeconds: 1_000,
+    nowSeconds: 1_500,
+    maxAgeSeconds: 600,
+  }), true);
+  assert.equal(isOraclePriceFresh({
+    updatedAtSeconds: 1_000,
+    nowSeconds: 1_601,
+    maxAgeSeconds: 600,
+  }), false);
+  assert.equal(isOraclePriceFresh({
+    updatedAtSeconds: 2_000,
+    nowSeconds: 1_500,
+    maxAgeSeconds: 600,
+  }), false);
 });
 
 test("TradingView and operator routes reject missing dedicated secrets", async () => {

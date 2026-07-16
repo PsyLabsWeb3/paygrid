@@ -52,7 +52,7 @@ function PositionRow({
       </div>
       <div className="treasury-price-grid">
         <div><span className="fine muted">Entry</span><strong>{money(position.entryPrice)}</strong></div>
-        <div><span className="fine muted">Now</span><strong>{money(position.currentPrice)}</strong></div>
+        <div><span className="fine muted">Oracle</span><strong>{money(position.oraclePrice ?? position.currentPrice)}</strong></div>
         <div>
           <span className="fine muted">PnL</span>
           <strong className={pnl >= 0 ? "positive" : "negative"}>{money(position.pnlQuote)} {position.quoteToken}</strong>
@@ -61,6 +61,13 @@ function PositionRow({
       <p className="fine muted" style={{ margin: "12px 0 0" }}>
         SL {money(position.slPrice)} · TP {money(position.tpPrice)}
       </p>
+      {position.executablePrice ? (
+        <p className="fine muted" style={{ margin: "6px 0 0" }}>
+          Executable {money(position.executablePrice)}
+          {position.priceDivergenceBps == null ? "" : ` · ${position.priceDivergenceBps} bps`}
+          {position.priceRoute ? ` · ${position.priceRoute}` : ""}
+        </p>
+      ) : null}
       {position.entryTxHash ? (
         <a
           className="fine positive"

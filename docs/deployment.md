@@ -219,7 +219,8 @@ The backend and MCP containers also require `PAYGRID_GIFT_VAULT_ADDRESS` and `PA
 
 ### Treasury Quant Agent
 
-Apply `20260716000007_treasury_quant_agent.sql` before starting the
+Apply `20260716000007_treasury_quant_agent.sql` and
+`20260716000008_treasury_dual_price_monitor.sql` before starting the
 `treasury-worker`. Deploy with:
 
 ```text
@@ -229,17 +230,20 @@ TREASURY_QUANT_MODE=paper
 
 Then configure `TREASURY_SIGNAL_SECRET`, `TREASURY_ADMIN_API_KEY`, conservative
 risk limits and an optional paper-mode executor address. Enable paper mode and
-send a TradingView signal to:
+send a TradingView signal through the IP-allowlisted Nginx route:
 
 ```text
-POST https://api.celopaygrid.xyz/api/treasury/signals/tradingview?key=<secret>
+POST https://api.celopaygrid.xyz/webhooks/tradingview/treasury
 ```
 
 Only switch to `live` after paper signals, Mento quotes, pause/resume, manual
 close and TP/SL monitoring have been verified. Live mode requires a dedicated
 execution wallet with no contract ownership or treasury roles. Keep its balance
 limited to the active risk budget. Every approval and swap uses
-`CELO_ATTRIBUTION_CODE`.
+`CELO_ATTRIBUTION_CODE`. Mainnet CELO monitoring uses the Chainlink CELO/USD
+feed, while the DEX quote uses the entire position size. Configure conservative
+oracle age and oracle/DEX divergence limits; either safety failure pauses new
+entries and blocks automated execution.
 
 ### Optional sponsored gift claims
 

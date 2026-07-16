@@ -149,6 +149,13 @@ export type TreasuryPositionRow = {
   cost_quote: string;
   entry_price: string;
   current_price: string;
+  oracle_price: string | null;
+  executable_price: string | null;
+  price_divergence_bps: number | null;
+  oracle_source: string | null;
+  oracle_updated_at: string | null;
+  price_block_number: string | null;
+  price_route: "mento" | "uniswap-v3" | null;
   sl_price: string;
   tp_price: string;
   pnl_quote: string;

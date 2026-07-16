@@ -109,6 +109,29 @@ export function calculateEntryDeviationBps(signalPrice: number, executionPrice: 
   return Math.round((Math.abs(executionPrice - signalPrice) / signalPrice) * 10_000);
 }
 
+export function calculatePriceDivergenceBps(referencePrice: number, executablePrice: number) {
+  if (referencePrice <= 0 || executablePrice <= 0) return Number.POSITIVE_INFINITY;
+  return Math.round((Math.abs(executablePrice - referencePrice) / referencePrice) * 10_000);
+}
+
+export function isOraclePriceFresh(input: {
+  updatedAtSeconds: number;
+  nowSeconds: number;
+  maxAgeSeconds: number;
+}) {
+  if (
+    !Number.isFinite(input.updatedAtSeconds)
+    || !Number.isFinite(input.nowSeconds)
+    || !Number.isFinite(input.maxAgeSeconds)
+    || input.updatedAtSeconds <= 0
+    || input.maxAgeSeconds <= 0
+    || input.updatedAtSeconds > input.nowSeconds
+  ) {
+    return false;
+  }
+  return input.nowSeconds - input.updatedAtSeconds <= input.maxAgeSeconds;
+}
+
 export function calculatePaperAssetAmount(tradeUsd: number, entryPrice: number) {
   if (tradeUsd <= 0 || entryPrice <= 0) throw new Error("Invalid paper position values");
   return (tradeUsd / entryPrice).toFixed(18).replace(/0+$/, "").replace(/\.$/, "");

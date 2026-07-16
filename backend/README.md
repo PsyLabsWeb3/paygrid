@@ -82,15 +82,20 @@ npm test
 
 ## Treasury Quant Agent
 
-The TradingView webhook accepts the existing signal JSON without adding fields:
+The TradingView webhook accepts the existing signal JSON without adding fields.
+Production Nginx should IP-allowlist TradingView and inject the dedicated signal
+secret:
 
 ```text
-POST /api/treasury/signals/tradingview?key=<TREASURY_SIGNAL_SECRET>
+POST /webhooks/tradingview/treasury
 ```
 
 Signals are deduplicated by `externalSignalId` and processed asynchronously by
 `npm run treasury:worker`. The worker defaults to `paper` mode. `live` mode
-requires a dedicated `TREASURY_EXECUTOR_PRIVATE_KEY`.
+requires a dedicated `TREASURY_EXECUTOR_PRIVATE_KEY`. TP/SL monitoring uses an
+onchain oracle as its reference price and a full-position Mento/Uniswap quote as
+the executable price. Stale feeds or excessive oracle/DEX divergence pause new
+entries and block automated exits.
 
 Public read routes:
 

@@ -99,9 +99,13 @@ const rawEnvSchema = z.object({
   TREASURY_DAILY_LOSS_LIMIT_USD: z.string().regex(/^\d+(\.\d+)?$/).optional(),
   TREASURY_MAX_SLIPPAGE_BPS: z.coerce.number().int().min(1).max(2000).optional(),
   TREASURY_MAX_ENTRY_DEVIATION_BPS: z.coerce.number().int().min(1).max(5000).optional(),
+  TREASURY_MAX_PRICE_DIVERGENCE_BPS: z.coerce.number().int().min(1).max(5000).optional(),
+  TREASURY_ORACLE_MAX_AGE_SECONDS: z.coerce.number().int().min(30).max(172800).optional(),
   TREASURY_POLL_INTERVAL_MS: z.coerce.number().int().min(5000).optional(),
   TREASURY_CELO_ADDRESS: optionalAddress(),
+  TREASURY_CELO_ORACLE_ADDRESS: optionalAddress(),
   TREASURY_ORO_ADDRESS: optionalAddress(),
+  TREASURY_ORO_ORACLE_ADDRESS: optionalAddress(),
   TREASURY_ORO_SYMBOL: z.string().trim().min(1).max(16).optional(),
   CELO_ATTRIBUTION_CODE: z.preprocess(
     (value) => (value === "" ? undefined : value),

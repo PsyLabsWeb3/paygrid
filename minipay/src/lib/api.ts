@@ -295,6 +295,13 @@ export type TreasuryPosition = {
   costQuote: string;
   entryPrice: string;
   currentPrice: string;
+  oraclePrice: string | null;
+  executablePrice: string | null;
+  priceDivergenceBps: number | null;
+  oracleSource: string | null;
+  oracleUpdatedAt: string | null;
+  priceBlockNumber: string | null;
+  priceRoute: "mento" | "uniswap-v3" | null;
   slPrice: string;
   tpPrice: string;
   pnlQuote: string;
@@ -315,8 +322,8 @@ export type TreasuryQuantStatus = {
   pauseReason: string | null;
   executorConfigured: boolean;
   assets: {
-    CELO: { enabled: boolean };
-    ORO: { enabled: boolean; symbol: string };
+    CELO: { enabled: boolean; oracleConfigured: boolean };
+    ORO: { enabled: boolean; oracleConfigured: boolean; symbol: string };
   };
   limits: {
     defaultPositionUsd: string;
@@ -324,6 +331,8 @@ export type TreasuryQuantStatus = {
     maxTotalExposureUsd: string;
     dailyLossLimitUsd: string;
     maxSlippageBps: number;
+    maxPriceDivergenceBps: number;
+    oracleMaxAgeSeconds: number;
   };
   balances: Partial<Record<Stablecoin | "CELO" | "ORO", string>>;
   metrics: {

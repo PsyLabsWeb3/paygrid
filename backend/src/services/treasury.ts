@@ -1,6 +1,7 @@
 import {
   erc20Abi,
   formatUnits,
+  parseAbi,
   parseUnits,
   type Address,
   type Hex,
@@ -19,9 +20,11 @@ import {
   calculateEntryDeviationBps,
   calculatePaperAssetAmount,
   calculatePositionPnl,
+  calculatePriceDivergenceBps,
   evaluateTreasuryRisk,
   getTreasuryCloseReason,
   getStaleSignalRecoveryAction,
+  isOraclePriceFresh,
   parseTradingViewSignal,
   type TradingViewSignal,
   type TreasuryCloseReason,
@@ -32,9 +35,45 @@ import {
   quoteTreasurySwap,
   type TreasuryCall,
   type TreasuryRoute,
+  type TreasurySwapQuote,
 } from "./treasury-routing.js";
 
 const DEFAULT_CELO_ADDRESS = "0x471EcE3750Da237f93B8E339c536989b8978a438" as Address;
+const DEFAULT_CELO_ORACLE_ADDRESS = "0x0568fD19986748cEfF3301e55c0eb1E729E0Ab7e" as Address;
+const aggregatorV3Abi = parseAbi([
+  "function decimals() view returns (uint8)",
+  "function description() view returns (string)",
+  "function latestRoundData() view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)",
+]);
+
+type TreasuryAsset = "CELO" | "ORO";
+
+type OracleSnapshot = {
+  price: number;
+  source: string;
+  updatedAt: string;
+  updatedAtSeconds: number;
+  roundId: string;
+  blockNumber: string;
+};
+
+type PositionMarketSnapshot = {
+  oracle: OracleSnapshot;
+  executablePrice: number;
+  divergenceBps: number;
+  route: TreasuryRoute;
+  quote: TreasurySwapQuote;
+};
+
+class TreasuryPriceSafetyError extends Error {
+  constructor(
+    message: string,
+    readonly details: Record<string, unknown> = {},
+  ) {
+    super(message);
+    this.name = "TreasuryPriceSafetyError";
+  }
+}
 
 function quantEnabled(env: Env) {
   return env.TREASURY_QUANT_ENABLED === "true";
@@ -49,6 +88,8 @@ function quantConfig(env: Env) {
     dailyLossLimitUsd: env.TREASURY_DAILY_LOSS_LIMIT_USD ?? "5",
     maxSlippageBps: env.TREASURY_MAX_SLIPPAGE_BPS ?? 100,
     maxEntryDeviationBps: env.TREASURY_MAX_ENTRY_DEVIATION_BPS ?? 500,
+    maxPriceDivergenceBps: env.TREASURY_MAX_PRICE_DIVERGENCE_BPS ?? 200,
+    oracleMaxAgeSeconds: env.TREASURY_ORACLE_MAX_AGE_SECONDS ?? 600,
     oroSymbol: env.TREASURY_ORO_SYMBOL ?? "ORO",
   };
 }
@@ -62,12 +103,43 @@ function fixed(value: number, decimals = 18) {
   return value.toFixed(decimals).replace(/0+$/, "").replace(/\.$/, "") || "0";
 }
 
-function assetAddress(env: Env, asset: "CELO" | "ORO") {
+function parseStoredUnits(value: string | number, decimals: number) {
+  const [whole, fraction = ""] = String(value).split(".");
+  const truncated = fraction.length > 0
+    ? `${whole}.${fraction.slice(0, decimals)}`
+    : whole;
+  return parseUnits(truncated, decimals);
+}
+
+function assetAddress(env: Env, asset: TreasuryAsset) {
   if (asset === "CELO") return env.TREASURY_CELO_ADDRESS ?? DEFAULT_CELO_ADDRESS;
   if (!env.TREASURY_ORO_ADDRESS) {
     throw new ApiError(409, "ASSET_NOT_CONFIGURED", `${quantConfig(env).oroSymbol} is not configured`);
   }
   return env.TREASURY_ORO_ADDRESS;
+}
+
+function assetOracleAddress(env: Env, asset: TreasuryAsset) {
+  if (asset === "CELO") {
+    const address = env.TREASURY_CELO_ORACLE_ADDRESS
+      ?? (env.CHAIN_ID === 42220 ? DEFAULT_CELO_ORACLE_ADDRESS : undefined);
+    if (!address) throw new TreasuryPriceSafetyError("CELO oracle is not configured");
+    return address;
+  }
+  if (!env.TREASURY_ORO_ORACLE_ADDRESS) {
+    throw new TreasuryPriceSafetyError(`${quantConfig(env).oroSymbol} oracle is not configured`);
+  }
+  return env.TREASURY_ORO_ORACLE_ADDRESS;
+}
+
+function assetIsConfigured(env: Env, asset: TreasuryAsset) {
+  if (asset === "CELO") {
+    return Boolean(
+      env.TREASURY_CELO_ORACLE_ADDRESS
+      ?? (env.CHAIN_ID === 42220 ? DEFAULT_CELO_ORACLE_ADDRESS : undefined),
+    );
+  }
+  return Boolean(env.TREASURY_ORO_ADDRESS && env.TREASURY_ORO_ORACLE_ADDRESS);
 }
 
 function executorAccount(env: Env) {
@@ -98,6 +170,69 @@ async function tokenBalance(env: Env, token: Address, owner: Address) {
     functionName: "balanceOf",
     args: [owner],
   });
+}
+
+async function readOraclePrice(env: Env, asset: TreasuryAsset): Promise<OracleSnapshot> {
+  const address = assetOracleAddress(env, asset);
+  const { publicClient } = createChainClients(env);
+  try {
+    const [decimals, description, round, blockNumber] = await Promise.all([
+      publicClient.readContract({
+        address,
+        abi: aggregatorV3Abi,
+        functionName: "decimals",
+      }),
+      publicClient.readContract({
+        address,
+        abi: aggregatorV3Abi,
+        functionName: "description",
+      }),
+      publicClient.readContract({
+        address,
+        abi: aggregatorV3Abi,
+        functionName: "latestRoundData",
+      }),
+      publicClient.getBlockNumber(),
+    ]);
+    const [roundId, answer, , updatedAt, answeredInRound] = round;
+    if (answer <= 0n) {
+      throw new TreasuryPriceSafetyError(`${asset} oracle returned a non-positive price`, {
+        oracle: address,
+        answer: answer.toString(),
+      });
+    }
+    if (updatedAt <= 0n || answeredInRound < roundId) {
+      throw new TreasuryPriceSafetyError(`${asset} oracle returned an incomplete round`, {
+        oracle: address,
+        roundId: roundId.toString(),
+        answeredInRound: answeredInRound.toString(),
+      });
+    }
+    const updatedAtSeconds = Number(updatedAt);
+    const maxAgeSeconds = quantConfig(env).oracleMaxAgeSeconds;
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    if (!isOraclePriceFresh({ updatedAtSeconds, nowSeconds, maxAgeSeconds })) {
+      throw new TreasuryPriceSafetyError(`${asset} oracle price is stale`, {
+        oracle: address,
+        updatedAt: new Date(updatedAtSeconds * 1000).toISOString(),
+        maxAgeSeconds,
+      });
+    }
+    return {
+      price: numeric(formatUnits(answer, Number(decimals))),
+      source: `${description} @ ${address}`,
+      updatedAt: new Date(updatedAtSeconds * 1000).toISOString(),
+      updatedAtSeconds,
+      roundId: roundId.toString(),
+      blockNumber: blockNumber.toString(),
+    };
+  } catch (error) {
+    if (error instanceof TreasuryPriceSafetyError) throw error;
+    throw new TreasuryPriceSafetyError(`${asset} oracle is unavailable`, {
+      oracle: address,
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 async function addAudit(
@@ -156,6 +291,13 @@ function serializePosition(position: TreasuryPositionRow) {
     costQuote: String(position.cost_quote),
     entryPrice: String(position.entry_price),
     currentPrice: String(position.current_price),
+    oraclePrice: position.oracle_price == null ? null : String(position.oracle_price),
+    executablePrice: position.executable_price == null ? null : String(position.executable_price),
+    priceDivergenceBps: position.price_divergence_bps,
+    oracleSource: position.oracle_source,
+    oracleUpdatedAt: position.oracle_updated_at,
+    priceBlockNumber: position.price_block_number == null ? null : String(position.price_block_number),
+    priceRoute: position.price_route,
     slPrice: String(position.sl_price),
     tpPrice: String(position.tp_price),
     pnlQuote: String(position.pnl_quote),
@@ -244,7 +386,7 @@ async function riskSnapshot(env: Env, signal: TradingViewSignal) {
   }, 0);
   return {
     paused: control.paused,
-    assetConfigured: signal.symbol.baseAsset === "CELO" || Boolean(env.TREASURY_ORO_ADDRESS),
+    assetConfigured: assetIsConfigured(env, signal.symbol.baseAsset),
     hasOpenPosition: openPositions.some((position) => position.asset === signal.symbol.baseAsset),
     tradeUsd: Number(config.defaultPositionUsd),
     maxPerTradeUsd: Number(config.maxPerTradeUsd),
@@ -333,11 +475,20 @@ async function executeTreasurySwap(
     tokenIn: Address;
     tokenOut: Address;
     amountIn: bigint;
+    quote?: TreasurySwapQuote;
   },
 ) {
   const account = executorAccount(env);
   if (!account) throw new Error("Treasury executor is not configured");
-  const quote = await quoteTreasurySwap(env, input.tokenIn, input.tokenOut, input.amountIn);
+  const quote = input.quote ?? await quoteTreasurySwap(env, input.tokenIn, input.tokenOut, input.amountIn);
+  if (
+    quote.tokenIn.toLowerCase() !== input.tokenIn.toLowerCase()
+    || quote.tokenOut.toLowerCase() !== input.tokenOut.toLowerCase()
+    || quote.amountIn !== input.amountIn
+    || quote.expiresAt < Math.floor(Date.now() / 1000)
+  ) {
+    throw new Error("Prepared treasury quote does not match the requested swap or has expired");
+  }
   const calls = await buildTreasurySwapCalls(env, quote, account.address);
   const before = await tokenBalance(env, input.tokenOut, account.address);
   let approvalHash: Hex | null = null;
@@ -416,14 +567,35 @@ async function createLivePosition(env: Env, signal: TreasurySignalRow) {
   const amountIn = parseUnits(config.defaultPositionUsd, TOKEN_DECIMALS[quoteToken]);
   const balance = await tokenBalance(env, quoteAddress, account.address);
   if (balance < amountIn) throw new Error(`Insufficient ${quoteToken} treasury balance`);
-  const quote = await quoteTreasurySwap(env, quoteAddress, outputAddress, amountIn);
+  const [quote, oracle] = await Promise.all([
+    quoteTreasurySwap(env, quoteAddress, outputAddress, amountIn),
+    readOraclePrice(env, signal.base_asset),
+  ]);
   const assetDecimals = await tokenDecimals(env, outputAddress);
   const expectedAsset = numeric(formatUnits(quote.expectedAmountOut, assetDecimals));
   const costQuote = numeric(formatUnits(amountIn, TOKEN_DECIMALS[quoteToken]));
   const executionPrice = costQuote / expectedAsset;
-  const deviationBps = calculateEntryDeviationBps(numeric(signal.entry_price), executionPrice);
-  if (deviationBps > config.maxEntryDeviationBps) {
-    throw new Error(`Executable price deviates ${deviationBps} bps from the TradingView signal`);
+  const signalPrice = numeric(signal.entry_price);
+  const signalExecutionDeviationBps = calculateEntryDeviationBps(signalPrice, executionPrice);
+  if (signalExecutionDeviationBps > config.maxEntryDeviationBps) {
+    throw new Error(
+      `Executable price deviates ${signalExecutionDeviationBps} bps from the TradingView signal`,
+    );
+  }
+  const signalOracleDeviationBps = calculateEntryDeviationBps(signalPrice, oracle.price);
+  if (signalOracleDeviationBps > config.maxEntryDeviationBps) {
+    throw new Error(`Oracle price deviates ${signalOracleDeviationBps} bps from the TradingView signal`);
+  }
+  const priceDivergenceBps = calculatePriceDivergenceBps(oracle.price, executionPrice);
+  if (priceDivergenceBps > config.maxPriceDivergenceBps) {
+    throw new TreasuryPriceSafetyError(
+      `Executable price diverges ${priceDivergenceBps} bps from the oracle`,
+      {
+        oraclePrice: oracle.price,
+        executablePrice: executionPrice,
+        maxPriceDivergenceBps: config.maxPriceDivergenceBps,
+      },
+    );
   }
   const { data, error } = await getSupabase(env)
     .from("treasury_quant_positions")
@@ -436,7 +608,14 @@ async function createLivePosition(env: Env, signal: TreasurySignalRow) {
       amount_asset: fixed(expectedAsset, 24),
       cost_quote: fixed(costQuote, 24),
       entry_price: fixed(executionPrice),
-      current_price: fixed(executionPrice),
+      current_price: fixed(oracle.price),
+      oracle_price: fixed(oracle.price),
+      executable_price: fixed(executionPrice),
+      price_divergence_bps: priceDivergenceBps,
+      oracle_source: oracle.source,
+      oracle_updated_at: oracle.updatedAt,
+      price_block_number: oracle.blockNumber,
+      price_route: quote.protocol,
       sl_price: signal.sl_price,
       tp_price: signal.tp_price,
     })
@@ -451,22 +630,39 @@ async function createLivePosition(env: Env, signal: TreasurySignalRow) {
       tokenIn: quoteAddress,
       tokenOut: outputAddress,
       amountIn,
+      quote,
     });
     const actualAsset = numeric(formatUnits(execution.amountOut, assetDecimals));
     const actualPrice = costQuote / actualAsset;
+    const actualDivergenceBps = calculatePriceDivergenceBps(oracle.price, actualPrice);
     const { data: updated, error: updateError } = await getSupabase(env)
       .from("treasury_quant_positions")
       .update({
         route: execution.quote.protocol,
         amount_asset: fixed(actualAsset, 24),
         entry_price: fixed(actualPrice),
-        current_price: fixed(actualPrice),
+        current_price: fixed(oracle.price),
+        executable_price: fixed(actualPrice),
+        price_divergence_bps: actualDivergenceBps,
         entry_tx_hash: execution.swapHash,
       })
       .eq("id", data.id)
       .select("*")
       .single();
     if (updateError || !updated) throw new Error(updateError?.message ?? "Live position update failed");
+    if (actualDivergenceBps > config.maxPriceDivergenceBps) {
+      await setTreasuryPause(
+        env,
+        true,
+        `Entry execution diverged ${actualDivergenceBps} bps from the oracle`,
+      );
+      await addAudit(env, "treasury_price_safety_pause", {
+        phase: "entry",
+        oraclePrice: oracle.price,
+        executablePrice: actualPrice,
+        divergenceBps: actualDivergenceBps,
+      }, { signalId: signal.id, positionId: data.id });
+    }
     return updated as TreasuryPositionRow;
   } catch (executionError) {
     await getSupabase(env)
@@ -602,26 +798,41 @@ export async function recoverStaleTreasurySignals(env: Env) {
   return recovered;
 }
 
-async function currentPositionPrice(env: Env, position: TreasuryPositionRow) {
+async function currentPositionMarket(
+  env: Env,
+  position: TreasuryPositionRow,
+): Promise<PositionMarketSnapshot> {
   const asset = assetAddress(env, position.asset);
   const quoteToken = position.quote_token as Stablecoin;
   const quoteAddress = getTokenAddress(env, quoteToken);
   const decimals = await tokenDecimals(env, asset);
-  const amountIn = 10n ** BigInt(decimals);
-  const quote = await quoteTreasurySwap(env, asset, quoteAddress, amountIn);
-  return numeric(formatUnits(quote.expectedAmountOut, TOKEN_DECIMALS[quoteToken]));
+  const amountIn = parseStoredUnits(position.amount_asset, decimals);
+  const [oracle, quote] = await Promise.all([
+    readOraclePrice(env, position.asset),
+    quoteTreasurySwap(env, asset, quoteAddress, amountIn),
+  ]);
+  const amountAsset = numeric(formatUnits(amountIn, decimals));
+  const amountQuote = numeric(formatUnits(quote.expectedAmountOut, TOKEN_DECIMALS[quoteToken]));
+  const executablePrice = amountQuote / amountAsset;
+  return {
+    oracle,
+    executablePrice,
+    divergenceBps: calculatePriceDivergenceBps(oracle.price, executablePrice),
+    route: quote.protocol,
+    quote,
+  };
 }
 
 async function closePaperPosition(
   env: Env,
   position: TreasuryPositionRow,
-  currentPrice: number,
+  market: PositionMarketSnapshot,
   reason: TreasuryCloseReason,
 ) {
   const pnl = calculatePositionPnl({
     amountAsset: numeric(position.amount_asset),
     costQuote: numeric(position.cost_quote),
-    currentPrice,
+    currentPrice: market.executablePrice,
   });
   await getSupabase(env).from("treasury_quant_executions").insert({
     signal_id: position.signal_id,
@@ -631,14 +842,21 @@ async function closePaperPosition(
     token_in: position.asset,
     token_out: position.quote_token,
     amount_in: position.amount_asset,
-    amount_out: fixed(numeric(position.amount_asset) * currentPrice, 24),
+    amount_out: fixed(numeric(position.amount_asset) * market.executablePrice, 24),
     status: "paper",
   });
   await getSupabase(env)
     .from("treasury_quant_positions")
     .update({
       status: "closed",
-      current_price: fixed(currentPrice),
+      current_price: fixed(market.oracle.price),
+      oracle_price: fixed(market.oracle.price),
+      executable_price: fixed(market.executablePrice),
+      price_divergence_bps: market.divergenceBps,
+      oracle_source: market.oracle.source,
+      oracle_updated_at: market.oracle.updatedAt,
+      price_block_number: market.oracle.blockNumber,
+      price_route: market.route,
       pnl_quote: fixed(pnl, 24),
       close_reason: reason,
       closed_at: new Date().toISOString(),
@@ -650,14 +868,14 @@ async function closePaperPosition(
 async function closeLivePosition(
   env: Env,
   position: TreasuryPositionRow,
-  currentPrice: number,
+  market: PositionMarketSnapshot,
   reason: TreasuryCloseReason,
 ) {
   const asset = assetAddress(env, position.asset);
   const quoteToken = position.quote_token as Stablecoin;
   const quoteAddress = getTokenAddress(env, quoteToken);
   const decimals = await tokenDecimals(env, asset);
-  const amountIn = parseUnits(String(position.amount_asset), decimals);
+  const amountIn = parseStoredUnits(position.amount_asset, decimals);
   await getSupabase(env).from("treasury_quant_positions").update({ status: "closing" }).eq("id", position.id);
   const execution = await executeTreasurySwap(env, {
     signalId: position.signal_id,
@@ -666,6 +884,7 @@ async function closeLivePosition(
     tokenIn: asset,
     tokenOut: quoteAddress,
     amountIn,
+    quote: market.quote,
   });
   const amountOut = numeric(formatUnits(execution.amountOut, TOKEN_DECIMALS[quoteToken]));
   const pnl = amountOut - numeric(position.cost_quote);
@@ -674,7 +893,14 @@ async function closeLivePosition(
     .update({
       status: "closed",
       route: execution.quote.protocol,
-      current_price: fixed(currentPrice),
+      current_price: fixed(market.oracle.price),
+      oracle_price: fixed(market.oracle.price),
+      executable_price: fixed(market.executablePrice),
+      price_divergence_bps: market.divergenceBps,
+      oracle_source: market.oracle.source,
+      oracle_updated_at: market.oracle.updatedAt,
+      price_block_number: market.oracle.blockNumber,
+      price_route: market.route,
       pnl_quote: fixed(pnl, 24),
       exit_tx_hash: execution.swapHash,
       close_reason: reason,
@@ -696,9 +922,57 @@ export async function monitorTreasuryPositions(env: Env) {
   for (const raw of data ?? []) {
     const position = raw as TreasuryPositionRow;
     try {
-      const currentPrice = await currentPositionPrice(env, position);
+      const market = await currentPositionMarket(env, position);
+      const marketFields = {
+        current_price: fixed(market.oracle.price),
+        oracle_price: fixed(market.oracle.price),
+        executable_price: fixed(market.executablePrice),
+        price_divergence_bps: market.divergenceBps,
+        oracle_source: market.oracle.source,
+        oracle_updated_at: market.oracle.updatedAt,
+        price_block_number: market.oracle.blockNumber,
+        price_route: market.route,
+        last_checked_at: new Date().toISOString(),
+      };
+      if (market.divergenceBps > quantConfig(env).maxPriceDivergenceBps) {
+        const maxPriceDivergenceBps = quantConfig(env).maxPriceDivergenceBps;
+        const wasAlreadyUnsafe = numeric(position.price_divergence_bps) > maxPriceDivergenceBps;
+        await getSupabase(env)
+          .from("treasury_quant_positions")
+          .update(marketFields)
+          .eq("id", position.id);
+        const message =
+          `Executable price diverges ${market.divergenceBps} bps from the oracle`;
+        if (!wasAlreadyUnsafe) {
+          const control = await getControl(env);
+          if (position.mode === "live" && !control.paused) {
+            await setTreasuryPause(env, true, message);
+          }
+          await addAudit(env, "treasury_price_safety_pause", {
+            message,
+            oraclePrice: market.oracle.price,
+            executablePrice: market.executablePrice,
+            divergenceBps: market.divergenceBps,
+            maxPriceDivergenceBps,
+            route: market.route,
+            blockNumber: market.oracle.blockNumber,
+          }, {
+            signalId: position.signal_id,
+            positionId: position.id,
+          });
+        }
+        results.push({
+          id: position.id,
+          status: "price_safety",
+          reason: message,
+          oraclePrice: market.oracle.price,
+          executablePrice: market.executablePrice,
+          divergenceBps: market.divergenceBps,
+        });
+        continue;
+      }
       const reason = getTreasuryCloseReason({
-        currentPrice,
+        currentPrice: market.oracle.price,
         slPrice: numeric(position.sl_price),
         tpPrice: numeric(position.tp_price),
         closeRequested: Boolean(position.close_requested_at),
@@ -707,35 +981,67 @@ export async function monitorTreasuryPositions(env: Env) {
         const pnl = calculatePositionPnl({
           amountAsset: numeric(position.amount_asset),
           costQuote: numeric(position.cost_quote),
-          currentPrice,
+          currentPrice: market.executablePrice,
         });
         await getSupabase(env)
           .from("treasury_quant_positions")
           .update({
-            current_price: fixed(currentPrice),
+            ...marketFields,
             pnl_quote: fixed(pnl, 24),
-            last_checked_at: new Date().toISOString(),
           })
           .eq("id", position.id);
-        results.push({ id: position.id, status: "open", currentPrice });
+        results.push({
+          id: position.id,
+          status: "open",
+          oraclePrice: market.oracle.price,
+          executablePrice: market.executablePrice,
+          divergenceBps: market.divergenceBps,
+          route: market.route,
+          blockNumber: market.oracle.blockNumber,
+          oracleUpdatedAt: market.oracle.updatedAt,
+        });
         continue;
       }
       if (position.mode === "paper") {
-        await closePaperPosition(env, position, currentPrice, reason);
+        await closePaperPosition(env, position, market, reason);
       } else {
-        await closeLivePosition(env, position, currentPrice, reason);
+        await closeLivePosition(env, position, market, reason);
       }
-      await addAudit(env, "position_closed", { reason, currentPrice }, {
+      await addAudit(env, "position_closed", {
+        reason,
+        oraclePrice: market.oracle.price,
+        executablePrice: market.executablePrice,
+        divergenceBps: market.divergenceBps,
+        route: market.route,
+        blockNumber: market.oracle.blockNumber,
+      }, {
         signalId: position.signal_id,
         positionId: position.id,
       });
-      results.push({ id: position.id, status: "closed", reason });
+      results.push({
+        id: position.id,
+        status: "closed",
+        reason,
+        oraclePrice: market.oracle.price,
+        executablePrice: market.executablePrice,
+        divergenceBps: market.divergenceBps,
+      });
     } catch (positionError) {
       const message = positionError instanceof Error ? positionError.message : String(positionError);
-      await addAudit(env, "position_monitor_error", { message }, {
-        signalId: position.signal_id,
-        positionId: position.id,
-      });
+      const priceSafetyError = positionError instanceof TreasuryPriceSafetyError;
+      const control = priceSafetyError ? await getControl(env) : null;
+      if (position.mode === "live" && priceSafetyError && !control?.paused) {
+        await setTreasuryPause(env, true, message);
+      }
+      if (!priceSafetyError || !control?.paused) {
+        await addAudit(env, "position_monitor_error", {
+          message,
+          details: priceSafetyError ? positionError.details : undefined,
+        }, {
+          signalId: position.signal_id,
+          positionId: position.id,
+        });
+      }
       results.push({ id: position.id, status: "error", reason: message });
     }
   }
@@ -808,8 +1114,15 @@ export async function getTreasuryQuantStatus(env: Env) {
     pauseReason: control.reason,
     executorConfigured: Boolean(address),
     assets: {
-      CELO: { enabled: true },
-      ORO: { enabled: Boolean(env.TREASURY_ORO_ADDRESS), symbol: config.oroSymbol },
+      CELO: {
+        enabled: assetIsConfigured(env, "CELO"),
+        oracleConfigured: assetIsConfigured(env, "CELO"),
+      },
+      ORO: {
+        enabled: assetIsConfigured(env, "ORO"),
+        oracleConfigured: Boolean(env.TREASURY_ORO_ORACLE_ADDRESS),
+        symbol: config.oroSymbol,
+      },
     },
     limits: {
       defaultPositionUsd: config.defaultPositionUsd,
@@ -817,6 +1130,8 @@ export async function getTreasuryQuantStatus(env: Env) {
       maxTotalExposureUsd: config.maxTotalExposureUsd,
       dailyLossLimitUsd: config.dailyLossLimitUsd,
       maxSlippageBps: config.maxSlippageBps,
+      maxPriceDivergenceBps: config.maxPriceDivergenceBps,
+      oracleMaxAgeSeconds: config.oracleMaxAgeSeconds,
     },
     balances,
     metrics: {
