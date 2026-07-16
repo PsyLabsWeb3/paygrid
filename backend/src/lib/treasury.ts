@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-const positiveDecimal = z.string().regex(/^\d+(\.\d+)?$/).refine((value) => Number(value) > 0);
+const positiveDecimal = z
+  .union([z.string(), z.number().finite()])
+  .transform(String)
+  .pipe(z.string().regex(/^\d+(\.\d+)?$/))
+  .refine((value) => Number(value) > 0);
 
 export const tradingViewSignalSchema = z
   .object({

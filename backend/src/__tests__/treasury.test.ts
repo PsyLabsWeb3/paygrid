@@ -60,6 +60,18 @@ test("accepts the existing TradingView webhook payload unchanged", () => {
   assert.equal(parsed.symbol.quoteAsset, "USDT");
 });
 
+test("normalizes numeric TradingView prices to decimal strings", () => {
+  const parsed = parseTradingViewSignal({
+    ...signal,
+    entryPrice: 0.07018,
+    slPrice: 0.06948,
+    tpPrice: 0.07229,
+  });
+  assert.equal(parsed.entryPrice, "0.07018");
+  assert.equal(parsed.slPrice, "0.06948");
+  assert.equal(parsed.tpPrice, "0.07229");
+});
+
 test("rejects shorts, invalid symbols and inverted LONG risk levels", () => {
   assert.throws(() => parseTradingViewSignal({ ...signal, side: "SHORT" }));
   assert.throws(() => parseTradingViewSignal({
