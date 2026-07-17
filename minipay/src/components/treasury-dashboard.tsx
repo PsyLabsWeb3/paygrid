@@ -137,7 +137,7 @@ export function TreasuryDashboard() {
   const openPositions = status.positions.filter((position) => position.status === "open" || position.status === "closing");
 
   return (
-    <div className="stack">
+    <div className="stack treasury-dashboard">
       <section className="metric-grid">
         <div className="metric"><span className="fine muted">Open positions</span><strong>{status.metrics.openPositions}</strong></div>
         <div className="metric"><span className="fine muted">Exposure</span><strong>${money(status.metrics.totalExposureUsd, 2)}</strong></div>
