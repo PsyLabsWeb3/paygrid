@@ -97,6 +97,11 @@ onchain oracle as its reference price and a full-position Mento/Uniswap quote as
 the executable price. Stale feeds or excessive oracle/DEX divergence pause new
 entries and block automated exits.
 
+Round-robin entries are controlled by
+`TREASURY_MAX_OPEN_POSITIONS_PER_ASSET`. Each accepted signal creates an
+independent position with its own TP/SL and realizable PnL, while the aggregate
+remains bounded by `TREASURY_MAX_TOTAL_EXPOSURE_USD`.
+
 Public read routes:
 
 ```text

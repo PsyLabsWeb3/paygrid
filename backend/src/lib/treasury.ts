@@ -65,7 +65,8 @@ export function parseTradingViewSignal(value: unknown) {
 export type TreasuryRiskSnapshot = {
   paused: boolean;
   assetConfigured: boolean;
-  hasOpenPosition: boolean;
+  openPositionsForAsset: number;
+  maxOpenPositionsPerAsset: number;
   tradeUsd: number;
   maxPerTradeUsd: number;
   totalExposureUsd: number;
@@ -77,7 +78,9 @@ export type TreasuryRiskSnapshot = {
 export function evaluateTreasuryRisk(snapshot: TreasuryRiskSnapshot) {
   if (snapshot.paused) return { ok: false as const, reason: "Treasury Quant Agent is paused" };
   if (!snapshot.assetConfigured) return { ok: false as const, reason: "Asset is not configured" };
-  if (snapshot.hasOpenPosition) return { ok: false as const, reason: "An open position already exists for this asset" };
+  if (snapshot.openPositionsForAsset >= snapshot.maxOpenPositionsPerAsset) {
+    return { ok: false as const, reason: "Maximum open positions reached for this asset" };
+  }
   if (snapshot.tradeUsd <= 0 || snapshot.tradeUsd > snapshot.maxPerTradeUsd) {
     return { ok: false as const, reason: "Position size exceeds the per-trade limit" };
   }

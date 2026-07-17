@@ -245,6 +245,10 @@ feed, while the DEX quote uses the entire position size. Configure conservative
 oracle age and oracle/DEX divergence limits; either safety failure pauses new
 entries and blocks automated execution.
 
+Set `TREASURY_MAX_OPEN_POSITIONS_PER_ASSET` explicitly before enabling live
+round-robin entries. Start with a small count; each position retains its own
+TP/SL, but all positions share the executor wallet and aggregate exposure cap.
+
 ### Optional sponsored gift claims
 
 Apply migration `20260713000006_gift_gas_sponsorships.sql` before enabling claim sponsorship. Deploy the backend first with `GIFT_GAS_SPONSOR_ENABLED=false`, create a dedicated sponsor key with no administrative roles, fund it with small CELO and USDm operating balances, and only then set the flag to `true` and recreate the backend container. The sponsor pays its own stipend-transfer fee in CELO; recipients receive USDm for the claim fee.

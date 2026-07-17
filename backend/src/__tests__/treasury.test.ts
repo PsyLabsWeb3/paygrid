@@ -86,11 +86,12 @@ test("rejects shorts, invalid symbols and inverted LONG risk levels", () => {
   }));
 });
 
-test("risk engine enforces pause, one position per asset and exposure limits", () => {
+test("risk engine enforces pause, round-robin position count and exposure limits", () => {
   const base = {
     paused: false,
     assetConfigured: true,
-    hasOpenPosition: false,
+    openPositionsForAsset: 0,
+    maxOpenPositionsPerAsset: 3,
     tradeUsd: 1,
     maxPerTradeUsd: 5,
     totalExposureUsd: 0,
@@ -100,7 +101,8 @@ test("risk engine enforces pause, one position per asset and exposure limits", (
   };
   assert.equal(evaluateTreasuryRisk(base).ok, true);
   assert.equal(evaluateTreasuryRisk({ ...base, paused: true }).ok, false);
-  assert.equal(evaluateTreasuryRisk({ ...base, hasOpenPosition: true }).ok, false);
+  assert.equal(evaluateTreasuryRisk({ ...base, openPositionsForAsset: 2 }).ok, true);
+  assert.equal(evaluateTreasuryRisk({ ...base, openPositionsForAsset: 3 }).ok, false);
   assert.equal(evaluateTreasuryRisk({ ...base, totalExposureUsd: 20 }).ok, false);
   assert.equal(evaluateTreasuryRisk({ ...base, dailyLossUsd: 5 }).ok, false);
 });

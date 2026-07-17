@@ -96,6 +96,7 @@ const rawEnvSchema = z.object({
   TREASURY_DEFAULT_POSITION_USD: z.string().regex(/^\d+(\.\d+)?$/).optional(),
   TREASURY_MAX_PER_TRADE_USD: z.string().regex(/^\d+(\.\d+)?$/).optional(),
   TREASURY_MAX_TOTAL_EXPOSURE_USD: z.string().regex(/^\d+(\.\d+)?$/).optional(),
+  TREASURY_MAX_OPEN_POSITIONS_PER_ASSET: z.coerce.number().int().min(1).max(100).optional(),
   TREASURY_DAILY_LOSS_LIMIT_USD: z.string().regex(/^\d+(\.\d+)?$/).optional(),
   TREASURY_MAX_SLIPPAGE_BPS: z.coerce.number().int().min(1).max(2000).optional(),
   TREASURY_MAX_ENTRY_DEVIATION_BPS: z.coerce.number().int().min(1).max(5000).optional(),

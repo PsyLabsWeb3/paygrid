@@ -154,7 +154,7 @@ export function TreasuryDashboard() {
           </span>
         </div>
         <p className="fine muted" style={{ margin: "12px 0 0" }}>
-          ${status.limits.defaultPositionUsd} per signal · {status.limits.maxSlippageBps / 100}% max slippage
+          ${status.limits.defaultPositionUsd} per signal · {status.limits.maxOpenPositionsPerAsset} positions per asset · {status.limits.maxSlippageBps / 100}% max slippage
         </p>
       </section>
 

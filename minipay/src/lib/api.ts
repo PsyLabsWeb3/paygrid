@@ -329,6 +329,7 @@ export type TreasuryQuantStatus = {
     defaultPositionUsd: string;
     maxPerTradeUsd: string;
     maxTotalExposureUsd: string;
+    maxOpenPositionsPerAsset: number;
     dailyLossLimitUsd: string;
     maxSlippageBps: number;
     maxPriceDivergenceBps: number;

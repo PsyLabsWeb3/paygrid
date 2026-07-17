@@ -179,9 +179,10 @@ operators:
 
 - TradingView `LONG` / `ENTRY` signals are accepted without changing the
   existing webhook JSON and deduplicated by `externalSignalId`.
-- The worker defaults to paper mode and supports one position per configured
-  asset, bounded position size, total exposure, daily loss, slippage and entry
-  deviation.
+- The worker defaults to paper mode and supports configurable round-robin
+  entries per asset. Every entry keeps independent TP/SL accounting while the
+  risk engine enforces position count, total exposure, daily loss, slippage and
+  entry-deviation limits.
 - CELO uses Mento when an executable route exists and falls back to configured
   Uniswap V3 liquidity. ORO remains disabled until a verified token address and
   route are configured.

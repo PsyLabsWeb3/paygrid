@@ -85,6 +85,7 @@ function quantConfig(env: Env) {
     defaultPositionUsd: env.TREASURY_DEFAULT_POSITION_USD ?? "1",
     maxPerTradeUsd: env.TREASURY_MAX_PER_TRADE_USD ?? "5",
     maxTotalExposureUsd: env.TREASURY_MAX_TOTAL_EXPOSURE_USD ?? "20",
+    maxOpenPositionsPerAsset: env.TREASURY_MAX_OPEN_POSITIONS_PER_ASSET ?? 1,
     dailyLossLimitUsd: env.TREASURY_DAILY_LOSS_LIMIT_USD ?? "5",
     maxSlippageBps: env.TREASURY_MAX_SLIPPAGE_BPS ?? 100,
     maxEntryDeviationBps: env.TREASURY_MAX_ENTRY_DEVIATION_BPS ?? 500,
@@ -387,7 +388,10 @@ async function riskSnapshot(env: Env, signal: TradingViewSignal) {
   return {
     paused: control.paused,
     assetConfigured: assetIsConfigured(env, signal.symbol.baseAsset),
-    hasOpenPosition: openPositions.some((position) => position.asset === signal.symbol.baseAsset),
+    openPositionsForAsset: openPositions.filter(
+      (position) => position.asset === signal.symbol.baseAsset,
+    ).length,
+    maxOpenPositionsPerAsset: config.maxOpenPositionsPerAsset,
     tradeUsd: Number(config.defaultPositionUsd),
     maxPerTradeUsd: Number(config.maxPerTradeUsd),
     totalExposureUsd: openPositions.reduce((sum, position) => sum + numeric(position.cost_quote), 0),
@@ -1128,6 +1132,7 @@ export async function getTreasuryQuantStatus(env: Env) {
       defaultPositionUsd: config.defaultPositionUsd,
       maxPerTradeUsd: config.maxPerTradeUsd,
       maxTotalExposureUsd: config.maxTotalExposureUsd,
+      maxOpenPositionsPerAsset: config.maxOpenPositionsPerAsset,
       dailyLossLimitUsd: config.dailyLossLimitUsd,
       maxSlippageBps: config.maxSlippageBps,
       maxPriceDivergenceBps: config.maxPriceDivergenceBps,
