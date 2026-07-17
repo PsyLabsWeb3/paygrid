@@ -1,4 +1,5 @@
 import {
+  decodeFunctionData,
   erc20Abi,
   formatUnits,
   parseAbi,
@@ -171,6 +172,45 @@ async function tokenBalance(env: Env, token: Address, owner: Address) {
     functionName: "balanceOf",
     args: [owner],
   });
+}
+
+async function waitForTreasuryApproval(
+  env: Env,
+  token: Address,
+  owner: Address,
+  approval: TreasuryCall,
+  requiredAmount: bigint,
+) {
+  const decoded = decodeFunctionData({ abi: erc20Abi, data: approval.data });
+  if (decoded.functionName !== "approve") return;
+  const spender = decoded.args[0] as Address;
+  const { publicClient } = createChainClients(env);
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const [balance, allowance] = await Promise.all([
+      publicClient.readContract({
+        address: token,
+        abi: erc20Abi,
+        functionName: "balanceOf",
+        args: [owner],
+      }),
+      publicClient.readContract({
+        address: token,
+        abi: erc20Abi,
+        functionName: "allowance",
+        args: [owner, spender],
+      }),
+    ]);
+    if (balance < requiredAmount) {
+      throw new Error("Treasury token balance became insufficient before swap execution");
+    }
+    if (allowance >= requiredAmount) {
+      // Celo RPC providers may briefly disagree immediately after a receipt.
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+  }
+  throw new Error("Treasury approval was not visible before swap execution");
 }
 
 async function readOraclePrice(env: Env, asset: TreasuryAsset): Promise<OracleSnapshot> {
@@ -506,6 +546,13 @@ async function executeTreasurySwap(
       tokenOut: input.tokenOut,
       amountIn: input.amountIn.toString(),
     });
+    await waitForTreasuryApproval(
+      env,
+      input.tokenIn,
+      account.address,
+      calls.approval,
+      input.amountIn,
+    );
   }
   const swapHash = await sendTreasuryCall(env, calls.swap, {
     signalId: input.signalId,
