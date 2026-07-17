@@ -466,6 +466,12 @@ a {
   color: var(--danger);
 }
 
+.treasury-error {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .nav-link {
   min-width: 0;
   min-height: 54px;

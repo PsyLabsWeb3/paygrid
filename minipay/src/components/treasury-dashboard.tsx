@@ -19,6 +19,26 @@ function money(value: string | undefined, maximumFractionDigits = 4) {
   return parsed.toLocaleString(undefined, { maximumFractionDigits });
 }
 
+function getSignalReason(reason: string) {
+  const normalized = reason.toLowerCase();
+
+  if (normalized.includes("execution reverted with reason: stf")) {
+    return "Swap could not access the required token balance or allowance.";
+  }
+  if (normalized.includes("execution reverted")) {
+    return "The swap was rejected onchain. No position was opened.";
+  }
+  if (normalized.includes("open position already exists")) {
+    return "The maximum number of open positions for this asset was reached.";
+  }
+  if (normalized.includes("paused")) {
+    return "New entries are currently paused.";
+  }
+
+  const firstLine = reason.split("\n", 1)[0]?.trim() ?? "Signal could not be processed.";
+  return firstLine.length > 140 ? `${firstLine.slice(0, 137)}...` : firstLine;
+}
+
 function PositionRow({
   position,
   operatorKey,
@@ -208,7 +228,11 @@ export function TreasuryDashboard() {
                 </div>
                 <span className={`status-pill ${signal.status === "executed" ? "status-active" : ""}`}>{signal.status}</span>
               </div>
-              {signal.reason ? <p className="fine negative" style={{ margin: "10px 0 0" }}>{signal.reason}</p> : null}
+              {signal.reason ? (
+                <p className="fine negative treasury-error" style={{ margin: "10px 0 0" }}>
+                  {getSignalReason(signal.reason)}
+                </p>
+              ) : null}
             </article>
           ))}
         </div>
