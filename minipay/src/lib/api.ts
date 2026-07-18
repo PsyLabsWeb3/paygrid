@@ -275,7 +275,7 @@ export type TreasurySignal = {
   slPrice: string;
   tpPrice: string;
   strategy: { code: string; name: string; description: string | null };
-  symbol: { code: string; baseAsset: "CELO" | "ORO"; quoteAsset: Stablecoin };
+  symbol: { code: string; baseAsset: "CELO" | "XAUT0"; quoteAsset: Stablecoin };
   status: "pending" | "processing" | "executed" | "rejected" | "failed";
   positionId: string | null;
   reason: string | null;
@@ -286,7 +286,7 @@ export type TreasurySignal = {
 export type TreasuryPosition = {
   id: string;
   signalId: string;
-  asset: "CELO" | "ORO";
+  asset: "CELO" | "XAUT0";
   quoteToken: Stablecoin;
   mode: "paper" | "live";
   route: "paper" | "mento" | "uniswap-v3";
@@ -323,7 +323,7 @@ export type TreasuryQuantStatus = {
   executorConfigured: boolean;
   assets: {
     CELO: { enabled: boolean; oracleConfigured: boolean };
-    ORO: { enabled: boolean; oracleConfigured: boolean; symbol: string };
+    XAUT0: { enabled: boolean; oracleConfigured: boolean; symbol: string };
   };
   limits: {
     defaultPositionUsd: string;
@@ -334,8 +334,9 @@ export type TreasuryQuantStatus = {
     maxSlippageBps: number;
     maxPriceDivergenceBps: number;
     oracleMaxAgeSeconds: number;
+    xaut0OracleMaxAgeSeconds: number;
   };
-  balances: Partial<Record<Stablecoin | "CELO" | "ORO", string>>;
+  balances: Partial<Record<Stablecoin | "CELO" | "XAUT0", string>>;
   metrics: {
     openPositions: number;
     totalExposureUsd: string;

@@ -184,8 +184,15 @@ operators:
   risk engine enforces position count, total exposure, daily loss, slippage and
   entry-deviation limits.
 - CELO uses Mento when an executable route exists and falls back to configured
-  Uniswap V3 liquidity. ORO remains disabled until a verified token address and
-  route are configured.
+  Uniswap V3 liquidity. XAUt0/USDT uses the canonical Celo XAUt0 token, a
+  RedStone XAUt/USDT reference feed and executable Uniswap V3 liquidity.
+- TradingView can submit `XAUTUSDT` (or `XAUT0USDT`) with `baseAsset: "XAUT0"`.
+  XAUt0 has a separate oracle freshness window because its reference feed uses
+  a longer heartbeat than the CELO/USD feed.
+- Mainnet contracts: XAUt0
+  `0xaf37E8B6C9ED7f6318979f56Fc287d76c30847ff`, RedStone XAUt/USDT
+  `0x98DC6E90D4c2f212ed9d124aD2aFBa4833268633`, Uniswap V3 pool
+  `0xbb469a28f64c72aecc7d05ca6e45b2fb1a63b4f9` (fee tier 3000).
 - Every approval and swap receives the PayGrid/Celo attribution suffix.
 - MCP exposes read-only status, positions and signals plus protected pause,
   resume and full-position close tools.

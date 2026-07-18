@@ -73,7 +73,7 @@ export const toolDefinitions = [
   },
   {
     name: "list_treasury_quant_positions",
-    description: "List paper or live CELO/ORO long positions managed by the Treasury Quant Agent.",
+    description: "List paper or live CELO/XAUt0 long positions managed by the Treasury Quant Agent.",
     write: false,
     inputSchema: {
       type: "object",
@@ -547,12 +547,12 @@ export async function callTool(config, name, args = {}) {
             "ERC-8004 signed backend requests",
             "rate-limited backend routes",
             "Treasury per-trade, total-exposure, daily-loss, slippage and entry-deviation limits",
-            "CELO/ORO asset allowlist with ORO disabled until explicitly configured",
+            "CELO/XAUt0 asset allowlist with per-asset oracle freshness and route checks",
           ],
           planned: ["per-agent API keys", "delegated user wallets", "scoped user-owned treasury policies"],
         },
         primaryFlows: [
-          "Treasury Quant Agent receives deduplicated TradingView LONG signals and manages guarded CELO/ORO positions",
+          "Treasury Quant Agent receives deduplicated TradingView LONG signals and manages guarded CELO/XAUt0 positions",
           "operators inspect positions, pause entries and request full closes through MCP",
           "agent creates a personal claimable gift and prepares exact-token or swap-routed funding",
           "recipient claims a gift and agents verify its onchain settlement",

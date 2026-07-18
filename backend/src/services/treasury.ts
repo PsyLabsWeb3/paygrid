@@ -41,13 +41,15 @@ import {
 
 const DEFAULT_CELO_ADDRESS = "0x471EcE3750Da237f93B8E339c536989b8978a438" as Address;
 const DEFAULT_CELO_ORACLE_ADDRESS = "0x0568fD19986748cEfF3301e55c0eb1E729E0Ab7e" as Address;
+const DEFAULT_XAUT0_ADDRESS = "0xaf37E8B6C9ED7f6318979f56Fc287d76c30847ff" as Address;
+const DEFAULT_XAUT0_ORACLE_ADDRESS = "0x98DC6E90D4c2f212ed9d124aD2aFBa4833268633" as Address;
 const aggregatorV3Abi = parseAbi([
   "function decimals() view returns (uint8)",
   "function description() view returns (string)",
   "function latestRoundData() view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)",
 ]);
 
-type TreasuryAsset = "CELO" | "ORO";
+type TreasuryAsset = "CELO" | "XAUT0";
 
 type OracleSnapshot = {
   price: number;
@@ -92,7 +94,7 @@ function quantConfig(env: Env) {
     maxEntryDeviationBps: env.TREASURY_MAX_ENTRY_DEVIATION_BPS ?? 500,
     maxPriceDivergenceBps: env.TREASURY_MAX_PRICE_DIVERGENCE_BPS ?? 200,
     oracleMaxAgeSeconds: env.TREASURY_ORACLE_MAX_AGE_SECONDS ?? 600,
-    oroSymbol: env.TREASURY_ORO_SYMBOL ?? "ORO",
+    xaut0OracleMaxAgeSeconds: env.TREASURY_XAUT0_ORACLE_MAX_AGE_SECONDS ?? 90_000,
   };
 }
 
@@ -115,10 +117,10 @@ function parseStoredUnits(value: string | number, decimals: number) {
 
 function assetAddress(env: Env, asset: TreasuryAsset) {
   if (asset === "CELO") return env.TREASURY_CELO_ADDRESS ?? DEFAULT_CELO_ADDRESS;
-  if (!env.TREASURY_ORO_ADDRESS) {
-    throw new ApiError(409, "ASSET_NOT_CONFIGURED", `${quantConfig(env).oroSymbol} is not configured`);
-  }
-  return env.TREASURY_ORO_ADDRESS;
+  const address = env.TREASURY_XAUT0_ADDRESS
+    ?? (env.CHAIN_ID === 42220 ? DEFAULT_XAUT0_ADDRESS : undefined);
+  if (!address) throw new ApiError(409, "ASSET_NOT_CONFIGURED", "XAUt0 is not configured");
+  return address;
 }
 
 function assetOracleAddress(env: Env, asset: TreasuryAsset) {
@@ -128,10 +130,10 @@ function assetOracleAddress(env: Env, asset: TreasuryAsset) {
     if (!address) throw new TreasuryPriceSafetyError("CELO oracle is not configured");
     return address;
   }
-  if (!env.TREASURY_ORO_ORACLE_ADDRESS) {
-    throw new TreasuryPriceSafetyError(`${quantConfig(env).oroSymbol} oracle is not configured`);
-  }
-  return env.TREASURY_ORO_ORACLE_ADDRESS;
+  const address = env.TREASURY_XAUT0_ORACLE_ADDRESS
+    ?? (env.CHAIN_ID === 42220 ? DEFAULT_XAUT0_ORACLE_ADDRESS : undefined);
+  if (!address) throw new TreasuryPriceSafetyError("XAUt0 oracle is not configured");
+  return address;
 }
 
 function assetIsConfigured(env: Env, asset: TreasuryAsset) {
@@ -141,7 +143,11 @@ function assetIsConfigured(env: Env, asset: TreasuryAsset) {
       ?? (env.CHAIN_ID === 42220 ? DEFAULT_CELO_ORACLE_ADDRESS : undefined),
     );
   }
-  return Boolean(env.TREASURY_ORO_ADDRESS && env.TREASURY_ORO_ORACLE_ADDRESS);
+  return Boolean(
+    (env.TREASURY_XAUT0_ADDRESS ?? (env.CHAIN_ID === 42220 ? DEFAULT_XAUT0_ADDRESS : undefined))
+    && (env.TREASURY_XAUT0_ORACLE_ADDRESS
+      ?? (env.CHAIN_ID === 42220 ? DEFAULT_XAUT0_ORACLE_ADDRESS : undefined)),
+  );
 }
 
 function executorAccount(env: Env) {
@@ -250,7 +256,10 @@ async function readOraclePrice(env: Env, asset: TreasuryAsset): Promise<OracleSn
       });
     }
     const updatedAtSeconds = Number(updatedAt);
-    const maxAgeSeconds = quantConfig(env).oracleMaxAgeSeconds;
+    const config = quantConfig(env);
+    const maxAgeSeconds = asset === "XAUT0"
+      ? config.xaut0OracleMaxAgeSeconds
+      : config.oracleMaxAgeSeconds;
     const nowSeconds = Math.floor(Date.now() / 1000);
     if (!isOraclePriceFresh({ updatedAtSeconds, nowSeconds, maxAgeSeconds })) {
       throw new TreasuryPriceSafetyError(`${asset} oracle price is stale`, {
@@ -1134,7 +1143,7 @@ export async function getTreasuryQuantStatus(env: Env) {
     listTreasuryPositions(env, 20),
   ]);
   const address = executorAddress(env);
-  const balances: Partial<Record<Stablecoin | "CELO" | "ORO", string>> = {};
+  const balances: Partial<Record<Stablecoin | "CELO" | "XAUT0", string>> = {};
   if (address) {
     const stablecoins: Stablecoin[] = ["USDC", "USDT", "USDm"];
     await Promise.all(stablecoins.map(async (token) => {
@@ -1145,9 +1154,9 @@ export async function getTreasuryQuantStatus(env: Env) {
         balances[token] = "unavailable";
       }
     }));
-    for (const asset of ["CELO", "ORO"] as const) {
+    for (const asset of ["CELO", "XAUT0"] as const) {
       try {
-        if (asset === "ORO" && !env.TREASURY_ORO_ADDRESS) continue;
+        if (asset === "XAUT0" && !assetIsConfigured(env, asset)) continue;
         const token = assetAddress(env, asset);
         const decimals = await tokenDecimals(env, token);
         balances[asset] = formatUnits(await tokenBalance(env, token, address), decimals);
@@ -1169,10 +1178,13 @@ export async function getTreasuryQuantStatus(env: Env) {
         enabled: assetIsConfigured(env, "CELO"),
         oracleConfigured: assetIsConfigured(env, "CELO"),
       },
-      ORO: {
-        enabled: assetIsConfigured(env, "ORO"),
-        oracleConfigured: Boolean(env.TREASURY_ORO_ORACLE_ADDRESS),
-        symbol: config.oroSymbol,
+      XAUT0: {
+        enabled: assetIsConfigured(env, "XAUT0"),
+        oracleConfigured: Boolean(
+          env.TREASURY_XAUT0_ORACLE_ADDRESS
+          ?? (env.CHAIN_ID === 42220 ? DEFAULT_XAUT0_ORACLE_ADDRESS : undefined),
+        ),
+        symbol: "XAUt0",
       },
     },
     limits: {
@@ -1184,6 +1196,7 @@ export async function getTreasuryQuantStatus(env: Env) {
       maxSlippageBps: config.maxSlippageBps,
       maxPriceDivergenceBps: config.maxPriceDivergenceBps,
       oracleMaxAgeSeconds: config.oracleMaxAgeSeconds,
+      xaut0OracleMaxAgeSeconds: config.xaut0OracleMaxAgeSeconds,
     },
     balances,
     metrics: {

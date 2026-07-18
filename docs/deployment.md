@@ -220,7 +220,8 @@ The backend and MCP containers also require `PAYGRID_GIFT_VAULT_ADDRESS` and `PA
 ### Treasury Quant Agent
 
 Apply `20260716000007_treasury_quant_agent.sql` and
-`20260716000008_treasury_dual_price_monitor.sql` before starting the
+`20260716000008_treasury_dual_price_monitor.sql`, followed by
+`20260718000009_treasury_xaut0.sql`, before starting the
 `treasury-worker`. Deploy with:
 
 ```text
@@ -244,6 +245,19 @@ limited to the active risk budget. Every approval and swap uses
 feed, while the DEX quote uses the entire position size. Configure conservative
 oracle age and oracle/DEX divergence limits; either safety failure pauses new
 entries and blocks automated execution.
+
+For XAUt0/USDT on Celo mainnet configure:
+
+```text
+TREASURY_XAUT0_ADDRESS=0xaf37E8B6C9ED7f6318979f56Fc287d76c30847ff
+TREASURY_XAUT0_ORACLE_ADDRESS=0x98DC6E90D4c2f212ed9d124aD2aFBa4833268633
+TREASURY_XAUT0_ORACLE_MAX_AGE_SECONDS=90000
+```
+
+The XAUt0 oracle is RedStone XAUt/USDT. The direct Celo Uniswap V3 pool is
+`0xbb469a28f64c72aecc7d05ca6e45b2fb1a63b4f9`; the router discovers its 3000
+fee tier through the supported fee-tier fallback list. TradingView signals use
+`XAUTUSDT` with canonical `baseAsset: "XAUT0"` and `quoteAsset: "USDT"`.
 
 Set `TREASURY_MAX_OPEN_POSITIONS_PER_ASSET` explicitly before enabling live
 round-robin entries. Start with a small count; each position retains its own

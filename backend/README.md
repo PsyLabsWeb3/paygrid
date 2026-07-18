@@ -102,6 +102,13 @@ Round-robin entries are controlled by
 independent position with its own TP/SL and realizable PnL, while the aggregate
 remains bounded by `TREASURY_MAX_TOTAL_EXPOSURE_USD`.
 
+Supported live assets are CELO and XAUt0. For XAUt0, TradingView should send
+`symbol.code: "XAUTUSDT"`, `baseAsset: "XAUT0"` and `quoteAsset: "USDT"`.
+The worker uses RedStone XAUt/USDT as the reference oracle and the direct
+Uniswap V3 USDT/XAUt0 pool as the executable route. Configure the token, oracle
+and longer XAUt0 heartbeat window with the `TREASURY_XAUT0_*` variables in
+`.env.example`.
+
 Public read routes:
 
 ```text

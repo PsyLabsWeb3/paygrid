@@ -74,6 +74,46 @@ test("normalizes numeric TradingView prices to decimal strings", () => {
   assert.equal(parsed.tpPrice, "0.07229");
 });
 
+test("accepts XAUt TradingView aliases and normalizes the asset to XAUT0", () => {
+  const parsed = parseTradingViewSignal({
+    ...signal,
+    entryPrice: "3350",
+    slPrice: "3300",
+    tpPrice: "3450",
+    symbol: {
+      code: "XAUTUSDT",
+      baseAsset: "XAUt",
+      quoteAsset: "USDT",
+    },
+  });
+  assert.equal(parsed.symbol.baseAsset, "XAUT0");
+  assert.equal(parsed.symbol.code, "XAUTUSDT");
+
+  assert.equal(parseTradingViewSignal({
+    ...signal,
+    entryPrice: "3350",
+    slPrice: "3300",
+    tpPrice: "3450",
+    symbol: {
+      code: "XAUT0USDT",
+      baseAsset: "XAUT0",
+      quoteAsset: "USDT",
+    },
+  }).symbol.baseAsset, "XAUT0");
+
+  assert.throws(() => parseTradingViewSignal({
+    ...signal,
+    entryPrice: "3350",
+    slPrice: "3300",
+    tpPrice: "3450",
+    symbol: {
+      code: "XAUTUSDC",
+      baseAsset: "XAUT0",
+      quoteAsset: "USDC",
+    },
+  }));
+});
+
 test("rejects shorts, invalid symbols and inverted LONG risk levels", () => {
   assert.throws(() => parseTradingViewSignal({ ...signal, side: "SHORT" }));
   assert.throws(() => parseTradingViewSignal({

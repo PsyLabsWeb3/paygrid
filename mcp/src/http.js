@@ -121,7 +121,7 @@ function publicAgentMetadata() {
       {
         id: "treasury_quant_agent",
         name: "Treasury Quant Agent",
-        description: "Consumes TradingView LONG signals, routes guarded CELO/ORO swaps and closes positions through verifiable TP/SL policies.",
+        description: "Consumes TradingView LONG signals, routes guarded CELO/XAUt0 swaps and closes positions through verifiable TP/SL policies.",
         tags: ["defai", "treasury", "tradingview", "risk-controls", "celo"],
       },
       {

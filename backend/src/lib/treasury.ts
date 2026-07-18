@@ -6,6 +6,11 @@ const positiveDecimal = z
   .pipe(z.string().regex(/^\d+(\.\d+)?$/))
   .refine((value) => Number(value) > 0);
 
+const treasuryAsset = z.preprocess(
+  (value) => (typeof value === "string" ? value.toUpperCase() : value),
+  z.enum(["CELO", "XAUT", "XAUT0"]),
+).transform((value) => (value === "CELO" ? "CELO" as const : "XAUT0" as const));
+
 export const tradingViewSignalSchema = z
   .object({
     externalSignalId: z.string().trim().min(1).max(160),
@@ -23,7 +28,7 @@ export const tradingViewSignalSchema = z
     }),
     symbol: z.object({
       code: z.string().trim().min(1).max(40),
-      baseAsset: z.enum(["CELO", "ORO"]),
+      baseAsset: treasuryAsset,
       quoteAsset: z.enum(["USDC", "USDT", "USDm"]),
     }),
     payload: z.record(z.string(), z.unknown()).default({}),
@@ -46,12 +51,21 @@ export const tradingViewSignalSchema = z
         message: "tpPrice must be above entryPrice for LONG signals",
       });
     }
-    const expectedSymbol = `${signal.symbol.baseAsset}${signal.symbol.quoteAsset}`.toUpperCase();
-    if (signal.symbol.code.toUpperCase() !== expectedSymbol) {
+    if (signal.symbol.baseAsset === "XAUT0" && signal.symbol.quoteAsset !== "USDT") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["symbol", "quoteAsset"],
+        message: "XAUt0 positions currently require USDT as the quote asset",
+      });
+    }
+    const expectedSymbols = signal.symbol.baseAsset === "XAUT0"
+      ? [`XAUT${signal.symbol.quoteAsset}`, `XAUT0${signal.symbol.quoteAsset}`]
+      : [`CELO${signal.symbol.quoteAsset}`];
+    if (!expectedSymbols.includes(signal.symbol.code.toUpperCase())) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["symbol", "code"],
-        message: `symbol.code must be ${expectedSymbol}`,
+        message: `symbol.code must be ${expectedSymbols.join(" or ")}`,
       });
     }
   });

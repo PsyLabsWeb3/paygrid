@@ -19,6 +19,10 @@ function money(value: string | undefined, maximumFractionDigits = 4) {
   return parsed.toLocaleString(undefined, { maximumFractionDigits });
 }
 
+function assetLabel(asset: TreasuryPosition["asset"]) {
+  return asset === "XAUT0" ? "XAUt0" : asset;
+}
+
 function getSignalReason(reason: string) {
   const normalized = reason.toLowerCase();
 
@@ -66,7 +70,7 @@ function PositionRow({
       <div className="split-row">
         <div>
           <p className="fine muted">{position.route} · {position.mode}</p>
-          <h3 className="top-title">{position.asset}/{position.quoteToken}</h3>
+          <h3 className="top-title">{assetLabel(position.asset)}/{position.quoteToken}</h3>
         </div>
         <span className={`status-pill ${isOpen ? "status-active" : ""}`}>{position.status}</span>
       </div>
@@ -187,10 +191,12 @@ export function TreasuryDashboard() {
           <ShieldCheck size={22} color="var(--lime)" />
         </div>
         <div className="token-row" style={{ marginTop: 14 }}>
-          {(["USDC", "USDT", "USDm", "CELO", "ORO"] as const).map((token) => {
+          {(["USDC", "USDT", "USDm", "CELO", "XAUT0"] as const).map((token) => {
             const balance = status.balances[token];
             if (balance === undefined) return null;
-            return <span className="token-chip" key={token}>{money(balance)} {token}</span>;
+            const label = token === "XAUT0" ? "XAUt0" : token;
+            const precision = token === "XAUT0" ? 6 : 4;
+            return <span className="token-chip" key={token}>{money(balance, precision)} {label}</span>;
           })}
         </div>
       </section>

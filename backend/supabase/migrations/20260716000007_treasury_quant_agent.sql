@@ -12,7 +12,7 @@ CREATE TABLE treasury_quant_signals (
   strategy_name text NOT NULL,
   strategy_description text,
   symbol_code text NOT NULL,
-  base_asset text NOT NULL CHECK (base_asset IN ('CELO', 'ORO')),
+  base_asset text NOT NULL CHECK (base_asset IN ('CELO', 'XAUT0')),
   quote_asset text NOT NULL CHECK (quote_asset IN ('USDC', 'USDT', 'USDm')),
   payload jsonb NOT NULL DEFAULT '{}'::jsonb,
   status text NOT NULL DEFAULT 'pending'
@@ -27,7 +27,7 @@ CREATE TABLE treasury_quant_signals (
 CREATE TABLE treasury_quant_positions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   signal_id uuid UNIQUE NOT NULL REFERENCES treasury_quant_signals(id),
-  asset text NOT NULL CHECK (asset IN ('CELO', 'ORO')),
+  asset text NOT NULL CHECK (asset IN ('CELO', 'XAUT0')),
   quote_token text NOT NULL CHECK (quote_token IN ('USDC', 'USDT', 'USDm')),
   mode text NOT NULL CHECK (mode IN ('paper', 'live')),
   route text NOT NULL CHECK (route IN ('paper', 'mento', 'uniswap-v3')),
