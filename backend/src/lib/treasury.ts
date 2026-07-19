@@ -149,6 +149,31 @@ export function isOraclePriceFresh(input: {
   return input.nowSeconds - input.updatedAtSeconds <= input.maxAgeSeconds;
 }
 
+export async function retryTreasuryOracleRead<T>(
+  read: () => Promise<T>,
+  options: {
+    attempts?: number;
+    delayMs?: number;
+    shouldRetry?: (error: unknown) => boolean;
+  } = {},
+) {
+  const attempts = Math.max(1, options.attempts ?? 3);
+  const delayMs = Math.max(0, options.delayMs ?? 0);
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await read();
+    } catch (error) {
+      lastError = error;
+      if (options.shouldRetry && !options.shouldRetry(error)) throw error;
+      if (attempt < attempts && delayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+  throw lastError;
+}
+
 export function calculatePaperAssetAmount(tradeUsd: number, entryPrice: number) {
   if (tradeUsd <= 0 || entryPrice <= 0) throw new Error("Invalid paper position values");
   return (tradeUsd / entryPrice).toFixed(18).replace(/0+$/, "").replace(/\.$/, "");

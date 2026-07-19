@@ -27,6 +27,7 @@ import {
   getStaleSignalRecoveryAction,
   isOraclePriceFresh,
   parseTradingViewSignal,
+  retryTreasuryOracleRead,
   type TradingViewSignal,
   type TreasuryCloseReason,
 } from "../lib/treasury.js";
@@ -72,6 +73,7 @@ class TreasuryPriceSafetyError extends Error {
   constructor(
     message: string,
     readonly details: Record<string, unknown> = {},
+    readonly scope: "asset" | "global" = "global",
   ) {
     super(message);
     this.name = "TreasuryPriceSafetyError";
@@ -127,12 +129,12 @@ function assetOracleAddress(env: Env, asset: TreasuryAsset) {
   if (asset === "CELO") {
     const address = env.TREASURY_CELO_ORACLE_ADDRESS
       ?? (env.CHAIN_ID === 42220 ? DEFAULT_CELO_ORACLE_ADDRESS : undefined);
-    if (!address) throw new TreasuryPriceSafetyError("CELO oracle is not configured");
+    if (!address) throw new TreasuryPriceSafetyError("CELO oracle is not configured", {}, "asset");
     return address;
   }
   const address = env.TREASURY_XAUT0_ORACLE_ADDRESS
     ?? (env.CHAIN_ID === 42220 ? DEFAULT_XAUT0_ORACLE_ADDRESS : undefined);
-  if (!address) throw new TreasuryPriceSafetyError("XAUt0 oracle is not configured");
+  if (!address) throw new TreasuryPriceSafetyError("XAUt0 oracle is not configured", {}, "asset");
   return address;
 }
 
@@ -219,69 +221,82 @@ async function waitForTreasuryApproval(
   throw new Error("Treasury approval was not visible before swap execution");
 }
 
-async function readOraclePrice(env: Env, asset: TreasuryAsset): Promise<OracleSnapshot> {
+async function readOraclePriceOnce(env: Env, asset: TreasuryAsset): Promise<OracleSnapshot> {
   const address = assetOracleAddress(env, asset);
   const { publicClient } = createChainClients(env);
-  try {
-    const [decimals, description, round, blockNumber] = await Promise.all([
-      publicClient.readContract({
-        address,
-        abi: aggregatorV3Abi,
-        functionName: "decimals",
-      }),
-      publicClient.readContract({
-        address,
-        abi: aggregatorV3Abi,
-        functionName: "description",
-      }),
-      publicClient.readContract({
-        address,
-        abi: aggregatorV3Abi,
-        functionName: "latestRoundData",
-      }),
-      publicClient.getBlockNumber(),
-    ]);
-    const [roundId, answer, , updatedAt, answeredInRound] = round;
-    if (answer <= 0n) {
-      throw new TreasuryPriceSafetyError(`${asset} oracle returned a non-positive price`, {
-        oracle: address,
-        answer: answer.toString(),
-      });
-    }
-    if (updatedAt <= 0n || answeredInRound < roundId) {
-      throw new TreasuryPriceSafetyError(`${asset} oracle returned an incomplete round`, {
-        oracle: address,
-        roundId: roundId.toString(),
-        answeredInRound: answeredInRound.toString(),
-      });
-    }
-    const updatedAtSeconds = Number(updatedAt);
-    const config = quantConfig(env);
-    const maxAgeSeconds = asset === "XAUT0"
-      ? config.xaut0OracleMaxAgeSeconds
-      : config.oracleMaxAgeSeconds;
-    const nowSeconds = Math.floor(Date.now() / 1000);
-    if (!isOraclePriceFresh({ updatedAtSeconds, nowSeconds, maxAgeSeconds })) {
-      throw new TreasuryPriceSafetyError(`${asset} oracle price is stale`, {
-        oracle: address,
-        updatedAt: new Date(updatedAtSeconds * 1000).toISOString(),
-        maxAgeSeconds,
-      });
-    }
-    return {
-      price: numeric(formatUnits(answer, Number(decimals))),
-      source: `${description} @ ${address}`,
-      updatedAt: new Date(updatedAtSeconds * 1000).toISOString(),
-      updatedAtSeconds,
+  const [decimals, description, round, blockNumber] = await Promise.all([
+    publicClient.readContract({
+      address,
+      abi: aggregatorV3Abi,
+      functionName: "decimals",
+    }),
+    publicClient.readContract({
+      address,
+      abi: aggregatorV3Abi,
+      functionName: "description",
+    }),
+    publicClient.readContract({
+      address,
+      abi: aggregatorV3Abi,
+      functionName: "latestRoundData",
+    }),
+    publicClient.getBlockNumber(),
+  ]);
+  const [roundId, answer, , updatedAt, answeredInRound] = round;
+  if (answer <= 0n) {
+    throw new TreasuryPriceSafetyError(`${asset} oracle returned a non-positive price`, {
+      oracle: address,
+      answer: answer.toString(),
+    }, "asset");
+  }
+  if (updatedAt <= 0n || answeredInRound < roundId) {
+    throw new TreasuryPriceSafetyError(`${asset} oracle returned an incomplete round`, {
+      oracle: address,
       roundId: roundId.toString(),
-      blockNumber: blockNumber.toString(),
-    };
+      answeredInRound: answeredInRound.toString(),
+    }, "asset");
+  }
+  const updatedAtSeconds = Number(updatedAt);
+  const config = quantConfig(env);
+  const maxAgeSeconds = asset === "XAUT0"
+    ? config.xaut0OracleMaxAgeSeconds
+    : config.oracleMaxAgeSeconds;
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (!isOraclePriceFresh({ updatedAtSeconds, nowSeconds, maxAgeSeconds })) {
+    throw new TreasuryPriceSafetyError(`${asset} oracle price is stale`, {
+      oracle: address,
+      updatedAt: new Date(updatedAtSeconds * 1000).toISOString(),
+      maxAgeSeconds,
+    }, "asset");
+  }
+  return {
+    price: numeric(formatUnits(answer, Number(decimals))),
+    source: `${description} @ ${address}`,
+    updatedAt: new Date(updatedAtSeconds * 1000).toISOString(),
+    updatedAtSeconds,
+    roundId: roundId.toString(),
+    blockNumber: blockNumber.toString(),
+  };
+}
+
+async function readOraclePrice(env: Env, asset: TreasuryAsset): Promise<OracleSnapshot> {
+  const address = assetOracleAddress(env, asset);
+  try {
+    return await retryTreasuryOracleRead(
+      () => readOraclePriceOnce(env, asset),
+      {
+        attempts: 3,
+        delayMs: 500,
+        shouldRetry: (error) => !(error instanceof TreasuryPriceSafetyError),
+      },
+    );
   } catch (error) {
     if (error instanceof TreasuryPriceSafetyError) throw error;
     throw new TreasuryPriceSafetyError(`${asset} oracle is unavailable`, {
       oracle: address,
+      attempts: 3,
       message: error instanceof Error ? error.message : String(error),
-    });
+    }, "asset");
   }
 }
 
@@ -861,6 +876,7 @@ export async function recoverStaleTreasurySignals(env: Env) {
 async function currentPositionMarket(
   env: Env,
   position: TreasuryPositionRow,
+  oracleSnapshot?: OracleSnapshot,
 ): Promise<PositionMarketSnapshot> {
   const asset = assetAddress(env, position.asset);
   const quoteToken = position.quote_token as Stablecoin;
@@ -868,7 +884,7 @@ async function currentPositionMarket(
   const decimals = await tokenDecimals(env, asset);
   const amountIn = parseStoredUnits(position.amount_asset, decimals);
   const [oracle, quote] = await Promise.all([
-    readOraclePrice(env, position.asset),
+    oracleSnapshot ?? readOraclePrice(env, position.asset),
     quoteTreasurySwap(env, asset, quoteAddress, amountIn),
   ]);
   const amountAsset = numeric(formatUnits(amountIn, decimals));
@@ -979,10 +995,20 @@ export async function monitorTreasuryPositions(env: Env) {
     .order("opened_at", { ascending: true });
   if (error) throw new Error(error.message);
   const results = [];
+  const oracleReads = new Map<TreasuryAsset, Promise<OracleSnapshot>>();
+  const auditedOracleErrors = new Set<TreasuryAsset>();
+  const readCycleOracle = (asset: TreasuryAsset) => {
+    const existing = oracleReads.get(asset);
+    if (existing) return existing;
+    const pending = readOraclePrice(env, asset);
+    oracleReads.set(asset, pending);
+    return pending;
+  };
   for (const raw of data ?? []) {
     const position = raw as TreasuryPositionRow;
     try {
-      const market = await currentPositionMarket(env, position);
+      const oracle = await readCycleOracle(position.asset);
+      const market = await currentPositionMarket(env, position, oracle);
       const marketFields = {
         current_price: fixed(market.oracle.price),
         oracle_price: fixed(market.oracle.price),
@@ -1089,18 +1115,25 @@ export async function monitorTreasuryPositions(env: Env) {
     } catch (positionError) {
       const message = positionError instanceof Error ? positionError.message : String(positionError);
       const priceSafetyError = positionError instanceof TreasuryPriceSafetyError;
-      const control = priceSafetyError ? await getControl(env) : null;
-      if (position.mode === "live" && priceSafetyError && !control?.paused) {
+      const globallyScoped = priceSafetyError && positionError.scope === "global";
+      const control = globallyScoped ? await getControl(env) : null;
+      if (position.mode === "live" && globallyScoped && !control?.paused) {
         await setTreasuryPause(env, true, message);
       }
-      if (!priceSafetyError || !control?.paused) {
+      const shouldAudit = !priceSafetyError
+        || globallyScoped
+        || !auditedOracleErrors.has(position.asset);
+      if (shouldAudit) {
         await addAudit(env, "position_monitor_error", {
           message,
           details: priceSafetyError ? positionError.details : undefined,
+          scope: priceSafetyError ? positionError.scope : undefined,
+          asset: position.asset,
         }, {
           signalId: position.signal_id,
           positionId: position.id,
         });
+        if (priceSafetyError && !globallyScoped) auditedOracleErrors.add(position.asset);
       }
       results.push({ id: position.id, status: "error", reason: message });
     }
@@ -1108,11 +1141,39 @@ export async function monitorTreasuryPositions(env: Env) {
   return results;
 }
 
+function oraclePauseAsset(reason: string | null): TreasuryAsset | null {
+  if (!reason) return null;
+  const match = /^(CELO|XAUT0) oracle (?:is unavailable|is not configured|price is stale|returned )/.exec(reason);
+  return match?.[1] === "CELO" || match?.[1] === "XAUT0" ? match[1] : null;
+}
+
+async function recoverLegacyOraclePause(env: Env) {
+  const control = await getControl(env);
+  if (!control.paused) return null;
+  const asset = oraclePauseAsset(control.reason);
+  if (!asset) return null;
+  try {
+    const oracle = await readOraclePrice(env, asset);
+    await setTreasuryPause(env, false);
+    await addAudit(env, "oracle_pause_recovered", {
+      asset,
+      previousReason: control.reason,
+      oraclePrice: oracle.price,
+      oracleUpdatedAt: oracle.updatedAt,
+      blockNumber: oracle.blockNumber,
+    });
+    return { asset, oraclePrice: oracle.price, oracleUpdatedAt: oracle.updatedAt };
+  } catch {
+    return null;
+  }
+}
+
 export async function runTreasuryWorkerCycle(env: Env) {
   const recovered = await recoverStaleTreasurySignals(env);
+  const oracleRecovery = await recoverLegacyOraclePause(env);
   const signal = await processNextTreasurySignal(env);
   const positions = await monitorTreasuryPositions(env);
-  return { recovered, signal, positions };
+  return { recovered, oracleRecovery, signal, positions };
 }
 
 export async function listTreasurySignals(env: Env, limit = 25) {

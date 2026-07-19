@@ -11,6 +11,7 @@ import {
   getStaleSignalRecoveryAction,
   isOraclePriceFresh,
   parseTradingViewSignal,
+  retryTreasuryOracleRead,
 } from "../lib/treasury.js";
 
 const signal = {
@@ -191,6 +192,29 @@ test("oracle freshness rejects stale, future and invalid observations", () => {
     nowSeconds: 1_500,
     maxAgeSeconds: 600,
   }), false);
+});
+
+test("oracle reads retry transient failures and recover", async () => {
+  let attempts = 0;
+  const result = await retryTreasuryOracleRead(async () => {
+    attempts += 1;
+    if (attempts < 3) throw new Error("temporary RPC failure");
+    return 4009.2;
+  }, { attempts: 3 });
+  assert.equal(result, 4009.2);
+  assert.equal(attempts, 3);
+});
+
+test("oracle reads do not retry deterministic safety failures", async () => {
+  let attempts = 0;
+  await assert.rejects(() => retryTreasuryOracleRead(async () => {
+    attempts += 1;
+    throw new Error("stale oracle round");
+  }, {
+    attempts: 3,
+    shouldRetry: () => false,
+  }));
+  assert.equal(attempts, 1);
 });
 
 test("TradingView and operator routes reject missing dedicated secrets", async () => {

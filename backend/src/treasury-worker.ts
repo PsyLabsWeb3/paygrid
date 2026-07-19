@@ -9,7 +9,7 @@ async function tick() {
   running = true;
   try {
     const result = await runTreasuryWorkerCycle(env);
-    if (result.signal || result.positions.length > 0) {
+    if (result.oracleRecovery || result.signal || result.positions.length > 0) {
       console.log("[treasury-worker]", JSON.stringify(result));
     }
   } catch (error) {
