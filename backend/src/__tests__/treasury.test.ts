@@ -8,7 +8,9 @@ import {
   calculatePriceDivergenceBps,
   evaluateTreasuryRisk,
   getTreasuryCloseReason,
+  getTreasuryPriceSafetyTransition,
   getStaleSignalRecoveryAction,
+  isLegacyTreasuryDivergencePause,
   isOraclePriceFresh,
   parseTradingViewSignal,
   retryTreasuryOracleRead,
@@ -174,6 +176,41 @@ test("entry deviation and paper sizing remain bounded", () => {
   assert.equal(calculatePriceDivergenceBps(100, 99), 100);
   assert.equal(calculatePriceDivergenceBps(0, 99), Number.POSITIVE_INFINITY);
   assert.equal(calculatePaperAssetAmount(1, 0.5), "2");
+});
+
+test("price divergence transitions are isolated and recover exactly once", () => {
+  assert.deepEqual(getTreasuryPriceSafetyTransition({
+    previousDivergenceBps: 100,
+    currentDivergenceBps: 250,
+    maxDivergenceBps: 200,
+  }), { unsafe: true, transition: "unsafe" });
+  assert.deepEqual(getTreasuryPriceSafetyTransition({
+    previousDivergenceBps: 250,
+    currentDivergenceBps: 240,
+    maxDivergenceBps: 200,
+  }), { unsafe: true, transition: null });
+  assert.deepEqual(getTreasuryPriceSafetyTransition({
+    previousDivergenceBps: 250,
+    currentDivergenceBps: 180,
+    maxDivergenceBps: 200,
+  }), { unsafe: false, transition: "recovered" });
+  assert.deepEqual(getTreasuryPriceSafetyTransition({
+    previousDivergenceBps: 180,
+    currentDivergenceBps: 150,
+    maxDivergenceBps: 200,
+  }), { unsafe: false, transition: null });
+});
+
+test("only inherited divergence pauses qualify for automatic recovery", () => {
+  assert.equal(isLegacyTreasuryDivergencePause(
+    "Executable price diverges 355 bps from the oracle",
+  ), true);
+  assert.equal(isLegacyTreasuryDivergencePause(
+    "Entry execution diverged 217 bps from the oracle",
+  ), true);
+  assert.equal(isLegacyTreasuryDivergencePause("Paused by operator"), false);
+  assert.equal(isLegacyTreasuryDivergencePause("Daily loss limit reached"), false);
+  assert.equal(isLegacyTreasuryDivergencePause("CELO oracle is unavailable"), false);
 });
 
 test("oracle freshness rejects stale, future and invalid observations", () => {

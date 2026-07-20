@@ -131,6 +131,31 @@ export function calculatePriceDivergenceBps(referencePrice: number, executablePr
   return Math.round((Math.abs(executablePrice - referencePrice) / referencePrice) * 10_000);
 }
 
+export function getTreasuryPriceSafetyTransition(input: {
+  previousDivergenceBps: number | null | undefined;
+  currentDivergenceBps: number;
+  maxDivergenceBps: number;
+}) {
+  const previouslyUnsafe = Number.isFinite(input.previousDivergenceBps)
+    && Number(input.previousDivergenceBps) > input.maxDivergenceBps;
+  const unsafe = input.currentDivergenceBps > input.maxDivergenceBps;
+  return {
+    unsafe,
+    transition: unsafe && !previouslyUnsafe
+      ? "unsafe" as const
+      : !unsafe && previouslyUnsafe
+        ? "recovered" as const
+        : null,
+  };
+}
+
+export function isLegacyTreasuryDivergencePause(reason: string | null | undefined) {
+  if (!reason) return false;
+  return /^(?:Executable price diverges|Entry execution diverged) \d+(?:\.\d+)? bps from the oracle$/.test(
+    reason,
+  );
+}
+
 export function isOraclePriceFresh(input: {
   updatedAtSeconds: number;
   nowSeconds: number;

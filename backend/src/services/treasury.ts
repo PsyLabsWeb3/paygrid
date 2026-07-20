@@ -24,7 +24,9 @@ import {
   calculatePriceDivergenceBps,
   evaluateTreasuryRisk,
   getTreasuryCloseReason,
+  getTreasuryPriceSafetyTransition,
   getStaleSignalRecoveryAction,
+  isLegacyTreasuryDivergencePause,
   isOraclePriceFresh,
   parseTradingViewSignal,
   retryTreasuryOracleRead,
@@ -77,6 +79,13 @@ class TreasuryPriceSafetyError extends Error {
   ) {
     super(message);
     this.name = "TreasuryPriceSafetyError";
+  }
+}
+
+class TreasuryEntryDivergenceError extends TreasuryPriceSafetyError {
+  constructor(message: string, details: Record<string, unknown>) {
+    super(message, details);
+    this.name = "TreasuryEntryDivergenceError";
   }
 }
 
@@ -663,7 +672,7 @@ async function createLivePosition(env: Env, signal: TreasurySignalRow) {
   }
   const priceDivergenceBps = calculatePriceDivergenceBps(oracle.price, executionPrice);
   if (priceDivergenceBps > config.maxPriceDivergenceBps) {
-    throw new TreasuryPriceSafetyError(
+    throw new TreasuryEntryDivergenceError(
       `Executable price diverges ${priceDivergenceBps} bps from the oracle`,
       {
         oraclePrice: oracle.price,
@@ -726,16 +735,15 @@ async function createLivePosition(env: Env, signal: TreasurySignalRow) {
       .single();
     if (updateError || !updated) throw new Error(updateError?.message ?? "Live position update failed");
     if (actualDivergenceBps > config.maxPriceDivergenceBps) {
-      await setTreasuryPause(
-        env,
-        true,
-        `Entry execution diverged ${actualDivergenceBps} bps from the oracle`,
-      );
-      await addAudit(env, "treasury_price_safety_pause", {
+      await addAudit(env, "position_price_unsafe", {
         phase: "entry",
+        message: `Entry execution diverged ${actualDivergenceBps} bps from the oracle`,
         oraclePrice: oracle.price,
         executablePrice: actualPrice,
         divergenceBps: actualDivergenceBps,
+        maxPriceDivergenceBps: config.maxPriceDivergenceBps,
+        route: execution.quote.protocol,
+        blockNumber: oracle.blockNumber,
       }, { signalId: signal.id, positionId: data.id });
     }
     return updated as TreasuryPositionRow;
@@ -813,8 +821,9 @@ export async function processNextTreasurySignal(env: Env) {
     return { status: "executed", positionId: position.id };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await rejectSignal(env, signal, message, "failed");
-    return { status: "failed", reason: message };
+    const status = error instanceof TreasuryEntryDivergenceError ? "rejected" : "failed";
+    await rejectSignal(env, signal, message, status);
+    return { status, reason: message };
   }
 }
 
@@ -1020,21 +1029,22 @@ export async function monitorTreasuryPositions(env: Env) {
         price_route: market.route,
         last_checked_at: new Date().toISOString(),
       };
-      if (market.divergenceBps > quantConfig(env).maxPriceDivergenceBps) {
-        const maxPriceDivergenceBps = quantConfig(env).maxPriceDivergenceBps;
-        const wasAlreadyUnsafe = numeric(position.price_divergence_bps) > maxPriceDivergenceBps;
+      const maxPriceDivergenceBps = quantConfig(env).maxPriceDivergenceBps;
+      const priceSafety = getTreasuryPriceSafetyTransition({
+        previousDivergenceBps: position.price_divergence_bps,
+        currentDivergenceBps: market.divergenceBps,
+        maxDivergenceBps: maxPriceDivergenceBps,
+      });
+      if (priceSafety.unsafe) {
         await getSupabase(env)
           .from("treasury_quant_positions")
           .update(marketFields)
           .eq("id", position.id);
         const message =
           `Executable price diverges ${market.divergenceBps} bps from the oracle`;
-        if (!wasAlreadyUnsafe) {
-          const control = await getControl(env);
-          if (position.mode === "live" && !control.paused) {
-            await setTreasuryPause(env, true, message);
-          }
-          await addAudit(env, "treasury_price_safety_pause", {
+        if (priceSafety.transition === "unsafe") {
+          await addAudit(env, "position_price_unsafe", {
+            phase: "monitor",
             message,
             oraclePrice: market.oracle.price,
             executablePrice: market.executablePrice,
@@ -1049,13 +1059,27 @@ export async function monitorTreasuryPositions(env: Env) {
         }
         results.push({
           id: position.id,
-          status: "price_safety",
+          status: "price_unsafe",
           reason: message,
           oraclePrice: market.oracle.price,
           executablePrice: market.executablePrice,
           divergenceBps: market.divergenceBps,
         });
         continue;
+      }
+      if (priceSafety.transition === "recovered") {
+        await addAudit(env, "position_price_recovered", {
+          previousDivergenceBps: numeric(position.price_divergence_bps),
+          oraclePrice: market.oracle.price,
+          executablePrice: market.executablePrice,
+          divergenceBps: market.divergenceBps,
+          maxPriceDivergenceBps,
+          route: market.route,
+          blockNumber: market.oracle.blockNumber,
+        }, {
+          signalId: position.signal_id,
+          positionId: position.id,
+        });
       }
       const reason = getTreasuryCloseReason({
         currentPrice: market.oracle.price,
@@ -1168,12 +1192,23 @@ async function recoverLegacyOraclePause(env: Env) {
   }
 }
 
+async function recoverLegacyDivergencePause(env: Env) {
+  const control = await getControl(env);
+  if (!control.paused || !isLegacyTreasuryDivergencePause(control.reason)) return null;
+  await setTreasuryPause(env, false);
+  await addAudit(env, "price_divergence_pause_recovered", {
+    previousReason: control.reason,
+  });
+  return { previousReason: control.reason };
+}
+
 export async function runTreasuryWorkerCycle(env: Env) {
   const recovered = await recoverStaleTreasurySignals(env);
+  const divergenceRecovery = await recoverLegacyDivergencePause(env);
   const oracleRecovery = await recoverLegacyOraclePause(env);
   const signal = await processNextTreasurySignal(env);
   const positions = await monitorTreasuryPositions(env);
-  return { recovered, oracleRecovery, signal, positions };
+  return { recovered, divergenceRecovery, oracleRecovery, signal, positions };
 }
 
 export async function listTreasurySignals(env: Env, limit = 25) {
