@@ -17,6 +17,7 @@ test("lists Paygrid MCP tools", async () => {
   assert.ok(result.result.tools.some((tool) => tool.name === "get_gift_leaderboard"));
   assert.ok(result.result.tools.some((tool) => tool.name === "get_treasury_quant_status"));
   assert.ok(result.result.tools.some((tool) => tool.name === "close_treasury_quant_position"));
+  assert.ok(result.result.tools.some((tool) => tool.name === "close_all_treasury_quant_positions"));
 });
 
 test("blocks remote write tools without API key", async () => {

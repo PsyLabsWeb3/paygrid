@@ -13,6 +13,7 @@ import {
   isLegacyTreasuryDivergencePause,
   isOraclePriceFresh,
   parseTradingViewSignal,
+  resolveTreasuryAssetLimits,
   retryTreasuryOracleRead,
 } from "../lib/treasury.js";
 
@@ -117,6 +118,49 @@ test("accepts XAUt TradingView aliases and normalizes the asset to XAUT0", () =>
   }));
 });
 
+test("accepts ETH, BTC and EUR TradingView aliases and normalizes treasury assets", () => {
+  const cases = [
+    { code: "ETHUSDT", baseAsset: "ETH", normalized: "WETH", entry: 3500 },
+    { code: "WETHUSDT", baseAsset: "WETH", normalized: "WETH", entry: 3500 },
+    { code: "BTCUSDT", baseAsset: "BTC", normalized: "WBTC", entry: 100000 },
+    { code: "WBTCUSDT", baseAsset: "WBTC", normalized: "WBTC", entry: 100000 },
+    { code: "EURUSDT", baseAsset: "EUR", normalized: "EURM", entry: 1.15 },
+    { code: "CEURUSDT", baseAsset: "cEUR", normalized: "EURM", entry: 1.15 },
+    { code: "EURMUSDT", baseAsset: "EURm", normalized: "EURM", entry: 1.15 },
+  ] as const;
+  for (const item of cases) {
+    const parsed = parseTradingViewSignal({
+      ...signal,
+      entryPrice: item.entry,
+      slPrice: item.entry * 0.98,
+      tpPrice: item.entry * 1.02,
+      symbol: {
+        code: item.code,
+        baseAsset: item.baseAsset,
+        quoteAsset: "USDT",
+      },
+    });
+    assert.equal(parsed.symbol.baseAsset, item.normalized);
+  }
+});
+
+test("new treasury markets reject inverted or non-USDT pairs", () => {
+  assert.throws(() => parseTradingViewSignal({
+    ...signal,
+    entryPrice: 3500,
+    slPrice: 3400,
+    tpPrice: 3600,
+    symbol: { code: "ETHUSDC", baseAsset: "ETH", quoteAsset: "USDC" },
+  }));
+  assert.throws(() => parseTradingViewSignal({
+    ...signal,
+    entryPrice: 1.15,
+    slPrice: 1.1,
+    tpPrice: 1.2,
+    symbol: { code: "USDTEUR", baseAsset: "EUR", quoteAsset: "USDT" },
+  }));
+});
+
 test("rejects shorts, invalid symbols and inverted LONG risk levels", () => {
   assert.throws(() => parseTradingViewSignal({ ...signal, side: "SHORT" }));
   assert.throws(() => parseTradingViewSignal({
@@ -139,6 +183,8 @@ test("risk engine enforces pause, round-robin position count and exposure limits
     maxPerTradeUsd: 5,
     totalExposureUsd: 0,
     maxTotalExposureUsd: 20,
+    assetExposureUsd: 0,
+    maxAssetExposureUsd: 20,
     dailyLossUsd: 0,
     dailyLossLimitUsd: 5,
   };
@@ -147,7 +193,30 @@ test("risk engine enforces pause, round-robin position count and exposure limits
   assert.equal(evaluateTreasuryRisk({ ...base, openPositionsForAsset: 2 }).ok, true);
   assert.equal(evaluateTreasuryRisk({ ...base, openPositionsForAsset: 3 }).ok, false);
   assert.equal(evaluateTreasuryRisk({ ...base, totalExposureUsd: 20 }).ok, false);
+  assert.equal(evaluateTreasuryRisk({ ...base, assetExposureUsd: 20 }).ok, false);
   assert.equal(evaluateTreasuryRisk({ ...base, dailyLossUsd: 5 }).ok, false);
+});
+
+test("asset limits inherit globals and apply only configured overrides", () => {
+  const globalLimits = {
+    maxPerTradeUsd: "12",
+    maxTotalExposureUsd: "300",
+    maxOpenPositions: 15,
+  };
+  assert.deepEqual(resolveTreasuryAssetLimits(globalLimits, {}), globalLimits);
+  assert.deepEqual(resolveTreasuryAssetLimits(globalLimits, {
+    maxPerTradeUsd: "5",
+    maxOpenPositions: 4,
+  }), {
+    maxPerTradeUsd: "5",
+    maxTotalExposureUsd: "300",
+    maxOpenPositions: 4,
+  });
+  assert.deepEqual(resolveTreasuryAssetLimits(globalLimits, {
+    maxPerTradeUsd: "20",
+    maxTotalExposureUsd: "500",
+    maxOpenPositions: 30,
+  }), globalLimits);
 });
 
 test("TP, SL and manual close triggers are deterministic", () => {
@@ -169,6 +238,13 @@ test("TP, SL and manual close triggers are deterministic", () => {
     tpPrice: 0.54438,
     closeRequested: true,
   }), "manual");
+  assert.equal(getTreasuryCloseReason({
+    currentPrice: 0.53,
+    slPrice: 0.51266,
+    tpPrice: 0.54438,
+    closeRequested: true,
+    closeRequestedReason: "manual_close_all",
+  }), "manual_close_all");
 });
 
 test("entry deviation and paper sizing remain bounded", () => {

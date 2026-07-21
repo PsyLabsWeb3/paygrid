@@ -126,7 +126,7 @@ export type TreasurySignalRow = {
   strategy_name: string;
   strategy_description: string | null;
   symbol_code: string;
-  base_asset: "CELO" | "XAUT0";
+  base_asset: "CELO" | "XAUT0" | "WETH" | "WBTC" | "EURM";
   quote_asset: "USDC" | "USDT" | "USDm";
   payload: Record<string, unknown>;
   status: "pending" | "processing" | "executed" | "rejected" | "failed";
@@ -140,7 +140,7 @@ export type TreasurySignalRow = {
 export type TreasuryPositionRow = {
   id: string;
   signal_id: string;
-  asset: "CELO" | "XAUT0";
+  asset: "CELO" | "XAUT0" | "WETH" | "WBTC" | "EURM";
   quote_token: "USDC" | "USDT" | "USDm";
   mode: "paper" | "live";
   route: "paper" | "mento" | "uniswap-v3";

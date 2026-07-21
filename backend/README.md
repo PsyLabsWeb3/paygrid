@@ -94,20 +94,20 @@ Signals are deduplicated by `externalSignalId` and processed asynchronously by
 `npm run treasury:worker`. The worker defaults to `paper` mode. `live` mode
 requires a dedicated `TREASURY_EXECUTOR_PRIVATE_KEY`. TP/SL monitoring uses an
 onchain oracle as its reference price and a full-position Mento/Uniswap quote as
-the executable price. Stale feeds or excessive oracle/DEX divergence pause new
-entries and block automated exits.
+the executable price. Unsafe quotes are isolated to their signal or position;
+they do not pause unrelated markets.
 
 Round-robin entries are controlled by
 `TREASURY_MAX_OPEN_POSITIONS_PER_ASSET`. Each accepted signal creates an
 independent position with its own TP/SL and realizable PnL, while the aggregate
 remains bounded by `TREASURY_MAX_TOTAL_EXPOSURE_USD`.
 
-Supported live assets are CELO and XAUt0. For XAUt0, TradingView should send
-`symbol.code: "XAUTUSDT"`, `baseAsset: "XAUT0"` and `quoteAsset: "USDT"`.
-The worker uses RedStone XAUt/USDT as the reference oracle and the direct
-Uniswap V3 USDT/XAUt0 pool as the executable route. Configure the token, oracle
-and longer XAUt0 heartbeat window with the `TREASURY_XAUT0_*` variables in
-`.env.example`.
+Supported live markets are CELO, XAUt0, ETH, BTC and EURm. TradingView aliases
+are normalized to the onchain assets: `XAUTUSDT` -> `XAUT0`, `ETHUSDT` ->
+`WETH`, `BTCUSDT` -> `WBTC`, and `EURUSDT`/`CEURUSDT` -> `EURM`. New markets
+are opt-in through `TREASURY_WETH_ENABLED`, `TREASURY_WBTC_ENABLED` and
+`TREASURY_EURM_ENABLED`. WETH and WBTC use direct Uniswap V3 routing; EURm is
+Mento-first with Uniswap fallback.
 
 Public read routes:
 
@@ -122,6 +122,7 @@ Operator routes require `X-Treasury-Admin-Key`:
 ```text
 POST /api/treasury/control/pause
 POST /api/treasury/control/resume
+POST /api/treasury/control/close-all
 POST /api/treasury/positions/:id/close
 ```
 

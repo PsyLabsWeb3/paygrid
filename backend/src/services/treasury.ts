@@ -29,6 +29,7 @@ import {
   isLegacyTreasuryDivergencePause,
   isOraclePriceFresh,
   parseTradingViewSignal,
+  resolveTreasuryAssetLimits,
   retryTreasuryOracleRead,
   type TradingViewSignal,
   type TreasuryCloseReason,
@@ -39,6 +40,7 @@ import {
   quoteTreasurySwap,
   type TreasuryCall,
   type TreasuryRoute,
+  type TreasuryRoutingPreference,
   type TreasurySwapQuote,
 } from "./treasury-routing.js";
 
@@ -46,13 +48,20 @@ const DEFAULT_CELO_ADDRESS = "0x471EcE3750Da237f93B8E339c536989b8978a438" as Add
 const DEFAULT_CELO_ORACLE_ADDRESS = "0x0568fD19986748cEfF3301e55c0eb1E729E0Ab7e" as Address;
 const DEFAULT_XAUT0_ADDRESS = "0xaf37E8B6C9ED7f6318979f56Fc287d76c30847ff" as Address;
 const DEFAULT_XAUT0_ORACLE_ADDRESS = "0x98DC6E90D4c2f212ed9d124aD2aFBa4833268633" as Address;
+const DEFAULT_WETH_ADDRESS = "0xD221812de1BD094f35587EE8E174B07B6167D9Af" as Address;
+const DEFAULT_WETH_ORACLE_ADDRESS = "0x1FcD30A73D67639c1cD89ff5746E7585731c083B" as Address;
+const DEFAULT_WBTC_ADDRESS = "0x8aC2901Dd8A1F17a1A4768A6bA4C3751e3995B2D" as Address;
+const DEFAULT_WBTC_ORACLE_ADDRESS = "0x128fE88eaa22bFFb868Bb3A584A54C96eE24014b" as Address;
+const DEFAULT_EURM_ADDRESS = "0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73" as Address;
+const DEFAULT_EURM_ORACLE_ADDRESS = "0x3D207061Dbe8E2473527611BFecB87Ff12b28dDa" as Address;
 const aggregatorV3Abi = parseAbi([
   "function decimals() view returns (uint8)",
   "function description() view returns (string)",
   "function latestRoundData() view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)",
 ]);
 
-type TreasuryAsset = "CELO" | "XAUT0";
+type TreasuryAsset = "CELO" | "XAUT0" | "WETH" | "WBTC" | "EURM";
+const TREASURY_ASSETS: TreasuryAsset[] = ["CELO", "XAUT0", "WETH", "WBTC", "EURM"];
 
 type OracleSnapshot = {
   price: number;
@@ -106,7 +115,44 @@ function quantConfig(env: Env) {
     maxPriceDivergenceBps: env.TREASURY_MAX_PRICE_DIVERGENCE_BPS ?? 200,
     oracleMaxAgeSeconds: env.TREASURY_ORACLE_MAX_AGE_SECONDS ?? 600,
     xaut0OracleMaxAgeSeconds: env.TREASURY_XAUT0_ORACLE_MAX_AGE_SECONDS ?? 90_000,
+    wethOracleMaxAgeSeconds: env.TREASURY_WETH_ORACLE_MAX_AGE_SECONDS ?? 3_600,
+    wbtcOracleMaxAgeSeconds: env.TREASURY_WBTC_ORACLE_MAX_AGE_SECONDS ?? 3_600,
+    eurmOracleMaxAgeSeconds: env.TREASURY_EURM_ORACLE_MAX_AGE_SECONDS ?? 90_000,
   };
+}
+
+function assetLimitOverrides(env: Env, asset: TreasuryAsset) {
+  if (asset === "WETH") {
+    return {
+      maxPerTradeUsd: env.TREASURY_WETH_MAX_PER_TRADE_USD,
+      maxTotalExposureUsd: env.TREASURY_WETH_MAX_TOTAL_EXPOSURE_USD,
+      maxOpenPositions: env.TREASURY_WETH_MAX_OPEN_POSITIONS,
+    };
+  }
+  if (asset === "WBTC") {
+    return {
+      maxPerTradeUsd: env.TREASURY_WBTC_MAX_PER_TRADE_USD,
+      maxTotalExposureUsd: env.TREASURY_WBTC_MAX_TOTAL_EXPOSURE_USD,
+      maxOpenPositions: env.TREASURY_WBTC_MAX_OPEN_POSITIONS,
+    };
+  }
+  if (asset === "EURM") {
+    return {
+      maxPerTradeUsd: env.TREASURY_EURM_MAX_PER_TRADE_USD,
+      maxTotalExposureUsd: env.TREASURY_EURM_MAX_TOTAL_EXPOSURE_USD,
+      maxOpenPositions: env.TREASURY_EURM_MAX_OPEN_POSITIONS,
+    };
+  }
+  return {};
+}
+
+function assetLimits(env: Env, asset: TreasuryAsset) {
+  const config = quantConfig(env);
+  return resolveTreasuryAssetLimits({
+    maxPerTradeUsd: config.maxPerTradeUsd,
+    maxTotalExposureUsd: config.maxTotalExposureUsd,
+    maxOpenPositions: config.maxOpenPositionsPerAsset,
+  }, assetLimitOverrides(env, asset));
 }
 
 function numeric(value: string | number | null | undefined) {
@@ -128,36 +174,75 @@ function parseStoredUnits(value: string | number, decimals: number) {
 
 function assetAddress(env: Env, asset: TreasuryAsset) {
   if (asset === "CELO") return env.TREASURY_CELO_ADDRESS ?? DEFAULT_CELO_ADDRESS;
-  const address = env.TREASURY_XAUT0_ADDRESS
-    ?? (env.CHAIN_ID === 42220 ? DEFAULT_XAUT0_ADDRESS : undefined);
-  if (!address) throw new ApiError(409, "ASSET_NOT_CONFIGURED", "XAUt0 is not configured");
+  const configured = {
+    XAUT0: env.TREASURY_XAUT0_ADDRESS ?? DEFAULT_XAUT0_ADDRESS,
+    WETH: env.TREASURY_WETH_ADDRESS ?? DEFAULT_WETH_ADDRESS,
+    WBTC: env.TREASURY_WBTC_ADDRESS ?? DEFAULT_WBTC_ADDRESS,
+    EURM: env.TREASURY_EURM_ADDRESS ?? DEFAULT_EURM_ADDRESS,
+  } as const;
+  const address = env.CHAIN_ID === 42220 ? configured[asset] : {
+    XAUT0: env.TREASURY_XAUT0_ADDRESS,
+    WETH: env.TREASURY_WETH_ADDRESS,
+    WBTC: env.TREASURY_WBTC_ADDRESS,
+    EURM: env.TREASURY_EURM_ADDRESS,
+  }[asset];
+  if (!address) throw new ApiError(409, "ASSET_NOT_CONFIGURED", `${asset} is not configured`);
   return address;
 }
 
 function assetOracleAddress(env: Env, asset: TreasuryAsset) {
-  if (asset === "CELO") {
-    const address = env.TREASURY_CELO_ORACLE_ADDRESS
-      ?? (env.CHAIN_ID === 42220 ? DEFAULT_CELO_ORACLE_ADDRESS : undefined);
-    if (!address) throw new TreasuryPriceSafetyError("CELO oracle is not configured", {}, "asset");
-    return address;
-  }
-  const address = env.TREASURY_XAUT0_ORACLE_ADDRESS
-    ?? (env.CHAIN_ID === 42220 ? DEFAULT_XAUT0_ORACLE_ADDRESS : undefined);
-  if (!address) throw new TreasuryPriceSafetyError("XAUt0 oracle is not configured", {}, "asset");
+  const configured = {
+    CELO: env.TREASURY_CELO_ORACLE_ADDRESS ?? DEFAULT_CELO_ORACLE_ADDRESS,
+    XAUT0: env.TREASURY_XAUT0_ORACLE_ADDRESS ?? DEFAULT_XAUT0_ORACLE_ADDRESS,
+    WETH: env.TREASURY_WETH_ORACLE_ADDRESS ?? DEFAULT_WETH_ORACLE_ADDRESS,
+    WBTC: env.TREASURY_WBTC_ORACLE_ADDRESS ?? DEFAULT_WBTC_ORACLE_ADDRESS,
+    EURM: env.TREASURY_EURM_ORACLE_ADDRESS ?? DEFAULT_EURM_ORACLE_ADDRESS,
+  } as const;
+  const address = env.CHAIN_ID === 42220 ? configured[asset] : {
+    CELO: env.TREASURY_CELO_ORACLE_ADDRESS,
+    XAUT0: env.TREASURY_XAUT0_ORACLE_ADDRESS,
+    WETH: env.TREASURY_WETH_ORACLE_ADDRESS,
+    WBTC: env.TREASURY_WBTC_ORACLE_ADDRESS,
+    EURM: env.TREASURY_EURM_ORACLE_ADDRESS,
+  }[asset];
+  if (!address) throw new TreasuryPriceSafetyError(`${asset} oracle is not configured`, {}, "asset");
   return address;
 }
 
 function assetIsConfigured(env: Env, asset: TreasuryAsset) {
-  if (asset === "CELO") {
-    return Boolean(
-      env.TREASURY_CELO_ORACLE_ADDRESS
-      ?? (env.CHAIN_ID === 42220 ? DEFAULT_CELO_ORACLE_ADDRESS : undefined),
-    );
+  const explicitlyEnabled = {
+    CELO: true,
+    XAUT0: true,
+    WETH: env.TREASURY_WETH_ENABLED === "true",
+    WBTC: env.TREASURY_WBTC_ENABLED === "true",
+    EURM: env.TREASURY_EURM_ENABLED === "true",
+  }[asset];
+  if (!explicitlyEnabled) return false;
+  try {
+    return Boolean(assetAddress(env, asset) && assetOracleAddress(env, asset));
+  } catch {
+    return false;
   }
-  return Boolean(
-    (env.TREASURY_XAUT0_ADDRESS ?? (env.CHAIN_ID === 42220 ? DEFAULT_XAUT0_ADDRESS : undefined))
-    && (env.TREASURY_XAUT0_ORACLE_ADDRESS
-      ?? (env.CHAIN_ID === 42220 ? DEFAULT_XAUT0_ORACLE_ADDRESS : undefined)),
+}
+
+function assetRoutingPreference(asset: TreasuryAsset): TreasuryRoutingPreference {
+  return asset === "WETH" || asset === "WBTC" ? "uniswap-only" : "mento-first";
+}
+
+function quoteAssetSwap(
+  env: Env,
+  asset: TreasuryAsset,
+  tokenIn: Address,
+  tokenOut: Address,
+  amountIn: bigint,
+) {
+  return quoteTreasurySwap(
+    env,
+    tokenIn,
+    tokenOut,
+    amountIn,
+    quantConfig(env).maxSlippageBps,
+    assetRoutingPreference(asset),
   );
 }
 
@@ -267,9 +352,13 @@ async function readOraclePriceOnce(env: Env, asset: TreasuryAsset): Promise<Orac
   }
   const updatedAtSeconds = Number(updatedAt);
   const config = quantConfig(env);
-  const maxAgeSeconds = asset === "XAUT0"
-    ? config.xaut0OracleMaxAgeSeconds
-    : config.oracleMaxAgeSeconds;
+  const maxAgeSeconds = {
+    CELO: config.oracleMaxAgeSeconds,
+    XAUT0: config.xaut0OracleMaxAgeSeconds,
+    WETH: config.wethOracleMaxAgeSeconds,
+    WBTC: config.wbtcOracleMaxAgeSeconds,
+    EURM: config.eurmOracleMaxAgeSeconds,
+  }[asset];
   const nowSeconds = Math.floor(Date.now() / 1000);
   if (!isOraclePriceFresh({ updatedAtSeconds, nowSeconds, maxAgeSeconds })) {
     throw new TreasuryPriceSafetyError(`${asset} oracle price is stale`, {
@@ -439,6 +528,7 @@ async function getControl(env: Env) {
 
 async function riskSnapshot(env: Env, signal: TradingViewSignal) {
   const config = quantConfig(env);
+  const effectiveLimits = assetLimits(env, signal.symbol.baseAsset);
   const supabase = getSupabase(env);
   const [{ data: positions, error: positionsError }, control] = await Promise.all([
     supabase.from("treasury_quant_positions").select("*").in("status", ["open", "closing"]),
@@ -458,17 +548,23 @@ async function riskSnapshot(env: Env, signal: TradingViewSignal) {
     const pnl = numeric(row.pnl_quote);
     return pnl < 0 ? sum + Math.abs(pnl) : sum;
   }, 0);
+  const positionsForAsset = openPositions.filter(
+    (position) => position.asset === signal.symbol.baseAsset,
+  );
   return {
     paused: control.paused,
     assetConfigured: assetIsConfigured(env, signal.symbol.baseAsset),
-    openPositionsForAsset: openPositions.filter(
-      (position) => position.asset === signal.symbol.baseAsset,
-    ).length,
-    maxOpenPositionsPerAsset: config.maxOpenPositionsPerAsset,
+    openPositionsForAsset: positionsForAsset.length,
+    maxOpenPositionsPerAsset: effectiveLimits.maxOpenPositions,
     tradeUsd: Number(config.defaultPositionUsd),
-    maxPerTradeUsd: Number(config.maxPerTradeUsd),
+    maxPerTradeUsd: Number(effectiveLimits.maxPerTradeUsd),
     totalExposureUsd: openPositions.reduce((sum, position) => sum + numeric(position.cost_quote), 0),
     maxTotalExposureUsd: Number(config.maxTotalExposureUsd),
+    assetExposureUsd: positionsForAsset.reduce(
+      (sum, position) => sum + numeric(position.cost_quote),
+      0,
+    ),
+    maxAssetExposureUsd: Number(effectiveLimits.maxTotalExposureUsd),
     dailyLossUsd,
     dailyLossLimitUsd: Number(config.dailyLossLimitUsd),
   };
@@ -652,7 +748,7 @@ async function createLivePosition(env: Env, signal: TreasurySignalRow) {
   const balance = await tokenBalance(env, quoteAddress, account.address);
   if (balance < amountIn) throw new Error(`Insufficient ${quoteToken} treasury balance`);
   const [quote, oracle] = await Promise.all([
-    quoteTreasurySwap(env, quoteAddress, outputAddress, amountIn),
+    quoteAssetSwap(env, signal.base_asset, quoteAddress, outputAddress, amountIn),
     readOraclePrice(env, signal.base_asset),
   ]);
   const assetDecimals = await tokenDecimals(env, outputAddress);
@@ -894,7 +990,7 @@ async function currentPositionMarket(
   const amountIn = parseStoredUnits(position.amount_asset, decimals);
   const [oracle, quote] = await Promise.all([
     oracleSnapshot ?? readOraclePrice(env, position.asset),
-    quoteTreasurySwap(env, asset, quoteAddress, amountIn),
+    quoteAssetSwap(env, position.asset, asset, quoteAddress, amountIn),
   ]);
   const amountAsset = numeric(formatUnits(amountIn, decimals));
   const amountQuote = numeric(formatUnits(quote.expectedAmountOut, TOKEN_DECIMALS[quoteToken]));
@@ -1086,6 +1182,7 @@ export async function monitorTreasuryPositions(env: Env) {
         slPrice: numeric(position.sl_price),
         tpPrice: numeric(position.tp_price),
         closeRequested: Boolean(position.close_requested_at),
+        closeRequestedReason: position.close_reason,
       });
       if (!reason) {
         const pnl = calculatePositionPnl({
@@ -1167,8 +1264,10 @@ export async function monitorTreasuryPositions(env: Env) {
 
 function oraclePauseAsset(reason: string | null): TreasuryAsset | null {
   if (!reason) return null;
-  const match = /^(CELO|XAUT0) oracle (?:is unavailable|is not configured|price is stale|returned )/.exec(reason);
-  return match?.[1] === "CELO" || match?.[1] === "XAUT0" ? match[1] : null;
+  const match = /^(CELO|XAUT0|WETH|WBTC|EURM) oracle (?:is unavailable|is not configured|price is stale|returned )/.exec(reason);
+  return TREASURY_ASSETS.includes(match?.[1] as TreasuryAsset)
+    ? match?.[1] as TreasuryAsset
+    : null;
 }
 
 async function recoverLegacyOraclePause(env: Env) {
@@ -1233,13 +1332,28 @@ export async function listTreasuryPositions(env: Env, limit = 25) {
 
 export async function getTreasuryQuantStatus(env: Env) {
   const config = quantConfig(env);
-  const [control, signals, positions] = await Promise.all([
+  const [control, signals, recentPositions, openPositionResult] = await Promise.all([
     getControl(env),
     listTreasurySignals(env, 10),
     listTreasuryPositions(env, 20),
+    getSupabase(env)
+      .from("treasury_quant_positions")
+      .select("*")
+      .in("status", ["open", "closing"])
+      .order("opened_at", { ascending: true }),
   ]);
+  if (openPositionResult.error) {
+    throw new ApiError(500, "INTERNAL_ERROR", openPositionResult.error.message);
+  }
+  const openPositionRows = (openPositionResult.data ?? []) as TreasuryPositionRow[];
+  const openPositions = openPositionRows.map(serializePosition);
+  const openIds = new Set(openPositions.map((position) => position.id));
+  const positions = [
+    ...openPositions,
+    ...recentPositions.filter((position) => !openIds.has(position.id)),
+  ];
   const address = executorAddress(env);
-  const balances: Partial<Record<Stablecoin | "CELO" | "XAUT0", string>> = {};
+  const balances: Partial<Record<Stablecoin | TreasuryAsset, string>> = {};
   if (address) {
     const stablecoins: Stablecoin[] = ["USDC", "USDT", "USDm"];
     await Promise.all(stablecoins.map(async (token) => {
@@ -1250,9 +1364,9 @@ export async function getTreasuryQuantStatus(env: Env) {
         balances[token] = "unavailable";
       }
     }));
-    for (const asset of ["CELO", "XAUT0"] as const) {
+    for (const asset of TREASURY_ASSETS) {
       try {
-        if (asset === "XAUT0" && !assetIsConfigured(env, asset)) continue;
+        if (!assetIsConfigured(env, asset)) continue;
         const token = assetAddress(env, asset);
         const decimals = await tokenDecimals(env, token);
         balances[asset] = formatUnits(await tokenBalance(env, token, address), decimals);
@@ -1261,7 +1375,15 @@ export async function getTreasuryQuantStatus(env: Env) {
       }
     }
   }
-  const openPositions = positions.filter((position) => position.status === "open" || position.status === "closing");
+  const effectiveByAsset = Object.fromEntries(
+    TREASURY_ASSETS.map((asset) => [
+      asset,
+      {
+        ...assetLimits(env, asset),
+        operational: assetIsConfigured(env, asset),
+      },
+    ]),
+  );
   return {
     name: "Treasury Quant Agent",
     enabled: quantEnabled(env),
@@ -1282,6 +1404,21 @@ export async function getTreasuryQuantStatus(env: Env) {
         ),
         symbol: "XAUt0",
       },
+      WETH: {
+        enabled: assetIsConfigured(env, "WETH"),
+        oracleConfigured: Boolean(assetIsConfigured(env, "WETH")),
+        symbol: "ETH",
+      },
+      WBTC: {
+        enabled: assetIsConfigured(env, "WBTC"),
+        oracleConfigured: Boolean(assetIsConfigured(env, "WBTC")),
+        symbol: "BTC",
+      },
+      EURM: {
+        enabled: assetIsConfigured(env, "EURM"),
+        oracleConfigured: Boolean(assetIsConfigured(env, "EURM")),
+        symbol: "EURm",
+      },
     },
     limits: {
       defaultPositionUsd: config.defaultPositionUsd,
@@ -1293,6 +1430,10 @@ export async function getTreasuryQuantStatus(env: Env) {
       maxPriceDivergenceBps: config.maxPriceDivergenceBps,
       oracleMaxAgeSeconds: config.oracleMaxAgeSeconds,
       xaut0OracleMaxAgeSeconds: config.xaut0OracleMaxAgeSeconds,
+      wethOracleMaxAgeSeconds: config.wethOracleMaxAgeSeconds,
+      wbtcOracleMaxAgeSeconds: config.wbtcOracleMaxAgeSeconds,
+      eurmOracleMaxAgeSeconds: config.eurmOracleMaxAgeSeconds,
+      effectiveByAsset,
     },
     balances,
     metrics: {
@@ -1339,4 +1480,25 @@ export async function requestTreasuryPositionClose(env: Env, id: string) {
     positionId: data.id,
   });
   return serializePosition(data as TreasuryPositionRow);
+}
+
+export async function requestAllTreasuryPositionsClose(env: Env) {
+  const { data, error } = await getSupabase(env).rpc("request_treasury_close_all");
+  if (error || !data) {
+    throw new ApiError(500, "INTERNAL_ERROR", error?.message ?? "Close-all request failed");
+  }
+  const result = data as {
+    paused: boolean;
+    requested: number;
+    openPositions: number;
+    positionIds: string[];
+    requestedAt: string;
+  };
+  await addAudit(env, "all_positions_close_requested", {
+    requested: result.requested,
+    openPositions: result.openPositions,
+    positionIds: result.positionIds,
+    requestedAt: result.requestedAt,
+  });
+  return result;
 }

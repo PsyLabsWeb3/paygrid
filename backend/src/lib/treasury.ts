@@ -8,8 +8,14 @@ const positiveDecimal = z
 
 const treasuryAsset = z.preprocess(
   (value) => (typeof value === "string" ? value.toUpperCase() : value),
-  z.enum(["CELO", "XAUT", "XAUT0"]),
-).transform((value) => (value === "CELO" ? "CELO" as const : "XAUT0" as const));
+  z.enum(["CELO", "XAUT", "XAUT0", "ETH", "WETH", "BTC", "WBTC", "EUR", "EURM", "CEUR"]),
+).transform((value) => {
+  if (value === "XAUT" || value === "XAUT0") return "XAUT0" as const;
+  if (value === "ETH" || value === "WETH") return "WETH" as const;
+  if (value === "BTC" || value === "WBTC") return "WBTC" as const;
+  if (value === "EUR" || value === "EURM" || value === "CEUR") return "EURM" as const;
+  return "CELO" as const;
+});
 
 export const tradingViewSignalSchema = z
   .object({
@@ -51,16 +57,23 @@ export const tradingViewSignalSchema = z
         message: "tpPrice must be above entryPrice for LONG signals",
       });
     }
-    if (signal.symbol.baseAsset === "XAUT0" && signal.symbol.quoteAsset !== "USDT") {
+    if (["XAUT0", "WETH", "WBTC", "EURM"].includes(signal.symbol.baseAsset)
+      && signal.symbol.quoteAsset !== "USDT") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["symbol", "quoteAsset"],
-        message: "XAUt0 positions currently require USDT as the quote asset",
+        message: `${signal.symbol.baseAsset} positions currently require USDT as the quote asset`,
       });
     }
-    const expectedSymbols = signal.symbol.baseAsset === "XAUT0"
-      ? [`XAUT${signal.symbol.quoteAsset}`, `XAUT0${signal.symbol.quoteAsset}`]
-      : [`CELO${signal.symbol.quoteAsset}`];
+    const aliases = {
+      CELO: ["CELO"],
+      XAUT0: ["XAUT", "XAUT0"],
+      WETH: ["ETH", "WETH"],
+      WBTC: ["BTC", "WBTC"],
+      EURM: ["EUR", "EURM", "CEUR"],
+    } as const;
+    const expectedSymbols = aliases[signal.symbol.baseAsset]
+      .map((base) => `${base}${signal.symbol.quoteAsset}`);
     if (!expectedSymbols.includes(signal.symbol.code.toUpperCase())) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -85,6 +98,8 @@ export type TreasuryRiskSnapshot = {
   maxPerTradeUsd: number;
   totalExposureUsd: number;
   maxTotalExposureUsd: number;
+  assetExposureUsd: number;
+  maxAssetExposureUsd: number;
   dailyLossUsd: number;
   dailyLossLimitUsd: number;
 };
@@ -101,21 +116,53 @@ export function evaluateTreasuryRisk(snapshot: TreasuryRiskSnapshot) {
   if (snapshot.totalExposureUsd + snapshot.tradeUsd > snapshot.maxTotalExposureUsd) {
     return { ok: false as const, reason: "Position would exceed total exposure" };
   }
+  if (snapshot.assetExposureUsd + snapshot.tradeUsd > snapshot.maxAssetExposureUsd) {
+    return { ok: false as const, reason: "Position would exceed asset exposure" };
+  }
   if (snapshot.dailyLossUsd >= snapshot.dailyLossLimitUsd) {
     return { ok: false as const, reason: "Daily loss limit reached" };
   }
   return { ok: true as const };
 }
 
-export type TreasuryCloseReason = "manual" | "stop_loss" | "take_profit";
+export type TreasuryAssetLimitValues = {
+  maxPerTradeUsd: string;
+  maxTotalExposureUsd: string;
+  maxOpenPositions: number;
+};
+
+export function resolveTreasuryAssetLimits(
+  globalLimits: TreasuryAssetLimitValues,
+  overrides: Partial<TreasuryAssetLimitValues>,
+): TreasuryAssetLimitValues {
+  const boundedDecimal = (override: string | undefined, globalValue: string) => (
+    override !== undefined && Number(override) < Number(globalValue) ? override : globalValue
+  );
+  return {
+    maxPerTradeUsd: boundedDecimal(overrides.maxPerTradeUsd, globalLimits.maxPerTradeUsd),
+    maxTotalExposureUsd: boundedDecimal(
+      overrides.maxTotalExposureUsd,
+      globalLimits.maxTotalExposureUsd,
+    ),
+    maxOpenPositions: Math.min(
+      overrides.maxOpenPositions ?? globalLimits.maxOpenPositions,
+      globalLimits.maxOpenPositions,
+    ),
+  };
+}
+
+export type TreasuryCloseReason = "manual" | "manual_close_all" | "stop_loss" | "take_profit";
 
 export function getTreasuryCloseReason(input: {
   currentPrice: number;
   slPrice: number;
   tpPrice: number;
   closeRequested: boolean;
+  closeRequestedReason?: string | null;
 }): TreasuryCloseReason | null {
-  if (input.closeRequested) return "manual";
+  if (input.closeRequested) {
+    return input.closeRequestedReason === "manual_close_all" ? "manual_close_all" : "manual";
+  }
   if (input.currentPrice <= input.slPrice) return "stop_loss";
   if (input.currentPrice >= input.tpPrice) return "take_profit";
   return null;

@@ -267,6 +267,8 @@ export function getGiftLeaderboard() {
   }>("/api/gifts/leaderboard");
 }
 
+export type TreasuryAsset = "CELO" | "XAUT0" | "WETH" | "WBTC" | "EURM";
+
 export type TreasurySignal = {
   id: string;
   externalSignalId: string;
@@ -275,7 +277,7 @@ export type TreasurySignal = {
   slPrice: string;
   tpPrice: string;
   strategy: { code: string; name: string; description: string | null };
-  symbol: { code: string; baseAsset: "CELO" | "XAUT0"; quoteAsset: Stablecoin };
+  symbol: { code: string; baseAsset: TreasuryAsset; quoteAsset: Stablecoin };
   status: "pending" | "processing" | "executed" | "rejected" | "failed";
   positionId: string | null;
   reason: string | null;
@@ -286,7 +288,7 @@ export type TreasurySignal = {
 export type TreasuryPosition = {
   id: string;
   signalId: string;
-  asset: "CELO" | "XAUT0";
+  asset: TreasuryAsset;
   quoteToken: Stablecoin;
   mode: "paper" | "live";
   route: "paper" | "mento" | "uniswap-v3";
@@ -324,6 +326,9 @@ export type TreasuryQuantStatus = {
   assets: {
     CELO: { enabled: boolean; oracleConfigured: boolean };
     XAUT0: { enabled: boolean; oracleConfigured: boolean; symbol: string };
+    WETH: { enabled: boolean; oracleConfigured: boolean; symbol: string };
+    WBTC: { enabled: boolean; oracleConfigured: boolean; symbol: string };
+    EURM: { enabled: boolean; oracleConfigured: boolean; symbol: string };
   };
   limits: {
     defaultPositionUsd: string;
@@ -335,8 +340,17 @@ export type TreasuryQuantStatus = {
     maxPriceDivergenceBps: number;
     oracleMaxAgeSeconds: number;
     xaut0OracleMaxAgeSeconds: number;
+    wethOracleMaxAgeSeconds: number;
+    wbtcOracleMaxAgeSeconds: number;
+    eurmOracleMaxAgeSeconds: number;
+    effectiveByAsset: Record<TreasuryAsset, {
+      maxPerTradeUsd: string;
+      maxTotalExposureUsd: string;
+      maxOpenPositions: number;
+      operational: boolean;
+    }>;
   };
-  balances: Partial<Record<Stablecoin | "CELO" | "XAUT0", string>>;
+  balances: Partial<Record<Stablecoin | TreasuryAsset, string>>;
   metrics: {
     openPositions: number;
     totalExposureUsd: string;
@@ -368,4 +382,17 @@ export function resumeTreasuryQuantAgent(operatorKey: string) {
 
 export function closeTreasuryPosition(id: string, operatorKey: string) {
   return treasuryControl(`/api/treasury/positions/${id}/close`, operatorKey);
+}
+
+export function closeAllTreasuryPositions(operatorKey: string) {
+  return requestJson<{
+    paused: boolean;
+    requested: number;
+    openPositions: number;
+    positionIds: string[];
+    requestedAt: string;
+  }>("/api/treasury/control/close-all", {
+    method: "POST",
+    headers: { "x-treasury-admin-key": operatorKey },
+  });
 }

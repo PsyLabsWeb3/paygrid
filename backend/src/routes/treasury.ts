@@ -7,6 +7,7 @@ import {
   getTreasuryQuantStatus,
   listTreasuryPositions,
   listTreasurySignals,
+  requestAllTreasuryPositionsClose,
   requestTreasuryPositionClose,
   setTreasuryPause,
   submitTreasurySignal,
@@ -75,6 +76,9 @@ export function treasuryRoutes(env: Env) {
   });
   app.post("/control/resume", (c, next) => requireAdmin(env, c, next), async (c) => {
     return c.json(await setTreasuryPause(env, false));
+  });
+  app.post("/control/close-all", (c, next) => requireAdmin(env, c, next), async (c) => {
+    return c.json(await requestAllTreasuryPositionsClose(env));
   });
   app.post("/positions/:id/close", (c, next) => requireAdmin(env, c, next), async (c) => {
     return c.json(await requestTreasuryPositionClose(env, c.req.param("id")));

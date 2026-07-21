@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLink, KeyRound, Pause, Play, ShieldCheck, X } from "lucide-react";
+import { ExternalLink, KeyRound, Pause, Play, ShieldAlert, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   closeTreasuryPosition,
+  closeAllTreasuryPositions,
   getTreasuryQuantStatus,
   pauseTreasuryQuantAgent,
   resumeTreasuryQuantAgent,
@@ -20,7 +21,11 @@ function money(value: string | undefined, maximumFractionDigits = 4) {
 }
 
 function assetLabel(asset: TreasuryPosition["asset"]) {
-  return asset === "XAUT0" ? "XAUt0" : asset;
+  if (asset === "XAUT0") return "XAUt0";
+  if (asset === "WETH") return "ETH";
+  if (asset === "WBTC") return "BTC";
+  if (asset === "EURM") return "EURm";
+  return asset;
 }
 
 function getSignalReason(reason: string) {
@@ -115,6 +120,7 @@ function PositionRow({
 export function TreasuryDashboard() {
   const [operatorKey, setOperatorKey] = useState("");
   const [draftKey, setDraftKey] = useState("");
+  const [confirmCloseAll, setConfirmCloseAll] = useState(false);
   const query = useQuery({
     queryKey: ["treasury-quant-status"],
     queryFn: getTreasuryQuantStatus,
@@ -151,6 +157,18 @@ export function TreasuryDashboard() {
     }
   }
 
+  async function requestCloseAll() {
+    if (!operatorKey) return;
+    try {
+      const result = await closeAllTreasuryPositions(operatorKey);
+      toast.success(`${result.requested} position${result.requested === 1 ? "" : "s"} queued for close`);
+      setConfirmCloseAll(false);
+      await query.refetch();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to close all positions");
+    }
+  }
+
   if (query.isLoading) {
     return <section className="panel panel-pad empty-state"><p className="muted">Loading Treasury Quant Agent</p></section>;
   }
@@ -178,8 +196,21 @@ export function TreasuryDashboard() {
           </span>
         </div>
         <p className="fine muted" style={{ margin: "12px 0 0" }}>
-          ${status.limits.defaultPositionUsd} per signal · {status.limits.maxOpenPositionsPerAsset} positions per asset · {status.limits.maxSlippageBps / 100}% max slippage
+          ${status.limits.defaultPositionUsd} per signal · ${status.limits.maxTotalExposureUsd} total exposure · {status.limits.maxSlippageBps / 100}% max slippage
         </p>
+        <div className="treasury-list" style={{ marginTop: 14 }}>
+          {Object.entries(status.limits.effectiveByAsset ?? {}).map(([asset, limits]) => (
+            <div className="split-row treasury-limit-row" key={asset}>
+              <span className="fine">
+                <strong>{assetLabel(asset as TreasuryPosition["asset"])}</strong>
+                {limits.operational ? "" : " · not active"}
+              </span>
+              <span className="fine muted">
+                ${limits.maxPerTradeUsd}/trade · ${limits.maxTotalExposureUsd} exposure · {limits.maxOpenPositions} positions
+              </span>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="panel panel-pad">
@@ -191,11 +222,13 @@ export function TreasuryDashboard() {
           <ShieldCheck size={22} color="var(--lime)" />
         </div>
         <div className="token-row" style={{ marginTop: 14 }}>
-          {(["USDC", "USDT", "USDm", "CELO", "XAUT0"] as const).map((token) => {
+          {(["USDC", "USDT", "USDm", "CELO", "XAUT0", "WETH", "WBTC", "EURM"] as const).map((token) => {
             const balance = status.balances[token];
             if (balance === undefined) return null;
-            const label = token === "XAUT0" ? "XAUt0" : token;
-            const precision = token === "XAUT0" ? 6 : 4;
+            const label = token === "USDC" || token === "USDT" || token === "USDm"
+              ? token
+              : assetLabel(token);
+            const precision = token === "WBTC" ? 8 : token === "XAUT0" || token === "WETH" ? 6 : 4;
             return <span className="token-chip" key={token}>{money(balance, precision)} {label}</span>;
           })}
         </div>
@@ -258,6 +291,28 @@ export function TreasuryDashboard() {
               {status.paused ? <Play size={18} /> : <Pause size={18} />}
               {status.paused ? "Resume entries" : "Pause new entries"}
             </button>
+            {openPositions.length > 0 && !confirmCloseAll ? (
+              <button
+                className="secondary-button"
+                style={{ minHeight: 44, marginTop: 10 }}
+                onClick={() => setConfirmCloseAll(true)}
+              >
+                <ShieldAlert size={18} /> Close all positions
+              </button>
+            ) : null}
+            {confirmCloseAll ? (
+              <div className="treasury-row" style={{ marginTop: 10 }}>
+                <p className="fine negative">This pauses new entries and queues every open position for a market-safe close.</p>
+                <div className="split-row" style={{ marginTop: 10 }}>
+                  <button className="secondary-button" style={{ minHeight: 40 }} onClick={requestCloseAll}>
+                    Confirm close all
+                  </button>
+                  <button className="icon-button" title="Cancel" onClick={() => setConfirmCloseAll(false)}>
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+            ) : null}
             <button
               className="secondary-button"
               style={{ minHeight: 44, marginTop: 10 }}

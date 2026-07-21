@@ -7,6 +7,18 @@ const optionalString = () =>
 const optionalUrl = () =>
   z.preprocess((value) => (value === "" ? undefined : value), z.string().url().optional());
 
+const optionalDecimalString = () =>
+  z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().regex(/^\d+(\.\d+)?$/).optional(),
+  );
+
+const optionalPositiveInt = (max: number) =>
+  z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.coerce.number().int().min(1).max(max).optional(),
+  );
+
 const optionalAddress = () =>
   z.preprocess(
     (value) => (value === "" ? undefined : value),
@@ -101,6 +113,15 @@ const rawEnvSchema = z.object({
   TREASURY_MAX_SLIPPAGE_BPS: z.coerce.number().int().min(1).max(2000).optional(),
   TREASURY_MAX_ENTRY_DEVIATION_BPS: z.coerce.number().int().min(1).max(5000).optional(),
   TREASURY_MAX_PRICE_DIVERGENCE_BPS: z.coerce.number().int().min(1).max(5000).optional(),
+  TREASURY_WETH_MAX_PER_TRADE_USD: optionalDecimalString(),
+  TREASURY_WETH_MAX_TOTAL_EXPOSURE_USD: optionalDecimalString(),
+  TREASURY_WETH_MAX_OPEN_POSITIONS: optionalPositiveInt(100),
+  TREASURY_WBTC_MAX_PER_TRADE_USD: optionalDecimalString(),
+  TREASURY_WBTC_MAX_TOTAL_EXPOSURE_USD: optionalDecimalString(),
+  TREASURY_WBTC_MAX_OPEN_POSITIONS: optionalPositiveInt(100),
+  TREASURY_EURM_MAX_PER_TRADE_USD: optionalDecimalString(),
+  TREASURY_EURM_MAX_TOTAL_EXPOSURE_USD: optionalDecimalString(),
+  TREASURY_EURM_MAX_OPEN_POSITIONS: optionalPositiveInt(100),
   TREASURY_ORACLE_MAX_AGE_SECONDS: z.coerce.number().int().min(30).max(172800).optional(),
   TREASURY_XAUT0_ORACLE_MAX_AGE_SECONDS: z.coerce.number().int().min(30).max(172800).optional(),
   TREASURY_POLL_INTERVAL_MS: z.coerce.number().int().min(5000).optional(),
@@ -108,6 +129,18 @@ const rawEnvSchema = z.object({
   TREASURY_CELO_ORACLE_ADDRESS: optionalAddress(),
   TREASURY_XAUT0_ADDRESS: optionalAddress(),
   TREASURY_XAUT0_ORACLE_ADDRESS: optionalAddress(),
+  TREASURY_WETH_ENABLED: z.enum(["true", "false"]).optional(),
+  TREASURY_WETH_ADDRESS: optionalAddress(),
+  TREASURY_WETH_ORACLE_ADDRESS: optionalAddress(),
+  TREASURY_WETH_ORACLE_MAX_AGE_SECONDS: z.coerce.number().int().min(30).max(172800).optional(),
+  TREASURY_WBTC_ENABLED: z.enum(["true", "false"]).optional(),
+  TREASURY_WBTC_ADDRESS: optionalAddress(),
+  TREASURY_WBTC_ORACLE_ADDRESS: optionalAddress(),
+  TREASURY_WBTC_ORACLE_MAX_AGE_SECONDS: z.coerce.number().int().min(30).max(172800).optional(),
+  TREASURY_EURM_ENABLED: z.enum(["true", "false"]).optional(),
+  TREASURY_EURM_ADDRESS: optionalAddress(),
+  TREASURY_EURM_ORACLE_ADDRESS: optionalAddress(),
+  TREASURY_EURM_ORACLE_MAX_AGE_SECONDS: z.coerce.number().int().min(30).max(172800).optional(),
   CELO_ATTRIBUTION_CODE: z.preprocess(
     (value) => (value === "" ? undefined : value),
     z.string().regex(/^[a-z0-9_]{1,32}$/).optional(),

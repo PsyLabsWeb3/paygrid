@@ -24,6 +24,7 @@ const uniswapRouterAbi = parseAbi([
 ]);
 
 export type TreasuryRoute = "mento" | "uniswap-v3";
+export type TreasuryRoutingPreference = "mento-first" | "uniswap-only";
 
 export type TreasurySwapQuote = {
   protocol: TreasuryRoute;
@@ -141,7 +142,11 @@ export async function quoteTreasurySwap(
   tokenOut: Address,
   amountIn: bigint,
   slippageBps = env.TREASURY_MAX_SLIPPAGE_BPS ?? 100,
+  preference: TreasuryRoutingPreference = "mento-first",
 ): Promise<TreasurySwapQuote> {
+  if (preference === "uniswap-only") {
+    return quoteUniswap(env, tokenIn, tokenOut, amountIn, slippageBps);
+  }
   try {
     const mento = await createMento(env);
     const route = await mento.routes.findRoute(tokenIn, tokenOut);

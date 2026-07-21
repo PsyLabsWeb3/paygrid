@@ -73,7 +73,7 @@ export const toolDefinitions = [
   },
   {
     name: "list_treasury_quant_positions",
-    description: "List paper or live CELO/XAUt0 long positions managed by the Treasury Quant Agent.",
+    description: "List paper or live CELO, XAUt0, ETH, BTC and EURm long positions managed by the Treasury Quant Agent.",
     write: false,
     inputSchema: {
       type: "object",
@@ -113,6 +113,12 @@ export const toolDefinitions = [
       required: ["id"],
       properties: { id: { type: "string" } },
     },
+  },
+  {
+    name: "close_all_treasury_quant_positions",
+    description: "Pause new entries and request a market-safe close for every open Treasury Quant Agent position.",
+    write: true,
+    inputSchema: { type: "object", properties: {} },
   },
   {
     name: "create_gift",
@@ -380,6 +386,12 @@ export async function callTool(config, name, args = {}) {
           headers: { "x-treasury-admin-key": config.treasuryAdminApiKey },
         },
       ));
+    case "close_all_treasury_quant_positions":
+      if (!config.treasuryAdminApiKey) throw new Error("TREASURY_ADMIN_API_KEY is not configured");
+      return text(await paygridRequest(config, "/api/treasury/control/close-all", {
+        method: "POST",
+        headers: { "x-treasury-admin-key": config.treasuryAdminApiKey },
+      }));
     case "create_gift": {
       const secret = randomBytes(32).toString("hex");
       const payload = {
@@ -547,12 +559,12 @@ export async function callTool(config, name, args = {}) {
             "ERC-8004 signed backend requests",
             "rate-limited backend routes",
             "Treasury per-trade, total-exposure, daily-loss, slippage and entry-deviation limits",
-            "CELO/XAUt0 asset allowlist with per-asset oracle freshness and route checks",
+            "CELO, XAUt0, ETH, BTC and EURm allowlist with per-asset oracle freshness and route checks",
           ],
           planned: ["per-agent API keys", "delegated user wallets", "scoped user-owned treasury policies"],
         },
         primaryFlows: [
-          "Treasury Quant Agent receives deduplicated TradingView LONG signals and manages guarded CELO/XAUt0 positions",
+          "Treasury Quant Agent receives deduplicated TradingView LONG signals and manages guarded CELO, XAUt0, ETH, BTC and EURm positions",
           "operators inspect positions, pause entries and request full closes through MCP",
           "agent creates a personal claimable gift and prepares exact-token or swap-routed funding",
           "recipient claims a gift and agents verify its onchain settlement",

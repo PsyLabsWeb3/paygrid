@@ -221,7 +221,8 @@ The backend and MCP containers also require `PAYGRID_GIFT_VAULT_ADDRESS` and `PA
 
 Apply `20260716000007_treasury_quant_agent.sql` and
 `20260716000008_treasury_dual_price_monitor.sql`, followed by
-`20260718000009_treasury_xaut0.sql`, before starting the
+`20260718000009_treasury_xaut0.sql` and
+`20260721000010_treasury_multi_asset.sql`, before starting the
 `treasury-worker`. Deploy with:
 
 ```text
@@ -243,8 +244,8 @@ execution wallet with no contract ownership or treasury roles. Keep its balance
 limited to the active risk budget. Every approval and swap uses
 `CELO_ATTRIBUTION_CODE`. Mainnet CELO monitoring uses the Chainlink CELO/USD
 feed, while the DEX quote uses the entire position size. Configure conservative
-oracle age and oracle/DEX divergence limits; either safety failure pauses new
-entries and blocks automated execution.
+oracle age and oracle/DEX divergence limits. Unsafe quotes are rejected or
+isolated per position without pausing unrelated markets.
 
 For XAUt0/USDT on Celo mainnet configure:
 
@@ -258,6 +259,23 @@ The XAUt0 oracle is RedStone XAUt/USDT. The direct Celo Uniswap V3 pool is
 `0xbb469a28f64c72aecc7d05ca6e45b2fb1a63b4f9`; the router discovers its 3000
 fee tier through the supported fee-tier fallback list. TradingView signals use
 `XAUTUSDT` with canonical `baseAsset: "XAUT0"` and `quoteAsset: "USDT"`.
+
+Opt in to the new mainnet markets only after a paper smoke test:
+
+```text
+TREASURY_WETH_ENABLED=true
+TREASURY_WETH_ADDRESS=0xD221812de1BD094f35587EE8E174B07B6167D9Af
+TREASURY_WETH_ORACLE_ADDRESS=0x1FcD30A73D67639c1cD89ff5746E7585731c083B
+TREASURY_WBTC_ENABLED=true
+TREASURY_WBTC_ADDRESS=0x8aC2901Dd8A1F17a1A4768A6bA4C3751e3995B2D
+TREASURY_WBTC_ORACLE_ADDRESS=0x128fE88eaa22bFFb868Bb3A584A54C96eE24014b
+TREASURY_EURM_ENABLED=true
+TREASURY_EURM_ADDRESS=0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73
+TREASURY_EURM_ORACLE_ADDRESS=0x3D207061Dbe8E2473527611BFecB87Ff12b28dDa
+```
+
+WETH/WBTC are Uniswap-only. EURm is Mento-first with Uniswap fallback. All
+three initial markets use USDT as the funding and settlement quote token.
 
 Set `TREASURY_MAX_OPEN_POSITIONS_PER_ASSET` explicitly before enabling live
 round-robin entries. Start with a small count; each position retains its own
