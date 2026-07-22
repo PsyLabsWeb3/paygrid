@@ -1115,6 +1115,9 @@ async function closeLivePosition(
       positionId: position.id,
     });
   }
+  const exitQuote = amountIn === requestedAmountIn
+    ? market.quote
+    : await quoteAssetSwap(env, position.asset, asset, quoteAddress, amountIn);
   await getSupabase(env).from("treasury_quant_positions").update({ status: "closing" }).eq("id", position.id);
   const execution = await executeTreasurySwap(env, {
     signalId: position.signal_id,
@@ -1123,7 +1126,7 @@ async function closeLivePosition(
     tokenIn: asset,
     tokenOut: quoteAddress,
     amountIn,
-    quote: market.quote,
+    quote: exitQuote,
   });
   const amountOut = numeric(formatUnits(execution.amountOut, TOKEN_DECIMALS[quoteToken]));
   const pnl = amountOut - numeric(position.cost_quote);
