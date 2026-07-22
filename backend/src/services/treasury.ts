@@ -1481,6 +1481,7 @@ export async function getTreasuryQuantStatus(env: Env) {
   ];
   const address = executorAddress(env);
   const balances: Partial<Record<Stablecoin | TreasuryAsset, string>> = {};
+  const assetPrices: Partial<Record<TreasuryAsset, string>> = {};
   if (address) {
     const stablecoins: Stablecoin[] = ["USDC", "USDT", "USDm"];
     await Promise.all(stablecoins.map(async (token) => {
@@ -1502,6 +1503,15 @@ export async function getTreasuryQuantStatus(env: Env) {
       }
     }
   }
+  await Promise.all(TREASURY_ASSETS.map(async (asset) => {
+    try {
+      if (!assetIsConfigured(env, asset)) return;
+      const oracle = await readOraclePrice(env, asset);
+      assetPrices[asset] = fixed(oracle.price, 8);
+    } catch {
+      assetPrices[asset] = "unavailable";
+    }
+  }));
   const effectiveByAsset = Object.fromEntries(
     TREASURY_ASSETS.map((asset) => [
       asset,
@@ -1563,6 +1573,7 @@ export async function getTreasuryQuantStatus(env: Env) {
       effectiveByAsset,
     },
     balances,
+    assetPrices,
     metrics: {
       openPositions: openPositions.length,
       totalExposureUsd: fixed(openPositions.reduce((sum, position) => sum + numeric(position.costQuote), 0), 2),

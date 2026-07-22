@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLink, KeyRound, Pause, Play, ShieldAlert, ShieldCheck, X } from "lucide-react";
+import { ExternalLink, KeyRound, Pause, Play, ShieldAlert, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   closeTreasuryPosition,
@@ -18,6 +18,13 @@ function money(value: string | undefined, maximumFractionDigits = 4) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return value;
   return parsed.toLocaleString(undefined, { maximumFractionDigits });
+}
+
+function approximateUsd(balance: string | undefined, price: string | undefined) {
+  const parsedBalance = Number(balance);
+  const parsedPrice = Number(price);
+  if (!Number.isFinite(parsedBalance) || !Number.isFinite(parsedPrice)) return null;
+  return parsedBalance * parsedPrice;
 }
 
 function assetLabel(asset: TreasuryPosition["asset"]) {
@@ -57,16 +64,23 @@ function PositionRow({
   operatorKey: string;
   onChanged: () => void;
 }) {
+  const [confirmClose, setConfirmClose] = useState(false);
+  const [requestingClose, setRequestingClose] = useState(false);
   const pnl = Number(position.pnlQuote);
   const isOpen = position.status === "open" || position.status === "closing";
+  const canClose = position.status === "open";
 
   async function requestClose() {
+    setRequestingClose(true);
     try {
       await closeTreasuryPosition(position.id, operatorKey);
       toast.success("Position close requested");
+      setConfirmClose(false);
       onChanged();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to request close");
+    } finally {
+      setRequestingClose(false);
     }
   }
 
@@ -108,10 +122,37 @@ function PositionRow({
           Settlement evidence <ExternalLink size={14} />
         </a>
       ) : null}
-      {isOpen && operatorKey ? (
-        <button className="secondary-button" style={{ minHeight: 44, marginTop: 12 }} onClick={requestClose}>
-          <X size={17} /> Close position
+      {canClose && operatorKey && !confirmClose ? (
+        <button
+          className="secondary-button"
+          style={{ minHeight: 44, marginTop: 12 }}
+          onClick={() => setConfirmClose(true)}
+        >
+          <X size={17} /> Close this position
         </button>
+      ) : null}
+      {canClose && operatorKey && confirmClose ? (
+        <div className="treasury-close-confirmation">
+          <p className="fine muted">Queue this position for a market-safe close?</p>
+          <div className="split-row" style={{ marginTop: 10 }}>
+            <button
+              className="secondary-button"
+              style={{ minHeight: 40 }}
+              disabled={requestingClose}
+              onClick={requestClose}
+            >
+              {requestingClose ? "Requesting" : "Confirm close"}
+            </button>
+            <button
+              className="icon-button"
+              title="Cancel close"
+              disabled={requestingClose}
+              onClick={() => setConfirmClose(false)}
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
       ) : null}
     </article>
   );
@@ -180,6 +221,18 @@ export function TreasuryDashboard() {
   const displayedPositions = [...status.positions].sort(
     (left, right) => Date.parse(right.openedAt) - Date.parse(left.openedAt),
   );
+  const balanceTokens = ["USDC", "USDT", "USDm", "CELO", "XAUT0", "WETH", "WBTC", "EURM"] as const;
+  const balanceValuations = balanceTokens.map((token) => {
+    const balance = status.balances[token];
+    const price = token === "USDC" || token === "USDT" || token === "USDm"
+      ? "1"
+      : status.assetPrices?.[token];
+    return { token, balance, valueUsd: approximateUsd(balance, price) };
+  });
+  const treasuryValueUsd = balanceValuations.reduce(
+    (total, item) => total + (item.valueUsd ?? 0),
+    0,
+  );
 
   return (
     <div className="stack treasury-dashboard">
@@ -222,17 +275,26 @@ export function TreasuryDashboard() {
             <p className="fine muted">Operational balances</p>
             <h2 className="top-title">Treasury account</h2>
           </div>
-          <ShieldCheck size={22} color="var(--lime)" />
+          <div className="treasury-total-value">
+            <span className="fine muted">Approx. value</span>
+            <strong>${money(String(treasuryValueUsd), 2)}</strong>
+          </div>
         </div>
         <div className="token-row" style={{ marginTop: 14 }}>
-          {(["USDC", "USDT", "USDm", "CELO", "XAUT0", "WETH", "WBTC", "EURM"] as const).map((token) => {
-            const balance = status.balances[token];
+          {balanceValuations.map(({ token, balance, valueUsd }) => {
             if (balance === undefined) return null;
             const label = token === "USDC" || token === "USDT" || token === "USDm"
               ? token
               : assetLabel(token);
             const precision = token === "WBTC" ? 8 : token === "XAUT0" || token === "WETH" ? 6 : 4;
-            return <span className="token-chip" key={token}>{money(balance, precision)} {label}</span>;
+            return (
+              <div className="token-chip treasury-balance-chip" key={token}>
+                <strong>{money(balance, precision)} {label}</strong>
+                <span className="fine muted">
+                  {valueUsd == null ? "Valuation unavailable" : `≈ $${money(String(valueUsd), 2)}`}
+                </span>
+              </div>
+            );
           })}
         </div>
       </section>

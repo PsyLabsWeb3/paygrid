@@ -351,6 +351,7 @@ export type TreasuryQuantStatus = {
     }>;
   };
   balances: Partial<Record<Stablecoin | TreasuryAsset, string>>;
+  assetPrices?: Partial<Record<TreasuryAsset, string>>;
   metrics: {
     openPositions: number;
     totalExposureUsd: string;
