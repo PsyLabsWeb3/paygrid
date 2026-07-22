@@ -7,6 +7,8 @@ import {
   calculatePaperAssetAmount,
   calculatePriceDivergenceBps,
   evaluateTreasuryRisk,
+  formatExactTreasuryAssetAmount,
+  getClosingPositionRecoveryAction,
   getTreasuryCloseReason,
   getTreasuryPriceSafetyTransition,
   getStaleSignalRecoveryAction,
@@ -252,6 +254,27 @@ test("entry deviation and paper sizing remain bounded", () => {
   assert.equal(calculatePriceDivergenceBps(100, 99), 100);
   assert.equal(calculatePriceDivergenceBps(0, 99), Number.POSITIVE_INFINITY);
   assert.equal(calculatePaperAssetAmount(1, 0.5), "2");
+});
+
+test("live asset amounts preserve exact 18-decimal onchain units", () => {
+  const amount = 7_887_654_321_012_345_678n;
+  const formatted = formatExactTreasuryAssetAmount(amount, 18);
+  assert.equal(formatted, "7.887654321012345678");
+  assert.equal(BigInt(formatted.replace(".", "")), amount);
+});
+
+test("closing recovery never reopens a position with a broadcast exit", () => {
+  assert.equal(getClosingPositionRecoveryAction([]), "reopen");
+  assert.equal(getClosingPositionRecoveryAction([
+    { action: "approve", status: "confirmed" },
+    { action: "exit", status: "failed" },
+  ]), "reopen");
+  assert.equal(getClosingPositionRecoveryAction([
+    { action: "exit", status: "submitted" },
+  ]), "hold");
+  assert.equal(getClosingPositionRecoveryAction([
+    { action: "exit", status: "confirmed" },
+  ]), "hold");
 });
 
 test("price divergence transitions are isolated and recover exactly once", () => {

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { formatUnits } from "viem";
 
 const positiveDecimal = z
   .union([z.string(), z.number().finite()])
@@ -249,6 +250,20 @@ export async function retryTreasuryOracleRead<T>(
 export function calculatePaperAssetAmount(tradeUsd: number, entryPrice: number) {
   if (tradeUsd <= 0 || entryPrice <= 0) throw new Error("Invalid paper position values");
   return (tradeUsd / entryPrice).toFixed(18).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+export function formatExactTreasuryAssetAmount(amount: bigint, decimals: number) {
+  return formatUnits(amount, decimals);
+}
+
+export function getClosingPositionRecoveryAction(
+  executions: Array<{ action: string; status: string }>,
+) {
+  const hasPotentiallyBroadcastExit = executions.some(
+    (execution) => execution.action === "exit"
+      && (execution.status === "submitted" || execution.status === "confirmed"),
+  );
+  return hasPotentiallyBroadcastExit ? "hold" as const : "reopen" as const;
 }
 
 export function calculatePositionPnl(input: {

@@ -23,6 +23,8 @@ import {
   calculatePositionPnl,
   calculatePriceDivergenceBps,
   evaluateTreasuryRisk,
+  formatExactTreasuryAssetAmount,
+  getClosingPositionRecoveryAction,
   getTreasuryCloseReason,
   getTreasuryPriceSafetyTransition,
   getStaleSignalRecoveryAction,
@@ -170,6 +172,14 @@ function parseStoredUnits(value: string | number, decimals: number) {
     ? `${whole}.${fraction.slice(0, decimals)}`
     : whole;
   return parseUnits(truncated, decimals);
+}
+
+function parseDatabaseInteger(value: string | number) {
+  const [whole, fraction = ""] = String(value).split(".");
+  if (fraction && /[1-9]/.test(fraction)) {
+    throw new Error(`Expected integer token units, received ${value}`);
+  }
+  return BigInt(whole);
 }
 
 function assetAddress(env: Env, asset: TreasuryAsset) {
@@ -812,14 +822,18 @@ async function createLivePosition(env: Env, signal: TreasurySignalRow) {
       amountIn,
       quote,
     });
-    const actualAsset = numeric(formatUnits(execution.amountOut, assetDecimals));
+    const actualAssetExact = formatExactTreasuryAssetAmount(execution.amountOut, assetDecimals);
+    const actualAsset = numeric(actualAssetExact);
     const actualPrice = costQuote / actualAsset;
     const actualDivergenceBps = calculatePriceDivergenceBps(oracle.price, actualPrice);
     const { data: updated, error: updateError } = await getSupabase(env)
       .from("treasury_quant_positions")
       .update({
         route: execution.quote.protocol,
-        amount_asset: fixed(actualAsset, 24),
+        // Preserve the exact onchain token amount. Converting an 18-decimal
+        // balance through a JavaScript number can round it above the wallet
+        // balance and make the eventual exit fail by a few wei.
+        amount_asset: actualAssetExact,
         entry_price: fixed(actualPrice),
         current_price: fixed(oracle.price),
         executable_price: fixed(actualPrice),
@@ -1262,6 +1276,111 @@ export async function monitorTreasuryPositions(env: Env) {
   return results;
 }
 
+export async function recoverStaleClosingTreasuryPositions(env: Env) {
+  if (!quantEnabled(env)) return [];
+  const supabase = getSupabase(env);
+  const { data, error } = await supabase
+    .from("treasury_quant_positions")
+    .select("*")
+    .eq("status", "closing")
+    .order("opened_at", { ascending: true });
+  if (error) throw new Error(error.message);
+
+  const recovered = [];
+  for (const rawPosition of data ?? []) {
+    const position = rawPosition as TreasuryPositionRow;
+    const { data: executions, error: executionError } = await supabase
+      .from("treasury_quant_executions")
+      .select("action,status,amount_out,tx_hash,created_at")
+      .eq("position_id", position.id)
+      .order("created_at", { ascending: false });
+    if (executionError) throw new Error(executionError.message);
+
+    const executionRows = (executions ?? []) as Array<{
+      action: string;
+      status: string;
+      amount_out: string | number;
+      tx_hash: string | null;
+      created_at: string;
+    }>;
+    const submittedExits = executionRows.filter(
+      (execution) => execution.action === "exit"
+        && execution.status === "submitted"
+        && execution.tx_hash,
+    );
+    if (submittedExits.length > 0) {
+      const { publicClient } = createChainClients(env);
+      for (const execution of submittedExits) {
+        try {
+          const receipt = await publicClient.getTransactionReceipt({
+            hash: execution.tx_hash as Hex,
+          });
+          if (receipt.status !== "reverted") continue;
+          const failure = "Exit transaction reverted onchain";
+          const { error: executionUpdateError } = await supabase
+            .from("treasury_quant_executions")
+            .update({ status: "failed", error: failure })
+            .eq("tx_hash", execution.tx_hash)
+            .eq("status", "submitted");
+          if (executionUpdateError) throw new Error(executionUpdateError.message);
+          execution.status = "failed";
+          await addAudit(env, "position_exit_reverted", {
+            txHash: execution.tx_hash,
+            blockNumber: receipt.blockNumber.toString(),
+          }, {
+            signalId: position.signal_id,
+            positionId: position.id,
+          });
+        } catch {
+          // A missing receipt or temporary RPC failure is ambiguous. Keep the
+          // position in closing so the worker can never submit a second exit.
+        }
+      }
+    }
+    if (getClosingPositionRecoveryAction(executionRows) === "hold") {
+      recovered.push({ id: position.id, status: "awaiting_exit_receipt" });
+      continue;
+    }
+
+    const confirmedEntry = executionRows.find(
+      (execution) => execution.action === "entry" && execution.status === "confirmed",
+    );
+    let amountAsset = position.amount_asset;
+    if (confirmedEntry) {
+      const decimals = await tokenDecimals(env, assetAddress(env, position.asset));
+      amountAsset = formatExactTreasuryAssetAmount(
+        parseDatabaseInteger(confirmedEntry.amount_out),
+        decimals,
+      );
+    }
+
+    const { data: reopened, error: reopenError } = await supabase
+      .from("treasury_quant_positions")
+      .update({
+        status: "open",
+        amount_asset: amountAsset,
+      })
+      .eq("id", position.id)
+      .eq("status", "closing")
+      .select("id")
+      .maybeSingle();
+    if (reopenError) throw new Error(reopenError.message);
+    if (!reopened) continue;
+
+    await addAudit(env, "position_closing_recovered", {
+      previousAmountAsset: position.amount_asset,
+      recoveredAmountAsset: amountAsset,
+      closeReason: position.close_reason,
+      closeRequestedAt: position.close_requested_at,
+    }, {
+      signalId: position.signal_id,
+      positionId: position.id,
+    });
+    recovered.push({ id: position.id, status: "reopened", amountAsset });
+  }
+  return recovered;
+}
+
 function oraclePauseAsset(reason: string | null): TreasuryAsset | null {
   if (!reason) return null;
   const match = /^(CELO|XAUT0|WETH|WBTC|EURM) oracle (?:is unavailable|is not configured|price is stale|returned )/.exec(reason);
@@ -1303,11 +1422,19 @@ async function recoverLegacyDivergencePause(env: Env) {
 
 export async function runTreasuryWorkerCycle(env: Env) {
   const recovered = await recoverStaleTreasurySignals(env);
+  const closingRecovery = await recoverStaleClosingTreasuryPositions(env);
   const divergenceRecovery = await recoverLegacyDivergencePause(env);
   const oracleRecovery = await recoverLegacyOraclePause(env);
   const signal = await processNextTreasurySignal(env);
   const positions = await monitorTreasuryPositions(env);
-  return { recovered, divergenceRecovery, oracleRecovery, signal, positions };
+  return {
+    recovered,
+    closingRecovery,
+    divergenceRecovery,
+    oracleRecovery,
+    signal,
+    positions,
+  };
 }
 
 export async function listTreasurySignals(env: Env, limit = 25) {

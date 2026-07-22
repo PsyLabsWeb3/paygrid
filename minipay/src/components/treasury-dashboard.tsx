@@ -177,6 +177,9 @@ export function TreasuryDashboard() {
   }
 
   const openPositions = status.positions.filter((position) => position.status === "open" || position.status === "closing");
+  const displayedPositions = [...status.positions].sort(
+    (left, right) => Date.parse(right.openedAt) - Date.parse(left.openedAt),
+  );
 
   return (
     <div className="stack treasury-dashboard">
@@ -243,7 +246,7 @@ export function TreasuryDashboard() {
           <span className="status-pill">{openPositions.length} open</span>
         </div>
         <div className="treasury-list" style={{ marginTop: 14 }}>
-          {status.positions.length ? status.positions.map((position) => (
+          {displayedPositions.length ? displayedPositions.map((position) => (
             <PositionRow
               key={position.id}
               position={position}
