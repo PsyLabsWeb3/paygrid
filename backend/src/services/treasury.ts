@@ -2,6 +2,7 @@ import {
   decodeFunctionData,
   erc20Abi,
   formatUnits,
+  parseEventLogs,
   parseAbi,
   parseUnits,
   type Address,
@@ -284,6 +285,34 @@ async function tokenBalance(env: Env, token: Address, owner: Address) {
     functionName: "balanceOf",
     args: [owner],
   });
+}
+
+async function entryAmountFromReceipt(
+  env: Env,
+  position: TreasuryPositionRow,
+  txHash: Hex,
+  decimals: number,
+) {
+  const owner = executorAddress(env);
+  if (!owner) return null;
+  const token = assetAddress(env, position.asset);
+  const { publicClient } = createChainClients(env);
+  const receipt = await publicClient.getTransactionReceipt({ hash: txHash });
+  if (receipt.status !== "success") return null;
+  const transfers = parseEventLogs({
+    abi: erc20Abi,
+    eventName: "Transfer",
+    logs: receipt.logs.filter((log) => log.address.toLowerCase() === token.toLowerCase()),
+    strict: false,
+  });
+  const received = transfers.reduce((total, transfer) => {
+    const to = transfer.args.to;
+    const value = transfer.args.value;
+    return to?.toLowerCase() === owner.toLowerCase() && typeof value === "bigint"
+      ? total + value
+      : total;
+  }, 0n);
+  return received > 0n ? formatExactTreasuryAssetAmount(received, decimals) : null;
 }
 
 async function waitForTreasuryApproval(
@@ -1070,7 +1099,22 @@ async function closeLivePosition(
   const quoteToken = position.quote_token as Stablecoin;
   const quoteAddress = getTokenAddress(env, quoteToken);
   const decimals = await tokenDecimals(env, asset);
-  const amountIn = parseStoredUnits(position.amount_asset, decimals);
+  const owner = executorAddress(env);
+  if (!owner) throw new Error("Treasury executor is not configured");
+  const requestedAmountIn = parseStoredUnits(position.amount_asset, decimals);
+  const availableAmount = await tokenBalance(env, asset, owner);
+  const amountIn = requestedAmountIn > availableAmount ? availableAmount : requestedAmountIn;
+  if (amountIn <= 0n) throw new Error(`Treasury has no ${position.asset} balance available to close`);
+  if (amountIn < requestedAmountIn) {
+    await addAudit(env, "position_exit_amount_capped", {
+      requestedAmount: requestedAmountIn.toString(),
+      availableAmount: availableAmount.toString(),
+      submittedAmount: amountIn.toString(),
+    }, {
+      signalId: position.signal_id,
+      positionId: position.id,
+    });
+  }
   await getSupabase(env).from("treasury_quant_positions").update({ status: "closing" }).eq("id", position.id);
   const execution = await executeTreasurySwap(env, {
     signalId: position.signal_id,
@@ -1348,7 +1392,10 @@ export async function recoverStaleClosingTreasuryPositions(env: Env) {
     let amountAsset = position.amount_asset;
     if (confirmedEntry) {
       const decimals = await tokenDecimals(env, assetAddress(env, position.asset));
-      amountAsset = formatExactTreasuryAssetAmount(
+      const receiptAmount = confirmedEntry.tx_hash
+        ? await entryAmountFromReceipt(env, position, confirmedEntry.tx_hash as Hex, decimals)
+        : null;
+      amountAsset = receiptAmount ?? formatExactTreasuryAssetAmount(
         parseDatabaseInteger(confirmedEntry.amount_out),
         decimals,
       );
