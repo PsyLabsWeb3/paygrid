@@ -27,6 +27,12 @@ function approximateUsd(balance: string | undefined, price: string | undefined) 
   return parsedBalance * parsedPrice;
 }
 
+function usablePrice(price: string | null | undefined) {
+  if (!price) return undefined;
+  const parsed = Number(price);
+  return Number.isFinite(parsed) && parsed > 0 ? price : undefined;
+}
+
 function assetLabel(asset: TreasuryPosition["asset"]) {
   if (asset === "XAUT0") return "XAUt0";
   if (asset === "WETH") return "ETH";
@@ -66,15 +72,18 @@ function PositionRow({
 }) {
   const [confirmClose, setConfirmClose] = useState(false);
   const [requestingClose, setRequestingClose] = useState(false);
+  const [closeQueued, setCloseQueued] = useState(false);
   const pnl = Number(position.pnlQuote);
   const isOpen = position.status === "open" || position.status === "closing";
-  const canClose = position.status === "open";
+  const closePending = closeQueued || position.status === "closing" || Boolean(position.closeRequestedAt);
+  const canClose = position.status === "open" && !closePending;
 
   async function requestClose() {
     setRequestingClose(true);
     try {
       await closeTreasuryPosition(position.id, operatorKey);
       toast.success("Position close requested");
+      setCloseQueued(true);
       setConfirmClose(false);
       onChanged();
     } catch (error) {
@@ -154,6 +163,12 @@ function PositionRow({
           </div>
         </div>
       ) : null}
+      {isOpen && closePending ? (
+        <div className="treasury-close-pending">
+          <span className="status-pill">close queued</span>
+          <span className="fine muted">Waiting for a market-safe execution.</span>
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -221,12 +236,22 @@ export function TreasuryDashboard() {
   const displayedPositions = [...status.positions].sort(
     (left, right) => Date.parse(right.openedAt) - Date.parse(left.openedAt),
   );
+  const fallbackAssetPrices = displayedPositions.reduce<Partial<Record<TreasuryPosition["asset"], string>>>(
+    (prices, position) => {
+      const oraclePrice = usablePrice(position.oraclePrice);
+      if (prices[position.asset] === undefined && oraclePrice) {
+        prices[position.asset] = oraclePrice;
+      }
+      return prices;
+    },
+    {},
+  );
   const balanceTokens = ["USDC", "USDT", "USDm", "CELO", "XAUT0", "WETH", "WBTC", "EURM"] as const;
   const balanceValuations = balanceTokens.map((token) => {
     const balance = status.balances[token];
     const price = token === "USDC" || token === "USDT" || token === "USDm"
       ? "1"
-      : status.assetPrices?.[token];
+      : usablePrice(status.assetPrices?.[token]) ?? fallbackAssetPrices[token];
     return { token, balance, valueUsd: approximateUsd(balance, price) };
   });
   const treasuryValueUsd = balanceValuations.reduce(

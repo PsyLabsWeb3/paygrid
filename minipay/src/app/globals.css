@@ -468,6 +468,14 @@ a {
   background: rgba(255, 255, 255, 0.035);
 }
 
+.treasury-close-pending {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .treasury-limit-row {
   flex-wrap: wrap;
   padding-bottom: 8px;
