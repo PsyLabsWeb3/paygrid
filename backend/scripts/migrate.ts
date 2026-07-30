@@ -26,6 +26,10 @@ async function ensureMigrationsTable(db: Sql) {
       applied_at timestamptz not null default now()
     )
   `;
+  await db`
+    alter table public.schema_migrations
+    enable row level security
+  `;
 }
 
 async function hasTable(db: Sql, tableName: string) {
