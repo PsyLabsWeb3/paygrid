@@ -426,6 +426,46 @@ a {
   max-width: 100%;
 }
 
+.treasury-main-segments {
+  width: 100%;
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+  background: var(--panel);
+  border-color: var(--line);
+}
+
+.treasury-main-segments .segment,
+.treasury-funds-segments .segment {
+  min-width: 0;
+  padding: 0 10px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.treasury-main-segments .segment-active,
+.treasury-funds-segments .segment-active {
+  color: var(--lime);
+}
+
+.treasury-funds-segments {
+  width: 100%;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-radius: 20px;
+  background: var(--panel);
+  border-color: var(--line);
+}
+
+.funds-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.funds-actions .primary-button,
+.funds-actions .secondary-button {
+  min-height: 46px;
+}
+
 .treasury-dashboard > *,
 .treasury-dashboard .panel,
 .treasury-dashboard .metric-grid,
@@ -543,6 +583,11 @@ a {
 }
 
 @media (max-width: 390px) {
+  .treasury-funds-segments {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-radius: 18px;
+  }
+
   .treasury-dashboard .panel-pad {
     padding: 16px;
   }

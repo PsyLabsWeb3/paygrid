@@ -105,6 +105,9 @@ const rawEnvSchema = z.object({
   TREASURY_ADMIN_API_KEY: optionalString(),
   TREASURY_EXECUTOR_PRIVATE_KEY: optionalPrivateKey(),
   TREASURY_EXECUTOR_ADDRESS: optionalAddress(),
+  TREASURY_FUNDS_ENABLED: z.enum(["true", "false"]).optional(),
+  TREASURY_MIN_CELO_GAS_RESERVE: optionalDecimalString(),
+  TREASURY_EXECUTION_LEASE_SECONDS: z.coerce.number().int().min(30).max(900).optional(),
   TREASURY_DEFAULT_POSITION_USD: z.string().regex(/^\d+(\.\d+)?$/).optional(),
   TREASURY_MAX_PER_TRADE_USD: z.string().regex(/^\d+(\.\d+)?$/).optional(),
   TREASURY_MAX_TOTAL_EXPOSURE_USD: z.string().regex(/^\d+(\.\d+)?$/).optional(),
@@ -201,6 +204,30 @@ const envSchema = rawEnvSchema.transform((env, ctx) => {
       code: z.ZodIssueCode.custom,
       path: ["TREASURY_EXECUTOR_PRIVATE_KEY"],
       message: "TREASURY_EXECUTOR_PRIVATE_KEY is required in live mode",
+    });
+    return z.NEVER;
+  }
+  if (env.TREASURY_FUNDS_ENABLED === "true" && !env.TREASURY_ADMIN_API_KEY) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["TREASURY_ADMIN_API_KEY"],
+      message: "TREASURY_ADMIN_API_KEY is required when Treasury funds are enabled",
+    });
+    return z.NEVER;
+  }
+  if (env.TREASURY_FUNDS_ENABLED === "true" && !env.TREASURY_EXECUTOR_PRIVATE_KEY) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["TREASURY_EXECUTOR_PRIVATE_KEY"],
+      message: "TREASURY_EXECUTOR_PRIVATE_KEY is required when Treasury funds are enabled",
+    });
+    return z.NEVER;
+  }
+  if (env.TREASURY_FUNDS_ENABLED === "true" && !env.CELO_ATTRIBUTION_CODE) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["CELO_ATTRIBUTION_CODE"],
+      message: "CELO_ATTRIBUTION_CODE is required when Treasury funds are enabled",
     });
     return z.NEVER;
   }

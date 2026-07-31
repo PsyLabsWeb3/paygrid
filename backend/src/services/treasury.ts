@@ -46,6 +46,7 @@ import {
   type TreasuryRoutingPreference,
   type TreasurySwapQuote,
 } from "./treasury-routing.js";
+import { withTreasuryExecutionLease } from "./treasury-lease.js";
 
 const DEFAULT_CELO_ADDRESS = "0x471EcE3750Da237f93B8E339c536989b8978a438" as Address;
 const DEFAULT_CELO_ORACLE_ADDRESS = "0x0568fD19986748cEfF3301e55c0eb1E729E0Ab7e" as Address;
@@ -678,17 +679,28 @@ async function sendTreasuryCall(
   return hash;
 }
 
+type TreasurySwapExecutionInput = {
+  signalId?: string;
+  positionId?: string;
+  action: "entry" | "exit";
+  tokenIn: Address;
+  tokenOut: Address;
+  amountIn: bigint;
+  quote?: TreasurySwapQuote;
+};
+
 async function executeTreasurySwap(
   env: Env,
-  input: {
-    signalId?: string;
-    positionId?: string;
-    action: "entry" | "exit";
-    tokenIn: Address;
-    tokenOut: Address;
-    amountIn: bigint;
-    quote?: TreasurySwapQuote;
-  },
+  input: TreasurySwapExecutionInput,
+) {
+  return withTreasuryExecutionLease(env, `worker:${input.action}`, () => (
+    executeTreasurySwapWithLease(env, input)
+  ));
+}
+
+async function executeTreasurySwapWithLease(
+  env: Env,
+  input: TreasurySwapExecutionInput,
 ) {
   const account = executorAccount(env);
   if (!account) throw new Error("Treasury executor is not configured");

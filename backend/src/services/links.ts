@@ -8,6 +8,7 @@ import {
   paygridRouterAbiConst,
 } from "../lib/chain.js";
 import { ApiError } from "../lib/errors.js";
+import { withServerAttribution } from "../lib/attribution.js";
 import {
   formatHumanAmount,
   getTokenAddress,
@@ -74,7 +75,7 @@ export async function createPaymentLink(env: Env, input: CreateLinkInput) {
 
   const { publicClient, walletClient } = createChainClients(env);
 
-  const { request } = await publicClient.simulateContract({
+  await publicClient.simulateContract({
     address: env.PAYGRID_LINK_ADDRESS,
     abi: paygridLinkAbiConst,
     functionName: "createLink",
@@ -89,7 +90,24 @@ export async function createPaymentLink(env: Env, input: CreateLinkInput) {
     account: walletClient.account,
   });
 
-  const txHash = await walletClient.writeContract(request);
+  const createLinkData = encodeFunctionData({
+    abi: paygridLinkAbiConst,
+    functionName: "createLink",
+    args: [
+      input.recipientAddress,
+      amountWei,
+      tokenAddress,
+      input.description ?? "",
+      acceptsFiat,
+      expiresAtUnix,
+    ],
+  });
+  const txHash = await walletClient.sendTransaction({
+    account: walletClient.account,
+    to: env.PAYGRID_LINK_ADDRESS,
+    data: withServerAttribution(env, createLinkData),
+    value: 0n,
+  });
   const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
   let onChainLinkId: bigint | null = null;

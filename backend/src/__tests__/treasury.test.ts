@@ -368,6 +368,16 @@ test("TradingView and operator routes reject missing dedicated secrets", async (
     body: JSON.stringify({ reason: "test" }),
   });
   assert.equal(pause.status, 401);
+
+  const funds = await app.request("http://localhost/api/treasury/funds");
+  assert.equal(funds.status, 401);
+
+  const withdrawal = await app.request("http://localhost/api/treasury/withdrawals", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  assert.equal(withdrawal.status, 401);
 });
 
 test("worker restart recovery never replays a signal with execution state", () => {

@@ -12,6 +12,7 @@ import {
   resumeTreasuryQuantAgent,
   type TreasuryPosition,
 } from "@/lib/api";
+import { TreasuryFunds } from "@/components/treasury-funds";
 
 function money(value: string | undefined, maximumFractionDigits = 4) {
   if (!value || value === "unavailable") return value ?? "0";
@@ -174,6 +175,7 @@ function PositionRow({
 }
 
 export function TreasuryDashboard() {
+  const [activeView, setActiveView] = useState<"overview" | "funds">("overview");
   const [operatorKey, setOperatorKey] = useState("");
   const [draftKey, setDraftKey] = useState("");
   const [confirmCloseAll, setConfirmCloseAll] = useState(false);
@@ -261,6 +263,12 @@ export function TreasuryDashboard() {
 
   return (
     <div className="stack treasury-dashboard">
+      <div className="segmented treasury-main-segments" aria-label="Treasury section">
+        <button className={`segment ${activeView === "overview" ? "segment-active" : ""}`} onClick={() => setActiveView("overview")}>Overview</button>
+        <button className={`segment ${activeView === "funds" ? "segment-active" : ""}`} onClick={() => setActiveView("funds")}>Deposits &amp; Withdrawals</button>
+      </div>
+
+      {activeView === "overview" ? <>
       <section className="metric-grid">
         <div className="metric"><span className="fine muted">Open positions</span><strong>{status.metrics.openPositions}</strong></div>
         <div className="metric"><span className="fine muted">Exposure</span><strong>${money(status.metrics.totalExposureUsd, 2)}</strong></div>
@@ -366,6 +374,7 @@ export function TreasuryDashboard() {
           ))}
         </div>
       </section>
+      </> : <TreasuryFunds operatorKey={operatorKey} />}
 
       <section className="panel panel-pad">
         <div className="split-row">

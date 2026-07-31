@@ -168,6 +168,41 @@ export type TreasuryPositionRow = {
   last_checked_at: string | null;
 };
 
+export type TreasuryWithdrawalAddressRow = {
+  id: string;
+  label: string;
+  address: string;
+  destination_type: "minipay" | "exchange" | "external_wallet";
+  chain_id: number;
+  asset: "USDC" | "USDT" | "USDm" | "CELO" | "XAUT0" | "WETH" | "WBTC" | "EURM";
+  active: boolean;
+  created_at: string;
+  deactivated_at: string | null;
+};
+
+export type TreasuryFundOperationRow = {
+  id: string;
+  request_id: string;
+  operation_type: "deposit" | "withdrawal";
+  asset: TreasuryWithdrawalAddressRow["asset"];
+  amount: string;
+  destination_address: string | null;
+  withdrawal_address_id: string | null;
+  payment_link_id: string | null;
+  creation_tx_hash: string | null;
+  mode: "free" | "evacuate" | null;
+  status: "active" | "paid" | "expired" | "pending" | "submitted" | "confirmed" | "failed";
+  tx_hash: string | null;
+  attribution_code: string | null;
+  attribution_verified: boolean | null;
+  position_ids: string[];
+  error: string | null;
+  created_at: string;
+  submitted_at: string | null;
+  confirmed_at: string | null;
+  updated_at: string;
+};
+
 let client: SupabaseClient | null = null;
 
 export function getSupabase(env: Env): SupabaseClient {

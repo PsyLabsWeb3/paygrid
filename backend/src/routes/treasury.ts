@@ -12,6 +12,15 @@ import {
   setTreasuryPause,
   submitTreasurySignal,
 } from "../services/treasury.js";
+import {
+  createTreasuryDepositLink,
+  createTreasuryWithdrawalAddress,
+  deactivateTreasuryWithdrawalAddress,
+  executeTreasuryWithdrawal,
+  getTreasuryFunds,
+  previewTreasuryWithdrawal,
+} from "../services/treasury-funds.js";
+import { TREASURY_FUND_ASSETS } from "../lib/treasury-funds.js";
 
 const listSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional(),
@@ -19,6 +28,27 @@ const listSchema = z.object({
 
 const pauseSchema = z.object({
   reason: z.string().trim().min(1).max(300).optional(),
+});
+
+const stablecoins = ["USDm", "USDC", "USDT"] as const;
+const depositLinkSchema = z.object({
+  requestId: z.string().trim().min(1).max(120).optional(),
+  amount: z.string().trim().min(1),
+  token: z.enum(stablecoins),
+  description: z.string().trim().max(200).optional(),
+});
+const withdrawalAddressSchema = z.object({
+  label: z.string().trim().min(1).max(80),
+  address: z.string().trim(),
+  destinationType: z.enum(["minipay", "exchange", "external_wallet"]),
+  asset: z.enum(TREASURY_FUND_ASSETS),
+});
+const withdrawalSchema = z.object({
+  requestId: z.string().trim().min(1).max(120),
+  asset: z.enum(TREASURY_FUND_ASSETS),
+  amount: z.string().trim().min(1),
+  withdrawalAddressId: z.string().uuid(),
+  mode: z.enum(["free", "evacuate"]),
 });
 
 function secretMatches(expected: string | undefined, provided: string | null | undefined) {
@@ -82,6 +112,29 @@ export function treasuryRoutes(env: Env) {
   });
   app.post("/positions/:id/close", (c, next) => requireAdmin(env, c, next), async (c) => {
     return c.json(await requestTreasuryPositionClose(env, c.req.param("id")));
+  });
+
+  app.get("/funds", (c, next) => requireAdmin(env, c, next), async (c) => {
+    return c.json(await getTreasuryFunds(env));
+  });
+  app.post("/deposit-links", (c, next) => requireAdmin(env, c, next), async (c) => {
+    const body = depositLinkSchema.parse(await c.req.json());
+    return c.json(await createTreasuryDepositLink(env, body), 201);
+  });
+  app.post("/withdrawal-addresses", (c, next) => requireAdmin(env, c, next), async (c) => {
+    const body = withdrawalAddressSchema.parse(await c.req.json());
+    return c.json(await createTreasuryWithdrawalAddress(env, body), 201);
+  });
+  app.post("/withdrawal-addresses/:id/deactivate", (c, next) => requireAdmin(env, c, next), async (c) => {
+    return c.json(await deactivateTreasuryWithdrawalAddress(env, c.req.param("id")));
+  });
+  app.post("/withdrawals/preview", (c, next) => requireAdmin(env, c, next), async (c) => {
+    const body = withdrawalSchema.parse(await c.req.json());
+    return c.json(await previewTreasuryWithdrawal(env, body));
+  });
+  app.post("/withdrawals", (c, next) => requireAdmin(env, c, next), async (c) => {
+    const body = withdrawalSchema.parse(await c.req.json());
+    return c.json(await executeTreasuryWithdrawal(env, body));
   });
 
   return app;

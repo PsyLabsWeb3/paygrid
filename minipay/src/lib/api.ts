@@ -397,3 +397,135 @@ export function closeAllTreasuryPositions(operatorKey: string) {
     headers: { "x-treasury-admin-key": operatorKey },
   });
 }
+
+export type TreasuryFundAsset = Stablecoin | "CELO" | "XAUT0" | "WETH" | "WBTC" | "EURM";
+export type TreasuryDestinationType = "minipay" | "exchange" | "external_wallet";
+
+export type TreasuryWithdrawalAddress = {
+  id: string;
+  label: string;
+  address: Address;
+  destinationType: TreasuryDestinationType;
+  chainId: number;
+  asset: TreasuryFundAsset;
+  active: boolean;
+  createdAt: string;
+  deactivatedAt: string | null;
+};
+
+export type TreasuryFundOperation = {
+  id: string;
+  requestId: string;
+  type: "deposit" | "withdrawal";
+  asset: TreasuryFundAsset;
+  amount: string;
+  destinationAddress: Address | null;
+  withdrawalAddressId: string | null;
+  paymentLinkId: string | null;
+  creationTxHash: Hex | null;
+  mode: "free" | "evacuate" | null;
+  status: "active" | "paid" | "expired" | "pending" | "submitted" | "confirmed" | "failed";
+  txHash: Hex | null;
+  attributionCode: string | null;
+  attributionVerified: boolean | null;
+  positionIds: string[];
+  error: string | null;
+  createdAt: string;
+  submittedAt: string | null;
+  confirmedAt: string | null;
+  updatedAt: string;
+};
+
+export type TreasuryFunds = {
+  enabled: boolean;
+  chainId: number;
+  walletAddress: Address | null;
+  attributionCode: string | null;
+  balances: Array<{
+    asset: TreasuryFundAsset;
+    balance: string;
+    reserved: string;
+    available: string;
+  }>;
+  addresses: TreasuryWithdrawalAddress[];
+  operations: TreasuryFundOperation[];
+};
+
+export type TreasuryWithdrawalRequest = {
+  requestId: string;
+  asset: TreasuryFundAsset;
+  amount: string;
+  withdrawalAddressId: string;
+  mode: "free" | "evacuate";
+};
+
+export type TreasuryWithdrawalPreview = {
+  requestId: string;
+  asset: TreasuryFundAsset;
+  amount: string;
+  mode: "free" | "evacuate";
+  destination: TreasuryWithdrawalAddress;
+  balance: string;
+  reserved: string;
+  available: string;
+  gasReserve: string;
+  positionIds: string[];
+  attributionCode: string | null;
+};
+
+function treasuryFundsRequest<T>(path: string, operatorKey: string, init?: RequestInit) {
+  return requestJson<T>(path, {
+    ...init,
+    headers: { "x-treasury-admin-key": operatorKey, ...init?.headers },
+  });
+}
+
+export function getTreasuryFunds(operatorKey: string) {
+  return treasuryFundsRequest<TreasuryFunds>("/api/treasury/funds", operatorKey);
+}
+
+export function createTreasuryDepositLink(
+  operatorKey: string,
+  input: { requestId?: string; amount: string; token: Stablecoin; description?: string },
+) {
+  return treasuryFundsRequest<TreasuryFundOperation & {
+    paymentUrl: string;
+    creationTxHash: Hex;
+    feeBps: number;
+    fee: string;
+    estimatedNet: string;
+  }>("/api/treasury/deposit-links", operatorKey, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function addTreasuryWithdrawalAddress(
+  operatorKey: string,
+  input: { label: string; address: Address; destinationType: TreasuryDestinationType; asset: TreasuryFundAsset },
+) {
+  return treasuryFundsRequest<TreasuryWithdrawalAddress>("/api/treasury/withdrawal-addresses", operatorKey, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function deactivateTreasuryWithdrawalAddress(operatorKey: string, id: string) {
+  return treasuryFundsRequest<TreasuryWithdrawalAddress>(`/api/treasury/withdrawal-addresses/${id}/deactivate`, operatorKey, {
+    method: "POST",
+  });
+}
+
+export function previewTreasuryWithdrawal(operatorKey: string, input: TreasuryWithdrawalRequest) {
+  return treasuryFundsRequest<TreasuryWithdrawalPreview>("/api/treasury/withdrawals/preview", operatorKey, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function executeTreasuryWithdrawal(operatorKey: string, input: TreasuryWithdrawalRequest) {
+  return treasuryFundsRequest<TreasuryFundOperation>("/api/treasury/withdrawals", operatorKey, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
