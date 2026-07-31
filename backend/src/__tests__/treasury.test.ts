@@ -368,16 +368,33 @@ test("TradingView and operator routes reject missing dedicated secrets", async (
     body: JSON.stringify({ reason: "test" }),
   });
   assert.equal(pause.status, 401);
+});
 
-  const funds = await app.request("http://localhost/api/treasury/funds");
-  assert.equal(funds.status, 401);
+test("every Treasury funds route fails closed without the operator key", async () => {
+  const app = createApp(env);
+  const routes = [
+    { method: "GET", path: "/api/treasury/funds" },
+    { method: "POST", path: "/api/treasury/deposit-links" },
+    { method: "POST", path: "/api/treasury/withdrawal-addresses" },
+    { method: "POST", path: "/api/treasury/withdrawal-addresses/11111111-1111-4111-8111-111111111111/deactivate" },
+    { method: "POST", path: "/api/treasury/withdrawals/preview" },
+    { method: "POST", path: "/api/treasury/withdrawals" },
+  ] as const;
 
-  const withdrawal = await app.request("http://localhost/api/treasury/withdrawals", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({}),
-  });
-  assert.equal(withdrawal.status, 401);
+  for (const route of routes) {
+    for (const operatorKey of [undefined, "incorrect-operator-key"]) {
+      const headers: Record<string, string> = { "content-type": "application/json" };
+      if (operatorKey) headers["x-treasury-admin-key"] = operatorKey;
+      const response = await app.request(`http://localhost${route.path}`, {
+        method: route.method,
+        headers,
+        body: route.method === "POST" ? JSON.stringify({}) : undefined,
+      });
+      assert.equal(response.status, 401, `${route.method} ${route.path} must reject an invalid operator key`);
+      const payload = await response.json() as { error?: { code?: string } };
+      assert.equal(payload.error?.code, "UNAUTHORIZED");
+    }
+  }
 });
 
 test("worker restart recovery never replays a signal with execution state", () => {
