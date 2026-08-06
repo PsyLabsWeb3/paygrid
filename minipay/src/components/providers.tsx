@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Toaster } from "sonner";
 import { WagmiProvider } from "wagmi";
 import { wagmiConfig, NetworkEnforcer, useAutoConnect } from "@/contexts/wagmi-config";
+import { CanaryAuthProvider } from "@/contexts/canary-auth";
 
 function WalletBoot({ children }: { children: React.ReactNode }) {
   useAutoConnect();
@@ -22,7 +23,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <WalletBoot>{children}</WalletBoot>
+        <CanaryAuthProvider><WalletBoot>{children}</WalletBoot></CanaryAuthProvider>
         <Toaster richColors position="top-center" />
       </QueryClientProvider>
     </WagmiProvider>

@@ -17,7 +17,7 @@ export type PaymentLinkRow = {
   paygrid_link_address: string;
   recipient_address: string;
   amount: string;
-  token: "USDm" | "USDC" | "USDT";
+  token: "USDm" | "USDC" | "USDT" | "wMXN";
   description: string | null;
   accepted_methods: string[];
   status: "active" | "paid" | "expired" | "cancelled";
@@ -42,9 +42,10 @@ export type PaymentRow = {
   link_id: string;
   payer_address: string;
   amount: string;
-  token: "USDm" | "USDC" | "USDT";
+  token: "USDm" | "USDC" | "USDT" | "wMXN";
   fee_amount: string;
-  payment_method: "crypto" | "fonbnk" | "card";
+  fee_bps: number | null;
+  payment_method: "crypto" | "fonbnk" | "card" | "ripio_spei";
   onramp_session_id: string | null;
   onramp_tx_id: string | null;
   tx_hash: string | null;
@@ -60,7 +61,7 @@ export type OnrampSessionRow = {
   provider_order_id: string | null;
   provider_metadata: Record<string, unknown>;
   amount: string;
-  token: "USDm" | "USDC" | "USDT";
+  token: "USDm" | "USDC" | "USDT" | "wMXN";
   fiat_amount: string | null;
   fiat_currency: string | null;
   carrier: string | null;
@@ -166,6 +167,56 @@ export type TreasuryPositionRow = {
   opened_at: string;
   closed_at: string | null;
   last_checked_at: string | null;
+};
+
+export type RipioProfileRow = {
+  id: string;
+  user_id: string;
+  provider_customer_id: string | null;
+  terms_id: string | null;
+  terms_accepted_at: string | null;
+  kyc_submission_id: string | null;
+  kyc_status: "NOT_STARTED" | "INCOMPLETE_USER_DATA" | "IN_REVIEW" | "COMPLETED" | "FAILED";
+  fiat_account_id: string | null;
+  fiat_account_status: "NOT_STARTED" | "UNCONFIRMED" | "PROCESSING" | "ENABLED" | "DISABLED";
+  clabe_last4: string | null;
+  clabe_hmac: string | null;
+  offramp_session_id: string | null;
+  offramp_deposit_address: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RipioCanaryStatus =
+  | "CREATING" | "WAITING_SPEI" | "MXN_RECEIVED" | "TRADE_COMPLETED"
+  | "WITHDRAWAL_PROCESSING" | "READY_FOR_RELEASE" | "RELEASING" | "RELEASED"
+  | "OFFRAMP_DEPOSIT_RECEIVED" | "OFFRAMP_TRADE_COMPLETED"
+  | "OFFRAMP_WITHDRAWAL_PROCESSING" | "COMPLETED" | "FAILED" | "REFUNDED";
+
+export type RipioCanaryRunRow = {
+  id: string;
+  profile_id: string;
+  payment_link_id: string | null;
+  onramp_session_id: string | null;
+  provider_quote_id: string | null;
+  provider_order_id: string | null;
+  offramp_transaction_id: string | null;
+  fiat_amount: string;
+  gross_amount: string | null;
+  fee_bps: number | null;
+  fee_amount: string | null;
+  net_amount: string | null;
+  funding_instructions: Record<string, unknown>;
+  quote_expires_at: string | null;
+  status: RipioCanaryStatus;
+  onramp_tx_hash: string | null;
+  release_tx_hash: string | null;
+  error_code: string | null;
+  error_detail: string | null;
+  created_at: string;
+  updated_at: string;
+  released_at: string | null;
+  completed_at: string | null;
 };
 
 export type TreasuryWithdrawalAddressRow = {

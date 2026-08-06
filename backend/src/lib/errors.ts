@@ -41,6 +41,9 @@ export type ApiErrorCode =
   | "PAYMENT_REQUIRED"
   | "ONRAMP_ERROR"
   | "FONBNK_ERROR"
+  | "RIPIO_ERROR"
+  | "CANARY_DISABLED"
+  | "PREFLIGHT_FAILED"
   | "INTERNAL_ERROR";
 
 export class ApiError extends Error {

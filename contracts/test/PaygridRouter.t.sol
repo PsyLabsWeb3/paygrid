@@ -59,7 +59,7 @@ contract PaygridRouterTest is Test {
 
     function test_Constructor() public {
         assertEq(router.treasury(), treasury);
-        assertEq(router.feeBps(), 50);
+        assertEq(router.feeBps(), 1);
         assertEq(address(router.paygridLink()), address(link));
     }
 
@@ -76,9 +76,9 @@ contract PaygridRouterTest is Test {
         vm.prank(payer);
         router.pay(id, address(usdc), amount);
 
-        // 0.5% fee = 0.5 USDC = 500000
-        assertEq(usdc.balanceOf(treasury), 500000);
-        assertEq(usdc.balanceOf(recipient), 99500000);
+        // 0.01% fee = 0.01 USDC = 10000
+        assertEq(usdc.balanceOf(treasury), 10000);
+        assertEq(usdc.balanceOf(recipient), 99990000);
         assertEq(usdc.balanceOf(payer), 10000e6 - amount);
 
         PaygridLink.PaymentLink memory l = link.getLink(id);
@@ -87,7 +87,7 @@ contract PaygridRouterTest is Test {
 
     function test_Pay_EmitsEvent() public {
         uint256 id = _createAndFundLink();
-        uint256 expectedFee = (amount * 50) / 10000;
+        uint256 expectedFee = (amount * 1) / 10000;
 
         vm.prank(payer);
         vm.expectEmit(true, true, true, false);
@@ -109,8 +109,8 @@ contract PaygridRouterTest is Test {
         bytes32 onrampTxId = keccak256("fonbnk-tx-123");
         router.payWithFiat(id, address(usdc), amount, onrampTxId);
 
-        assertEq(usdc.balanceOf(treasury), 500000);
-        assertEq(usdc.balanceOf(recipient), 99500000);
+        assertEq(usdc.balanceOf(treasury), 10000);
+        assertEq(usdc.balanceOf(recipient), 99990000);
     }
 
     function test_PayWithFiat_RevertsNotOwner() public {
@@ -144,8 +144,8 @@ contract PaygridRouterTest is Test {
         bytes32 providerTxId = keccak256("ramp-tx-123");
         router.payWithCard(id, address(usdc), amount, providerTxId);
 
-        assertEq(usdc.balanceOf(treasury), 500000);
-        assertEq(usdc.balanceOf(recipient), 99500000);
+        assertEq(usdc.balanceOf(treasury), 10000);
+        assertEq(usdc.balanceOf(recipient), 99990000);
 
         PaygridLink.PaymentLink memory l = link.getLink(id);
         assertTrue(l.paid);
@@ -157,7 +157,7 @@ contract PaygridRouterTest is Test {
 
         usdc.mint(address(router), amount);
         bytes32 providerTxId = keccak256("ramp-tx-123");
-        uint256 expectedFee = (amount * 50) / 10000;
+        uint256 expectedFee = (amount * 1) / 10000;
 
         vm.expectEmit(true, true, true, false);
         emit PaygridRouter.PaymentReceived(
@@ -250,9 +250,9 @@ contract PaygridRouterTest is Test {
         router.pay(id, address(usdc), amount);
 
         // 100 USDC = 100_000_000 (6 decimals)
-        // 0.5% = 500_000
-        assertEq(usdc.balanceOf(treasury), 500_000);
-        assertEq(usdc.balanceOf(recipient), 99_500_000);
+        // 0.01% = 10_000
+        assertEq(usdc.balanceOf(treasury), 10_000);
+        assertEq(usdc.balanceOf(recipient), 99_990_000);
     }
 
     function test_FeeCalculation_1USDC() public {
@@ -268,9 +268,9 @@ contract PaygridRouterTest is Test {
         router.pay(id, address(usdc), small);
 
         // 1 USDC = 1_000_000
-        // 0.5% = 5_000
-        assertEq(usdc.balanceOf(treasury), 5_000);
-        assertEq(usdc.balanceOf(recipient), 995_000);
+        // 0.01% = 100
+        assertEq(usdc.balanceOf(treasury), 100);
+        assertEq(usdc.balanceOf(recipient), 999_900);
     }
 
     // --- PayWithPermit ---
@@ -305,7 +305,7 @@ contract PaygridRouterTest is Test {
         vm.prank(signer);
         router.payWithPermit(id, address(usdc), amount, deadline, v, r, s);
 
-        uint256 expectedFee = (amount * 50) / 10000;
+        uint256 expectedFee = (amount * 1) / 10000;
         assertEq(usdc.balanceOf(treasury), expectedFee);
         assertEq(usdc.balanceOf(recipient), amount - expectedFee);
     }

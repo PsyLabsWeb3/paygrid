@@ -15,7 +15,7 @@ Built for the autonomous agent economy and emerging markets where traditional pl
 ## Use Cases (in priority order)
 
 ### 1. Agent-to-Agent — Pay-per-Task API Monetization
-Developers and companies protect APIs or services with x402. An AI agent sends a request, receives a 402 Payment Required, automatically pays in USDC, and gets the result. No account setup, no manual invoicing. Fee: 0.5% per transaction charged to the recipient.
+Developers and companies protect APIs or services with x402. An AI agent sends a request, receives a 402 Payment Required, automatically pays in USDC, and gets the result. No account setup, no manual invoicing. Current PaygridRouterV2 fee: 1 bp (0.01%) charged to the recipient.
 
 ### 2. Agent-to-Human — Agent as Payer / Treasurer
 An autonomous agent manages payments for a team or protocol. It generates invoices, creates payment links, executes payouts, and reports on-chain activity. The agent operates with its own dedicated wallet registered on-chain via ERC-8004.
@@ -30,7 +30,7 @@ Any person creates a payment link from MiniPay and shares it via WhatsApp, email
 
 ## Business Model
 
-- 0.5% fee per transaction, charged to the recipient on each received payment
+- Current PaygridRouterV2 fee is 1 bp (0.01%) per transaction, charged to the recipient
 - Fee is collected by PaygridRouter.sol and sent to the Paygrid treasury address
 - Future roadmap: volume API tier, multi-stablecoin conversion spread, white-label
 
@@ -55,7 +55,7 @@ paygrid/
 
 ## System Modules
 
-- contracts/ — Smart contracts: PaygridRouter.sol (receives payment, splits 0.5% fee to treasury, sends remainder to recipient) and PaygridLink.sol (creates and manages payment links on-chain). Built with Foundry.
+- contracts/ — Smart contracts: PaygridRouter.sol (receives payment, reads its configured fee, sends the fee to treasury and the remainder to the recipient) and PaygridLink.sol (creates and manages payment links on-chain). Built with Foundry.
 - backend/ — REST API for payment link generation and management, webhook system for payment confirmation (including Fonbnk onramp webhooks), on-chain event indexer via Viem watchContractEvent, x402 protected endpoints for pay-per-task. Uses Supabase for data persistence and Privy for authentication.
 - agent/ — Autonomous AI agent with dedicated ERC-8004 wallet, Vercel AI SDK for reasoning and tools, thirdweb/x402 for autonomous payments, @chaoschain/sdk for on-chain identity registration.
 - minipay/ — Next.js MiniApp: MiniPay auto-connect, create payment link UI, pay a received link UI (crypto + Fonbnk fiat), payment history, MiniPay deeplinks for receipts and deposits.

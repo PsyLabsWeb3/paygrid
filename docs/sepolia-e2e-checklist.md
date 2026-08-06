@@ -129,8 +129,8 @@ Steps:
 - [ ] Approve token allowance for `PaygridRouter`.
 - [ ] Submit the `pay` transaction from the payer wallet.
 - [ ] Confirm `PaymentReceived` was emitted.
-- [ ] Confirm treasury received the 0.5% fee.
-- [ ] Confirm recipient received 99.5%.
+- [ ] Read `feeBps()` and confirm treasury received that exact fee.
+- [ ] Confirm recipient received the exact net amount.
 
 Record:
 

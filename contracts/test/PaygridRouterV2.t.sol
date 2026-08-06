@@ -83,8 +83,8 @@ contract PaygridRouterV2Test is Test {
         router.pay(id, address(usdc), amount);
         vm.stopPrank();
 
-        assertEq(usdc.balanceOf(treasury), 500000);
-        assertEq(usdc.balanceOf(recipient), 99500000);
+        assertEq(usdc.balanceOf(treasury), 10000);
+        assertEq(usdc.balanceOf(recipient), 99990000);
         assertTrue(link.getLink(id).paid);
     }
 
@@ -104,8 +104,8 @@ contract PaygridRouterV2Test is Test {
         router.payWithSwap(id, address(usdt), 101e6, amount, address(swapTarget), swapData, block.timestamp + 1 hours);
         vm.stopPrank();
 
-        assertEq(usdc.balanceOf(treasury), 500000);
-        assertEq(usdc.balanceOf(recipient), 99500000);
+        assertEq(usdc.balanceOf(treasury), 10000);
+        assertEq(usdc.balanceOf(recipient), 99990000);
         assertEq(usdt.balanceOf(payer), 10000e6 - 100e6);
         assertTrue(link.getLink(id).paid);
     }

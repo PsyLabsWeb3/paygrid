@@ -16,7 +16,7 @@ import { withServerAttribution } from "../lib/attribution.js";
 import { createChainClients } from "../lib/chain.js";
 import { ApiError } from "../lib/errors.js";
 import { giftRouterAbi, giftVaultAbi, requireGiftContracts } from "../lib/gifts.js";
-import { getTokenAddress, parseHumanAmount, TOKEN_DECIMALS, type Stablecoin } from "../lib/tokens.js";
+import { getTokenAddress, parseHumanAmount, TOKEN_DECIMALS, type CoreStablecoin as Stablecoin } from "../lib/tokens.js";
 import { buildSwapExecution, quoteStablecoinAmount } from "./swaps.js";
 
 const MIN_GIFT_USD = 0.5;

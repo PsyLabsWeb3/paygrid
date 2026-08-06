@@ -33,7 +33,7 @@ Paygrid has four interaction flows connected by a shared backend + contract laye
 │                         Celo Blockchain                                   │
 │  ┌─────────────────────┐     ┌──────────────────────┐                    │
 │  │ PaygridRouterV2.sol │     │ PaygridLink.sol      │                    │
-│  │ - fee split 0.5%    │◄────│ - link creation       │                    │
+│  │ - fee split 1 bp    │◄────│ - link creation       │                    │
 │  │ - stablecoin swaps  │     │ - on-chain records    │                    │
 │  └─────────────────────┘     └──────────────────────┘                    │
 └──────────────────────────────────────────────────────────────────────────┘
@@ -45,7 +45,7 @@ Paygrid has four interaction flows connected by a shared backend + contract laye
 
 ```text
 User opens link → connects wallet → approves token spend → confirms tx
-→ PaygridRouterV2 receives tokens → splits 0.5% to treasury → sends 99.5% to recipient
+→ PaygridRouterV2 receives tokens → reads feeBps (currently 1 bp) → sends fee to treasury → sends net to recipient
 → emits PaymentReceived event → backend indexer picks it up → updates DB → notifies recipient
 ```
 

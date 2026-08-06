@@ -529,3 +529,58 @@ export function executeTreasuryWithdrawal(operatorKey: string, input: TreasuryWi
     body: JSON.stringify(input),
   });
 }
+
+export type RipioProfile = {
+  id: string;
+  customerCreated: boolean;
+  termsAccepted: boolean;
+  kycStatus: "NOT_STARTED" | "INCOMPLETE_USER_DATA" | "IN_REVIEW" | "COMPLETED" | "FAILED";
+  fiatAccountStatus: "NOT_STARTED" | "UNCONFIRMED" | "PROCESSING" | "ENABLED" | "DISABLED";
+  clabeLast4: string | null;
+  offrampReady: boolean;
+  celoDepositAddress: Address | null;
+};
+
+export type RipioCanaryRun = {
+  id: string;
+  paymentLinkId: string | null;
+  fiatAmount: string;
+  grossAmount: string | null;
+  feeBps: number | null;
+  feeAmount: string | null;
+  netAmount: string | null;
+  fundingInstructions: Record<string, unknown>;
+  status: string;
+  onrampTxHash: Hex | null;
+  releaseTxHash: Hex | null;
+  createdAt: string;
+  completedAt: string | null;
+};
+
+async function ripioRequest<T>(path: string, accessToken: string, init?: RequestInit) {
+  return requestJson<T>(`/api/ripio${path}`, {
+    ...init,
+    headers: { Authorization: `Bearer ${accessToken}`, ...init?.headers },
+  });
+}
+
+export const getRipioProfile = (token: string) =>
+  ripioRequest<{ profile: RipioProfile | null }>("/profile", token);
+
+export const startRipioProfile = (token: string, input: { email: string; redirectUrl: string }) =>
+  ripioRequest<{ profile: RipioProfile; kycUrl: string | null }>("/profile", token, { method: "POST", body: JSON.stringify(input) });
+
+export const addRipioFiatAccount = (token: string, clabe: string) =>
+  ripioRequest<{ profile: RipioProfile }>("/profile/fiat-account", token, { method: "POST", body: JSON.stringify({ clabe }) });
+
+export const startRipioOfframpSession = (token: string) =>
+  ripioRequest<{ profile: RipioProfile }>("/profile/offramp-session", token, { method: "POST" });
+
+export const createRipioCanary = (token: string, amountMxn: string) =>
+  ripioRequest<RipioCanaryRun>("/canaries", token, { method: "POST", body: JSON.stringify({ amountMxn }) });
+
+export const getRipioCanary = (token: string, id: string) =>
+  ripioRequest<RipioCanaryRun>(`/canaries/${id}`, token);
+
+export const releaseRipioCanary = (token: string, id: string, confirmation: string) =>
+  ripioRequest<RipioCanaryRun>(`/canaries/${id}/release`, token, { method: "POST", body: JSON.stringify({ confirmation }) });

@@ -6,7 +6,7 @@ export type PaymentReceivedNotification = {
   payer: `0x${string}`;
   txHash: `0x${string}`;
   amount: string;
-  token: "USDm" | "USDC" | "USDT";
+  token: "USDm" | "USDC" | "USDT" | "wMXN";
 };
 
 const emitter = new EventEmitter();

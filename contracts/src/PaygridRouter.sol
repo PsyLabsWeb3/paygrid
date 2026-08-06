@@ -14,7 +14,7 @@ contract PaygridRouter is Ownable, ReentrancyGuard {
     enum PaymentMethod { Crypto, Fonbnk, Card }
 
     address public treasury;
-    uint256 public feeBps = 50; // 0.5% = 50 bps
+    uint256 public feeBps = 1; // 0.01% = 1 bp
     uint256 public constant MAX_FEE_BPS = 500; // 5% max
     PaygridLink public paygridLink;
 

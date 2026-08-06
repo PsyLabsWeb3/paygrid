@@ -63,7 +63,7 @@ contract PaygridTest is Test {
         vm.prank(payer);
         router.pay(id, address(token), 1_000_000);
 
-        uint256 fee = (1_000_000 * 50) / 10000; // 0.5%
+        uint256 fee = (1_000_000 * 1) / 10000; // 0.01%
         uint256 net = 1_000_000 - fee;
 
         assertEq(token.balanceOf(treasury), fee);
@@ -84,7 +84,7 @@ contract PaygridTest is Test {
         // router.payWithFiat is owner-only; test contract is owner
         router.payWithFiat(id, address(token), 1000, txid);
 
-        uint256 fee = (1000 * 50) / 10000;
+        uint256 fee = (1000 * 1) / 10000;
         uint256 net = 1000 - fee;
 
         assertEq(token.balanceOf(treasury), fee);

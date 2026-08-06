@@ -426,6 +426,27 @@ a {
   max-width: 100%;
 }
 
+.canary-progress {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.canary-progress li {
+  color: var(--muted);
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel-2);
+}
+
+.canary-progress li.done {
+  color: var(--lime);
+  border-color: rgba(183, 255, 26, 0.38);
+}
+
 .treasury-main-segments {
   width: 100%;
   grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);

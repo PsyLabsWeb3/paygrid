@@ -37,7 +37,8 @@ Records each payment made through a link.
 | payer_address | text | On-chain address of payer |
 | amount | numeric(36,18) | Amount paid |
 | token | enum('USDm', 'USDC', 'USDT') | Token used |
-| fee_amount | numeric(36,18) | 0.5% fee collected |
+| fee_amount | numeric(36,18) | Fee collected using the payment's observed Router value |
+| fee_bps | integer | Router `feeBps()` observed for this payment |
 | payment_method | enum('crypto', 'fonbnk') | How the payment was made |
 | onramp_session_id | uuid (FK → onramp_sessions.id) | Onramp session (if fiat) |
 | onramp_tx_id | text | Onramp transaction ID (if fiat) |

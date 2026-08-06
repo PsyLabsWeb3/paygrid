@@ -616,14 +616,20 @@ async function settlePaymentOnChain(
   const txHash = await walletClient.writeContract(request);
   await publicClient.waitForTransactionReceipt({ hash: txHash });
 
+  const feeBps = await publicClient.readContract({
+    address: env.PAYGRID_ROUTER_ADDRESS,
+    abi: paygridRouterAbiConst,
+    functionName: "feeBps",
+  }) as bigint;
   const now = new Date().toISOString();
-  const fee = formatHumanAmount((amountWei * 50n) / 10000n, args.token);
+  const fee = formatHumanAmount((amountWei * feeBps) / 10000n, args.token);
   const paymentInsert = {
     link_id: link.id,
     payer_address: env.PAYGRID_ROUTER_ADDRESS.toLowerCase(),
     amount: args.amount,
     token: args.token,
     fee_amount: fee,
+    fee_bps: Number(feeBps),
     payment_method: "fonbnk",
     onramp_session_id: args.sessionId,
     onramp_tx_id: args.onrampTxId,
@@ -666,6 +672,8 @@ async function settlePaymentOnChain(
         onramp_session_id: args.sessionId,
         onramp_tx_id: args.onrampTxId,
         payment_method: "fonbnk",
+        fee_amount: fee,
+        fee_bps: Number(feeBps),
       })
       .eq("id", existingPaymentId);
   }

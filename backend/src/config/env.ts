@@ -64,6 +64,18 @@ const rawEnvSchema = z.object({
   RAMP_WIDGET_URL: optionalUrl(),
   RAMP_WEBHOOK_BASE_URL: optionalUrl(),
   RAMP_WEBHOOK_PUBLIC_KEY: optionalString(),
+  RIPIO_CANARY_ENABLED: z.enum(["true", "false"]).optional(),
+  RIPIO_ENV: z.enum(["sandbox", "production"]).optional(),
+  RIPIO_API_BASE_URL: optionalUrl(),
+  RIPIO_CLIENT_ID: optionalString(),
+  RIPIO_CLIENT_SECRET: optionalString(),
+  RIPIO_WEBHOOK_SECRET: optionalString(),
+  RIPIO_CLABE_HMAC_SECRET: optionalString(),
+  RIPIO_WMXN_ADDRESS: optionalAddress(),
+  RIPIO_WMXN_SYMBOL: z.string().trim().min(1).max(16).optional(),
+  RIPIO_CELO_NETWORK: z.string().trim().min(1).max(64).optional(),
+  RIPIO_CANARY_MAX_MXN: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
+  RIPIO_OPERATOR_PRIVY_IDS: optionalString(),
   ROUTER_OWNER_PRIVATE_KEY: optionalString(),
   CELO_RPC_URL: optionalUrl(),
   CELO_SEPOLIA_RPC: optionalUrl(),
@@ -214,6 +226,36 @@ const envSchema = rawEnvSchema.transform((env, ctx) => {
       message: "TREASURY_ADMIN_API_KEY is required when Treasury funds are enabled",
     });
     return z.NEVER;
+  }
+  if (env.RIPIO_CANARY_ENABLED === "true") {
+    const requiredRipioConfig = [
+      ["RIPIO_CLIENT_ID", env.RIPIO_CLIENT_ID],
+      ["RIPIO_CLIENT_SECRET", env.RIPIO_CLIENT_SECRET],
+      ["RIPIO_WEBHOOK_SECRET", env.RIPIO_WEBHOOK_SECRET],
+      ["RIPIO_CLABE_HMAC_SECRET", env.RIPIO_CLABE_HMAC_SECRET],
+      ["RIPIO_WMXN_ADDRESS", env.RIPIO_WMXN_ADDRESS],
+      ["RIPIO_OPERATOR_PRIVY_IDS", env.RIPIO_OPERATOR_PRIVY_IDS],
+      ["ROUTER_OWNER_PRIVATE_KEY", env.ROUTER_OWNER_PRIVATE_KEY],
+    ] as const;
+    for (const [name, value] of requiredRipioConfig) {
+      if (!value) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [name],
+          message: `${name} is required when RIPIO_CANARY_ENABLED is true`,
+        });
+      }
+    }
+    if (env.CHAIN_ID !== 42220) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["CHAIN_ID"],
+        message: "Ripio canary is mainnet-only and requires CHAIN_ID=42220",
+      });
+    }
+    if (requiredRipioConfig.some(([, value]) => !value) || env.CHAIN_ID !== 42220) {
+      return z.NEVER;
+    }
   }
   if (env.TREASURY_FUNDS_ENABLED === "true" && !env.TREASURY_EXECUTOR_PRIVATE_KEY) {
     ctx.addIssue({

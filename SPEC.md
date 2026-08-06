@@ -28,7 +28,7 @@ Four interaction flows in priority order:
 
 ### 1. Agent-to-Agent — Pay-per-Task API Monetization (priority 1)
 
-Developers and companies expose services or APIs protected with x402. An AI agent makes a request, receives a 402 Payment Required, automatically pays in USDC, and gets the response. No account setup, no manual invoicing. Fee: 0.5% charged to the recipient.
+Developers and companies expose services or APIs protected with x402. An AI agent makes a request, receives a 402 Payment Required, automatically pays in USDC, and gets the response. No account setup, no manual invoicing. Current PaygridRouterV2 fee: 1 bp (0.01%) charged to the recipient.
 
 ### 2. Agent-to-Human — Agent as Payer / Treasurer (priority 2)
 
@@ -44,7 +44,7 @@ Anyone generates a payment link from MiniPay and shares it via WhatsApp, email, 
 
 ## Business Model
 
-- Transaction fee: 0.5% charged to the recipient on each received payment
+- Transaction fee: current PaygridRouterV2 value is 1 bp (0.01%), charged to the recipient on each received payment
 - Roadmap (future): volume API tier, multi-stablecoin conversion spread, white-label
 
 ## Fiat Onramp (Fonbnk)

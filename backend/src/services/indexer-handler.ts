@@ -1,6 +1,7 @@
 import type { Env } from "../config/env.js";
 import { getSupabase } from "../db/supabase.js";
 import { formatHumanAmount, getStablecoinByAddress } from "../lib/tokens.js";
+import { createChainClients, paygridRouterAbiConst } from "../lib/chain.js";
 import { notifyPaymentReceived } from "./notifier.js";
 
 export async function handlePaymentReceived(
@@ -34,7 +35,7 @@ export async function handlePaymentReceived(
 
   const { data: link } = await supabase
     .from("payment_links")
-    .select("id, amount, token")
+    .select("id, amount, token, accepted_methods")
     .eq("on_chain_link_id", event.linkId.toString())
     .eq("paygrid_link_address", env.PAYGRID_LINK_ADDRESS.toLowerCase())
     .maybeSingle();
@@ -50,7 +51,15 @@ export async function handlePaymentReceived(
 
   const amountHuman = formatHumanAmount(event.amount, tokenSymbol);
   const feeHuman = formatHumanAmount(event.fee, tokenSymbol);
-  const paymentMethod = event.method === 2 ? "card" : event.method === 1 ? "fonbnk" : "crypto";
+  const paymentMethod = tokenSymbol === "wMXN" && link.accepted_methods?.includes("ripio_spei")
+    ? "ripio_spei"
+    : event.method === 2 ? "card" : event.method === 1 ? "fonbnk" : "crypto";
+  const { publicClient } = createChainClients(env);
+  const feeBps = await publicClient.readContract({
+    address: env.PAYGRID_ROUTER_ADDRESS,
+    abi: paygridRouterAbiConst,
+    functionName: "feeBps",
+  }) as bigint;
   const now = new Date().toISOString();
 
   const { error: payErr } = await supabase.from("payments").insert({
@@ -59,6 +68,7 @@ export async function handlePaymentReceived(
     amount: amountHuman,
     token: tokenSymbol,
     fee_amount: feeHuman,
+    fee_bps: Number(feeBps),
     payment_method: paymentMethod,
     tx_hash: event.transactionHash,
     status: "confirmed",

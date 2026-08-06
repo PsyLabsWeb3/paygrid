@@ -12,6 +12,8 @@ import { rampRoutes } from "./routes/onramp/ramp.js";
 import { x402Routes } from "./routes/x402.js";
 import { giftsRoutes } from "./routes/gifts.js";
 import { treasuryRoutes } from "./routes/treasury.js";
+import { ripioRoutes } from "./routes/ripio.js";
+import { processRipioWebhook } from "./services/ripio.js";
 
 const defaultCorsOrigins = [
   "http://localhost:3000",
@@ -83,6 +85,12 @@ export function createApp(env: Env) {
   app.route("/api/payments", paymentsRoutes(env));
   app.route("/api/onramp/fonbnk", fonbnkRoutes(env));
   app.route("/api/onramp/ramp", rampRoutes(env));
+  app.route("/api/ripio", ripioRoutes(env));
+  app.post("/api/webhooks/ripio", async (c) => {
+    const rawBody = await c.req.text();
+    const signature = c.req.header("Http-X-Wh-Signature-256") ?? c.req.header("X-Wh-Signature-256");
+    return c.json(await processRipioWebhook(env, rawBody, signature));
+  });
   app.route("/api/x402", x402Routes(env));
 
   return app;

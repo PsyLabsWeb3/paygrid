@@ -9,7 +9,7 @@
 Paygrid uses two core contracts on Celo:
 
 - **PaygridLink.sol** creates and manages payment links on-chain.
-- **PaygridRouterV2.sol** receives exact-token payments, executes authorized stablecoin swaps, splits the 0.5% fee to treasury, and forwards the remainder to the recipient.
+- **PaygridRouterV2.sol** receives exact-token payments, executes authorized stablecoin swaps, sends its configured fee (currently 1 bp) to treasury, and forwards the remainder to the recipient.
 
 Mainnet is the canonical production deployment. Sepolia remains the development reference for backend integration and UI wiring.
 
@@ -80,13 +80,13 @@ struct PaymentLink {
 - Receive stablecoin payments.
 - Execute atomic swaps for supported stablecoin mismatches.
 - Validate final settlement token output before marking the link paid.
-- Split 0.5% fee to treasury.
-- Forward 99.5% to recipient.
+- Split the configured fee (currently 1 bp / 0.01%) to treasury.
+- Forward the net amount to recipient.
 - Emit indexed payment events for the backend indexer.
 
 ### State
 - `treasury: address` - fee recipient
-- `feeBps: uint256 = 50` - 0.5% fee
+- `feeBps: uint256 = 1` - 0.01% fee
 - `paygridLink: PaygridLink` - link registry reference
 - `supportedTokens: mapping(address => bool)` - USDC, USDT, USDm allowlist
 - `authorizedSwapTargets: mapping(address => bool)` - Mento first, optional Uniswap fallback

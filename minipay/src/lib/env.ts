@@ -50,6 +50,7 @@ export const appConfig = {
   giftVaultAddress: optionalPublicAddress("NEXT_PUBLIC_PAYGRID_GIFT_VAULT_ADDRESS"),
   giftRouterAddress: optionalPublicAddress("NEXT_PUBLIC_PAYGRID_GIFT_ROUTER_ADDRESS"),
   walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
+  privyAppId: process.env.NEXT_PUBLIC_PRIVY_APP_ID,
   miniPayDeepLinkEnabled: process.env.NEXT_PUBLIC_MINIPAY_DEEPLINK_ENABLED === "true",
   attributionCode: process.env.NEXT_PUBLIC_CELO_ATTRIBUTION_CODE,
   usdcAddress: publicAddress(

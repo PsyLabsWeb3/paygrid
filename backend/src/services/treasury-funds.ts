@@ -30,7 +30,7 @@ import {
   type TreasuryFundAsset,
   type TreasuryWithdrawalMode,
 } from "../lib/treasury-funds.js";
-import { getTokenAddress, type Stablecoin } from "../lib/tokens.js";
+import { getTokenAddress, type CoreStablecoin as Stablecoin } from "../lib/tokens.js";
 import { createPaymentLink } from "./links.js";
 import { withTreasuryExecutionLease } from "./treasury-lease.js";
 

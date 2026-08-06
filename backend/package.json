@@ -12,7 +12,9 @@
     "indexer:start": "node dist/indexer.js",
     "treasury:worker": "tsx src/treasury-worker.ts",
     "treasury:worker:start": "node dist/treasury-worker.js",
-    "db:migrate": "tsx scripts/migrate.ts"
+    "db:migrate": "tsx scripts/migrate.ts",
+    "ripio:preflight": "tsx scripts/ripio-preflight.ts",
+    "ripio:mock-smoke": "tsx scripts/ripio-mock-smoke.ts"
   },
   "dependencies": {
     "@celo/attribution-tags": "^0.3.0",

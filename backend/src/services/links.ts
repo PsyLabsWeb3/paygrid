@@ -21,7 +21,7 @@ export type CreateLinkInput = {
   amount: string;
   token: Stablecoin;
   description?: string;
-  acceptedMethods: ("crypto" | "fonbnk" | "card")[];
+  acceptedMethods: ("crypto" | "fonbnk" | "card" | "ripio_spei")[];
   recipientAddress: `0x${string}`;
   expiresAt?: string;
   creator?: {
@@ -68,7 +68,9 @@ export async function createPaymentLink(env: Env, input: CreateLinkInput) {
 
   const amountWei = parseHumanAmount(input.amount, input.token);
   const tokenAddress = getTokenAddress(env, input.token);
-  const acceptsFiat = input.acceptedMethods.includes("fonbnk") || input.acceptedMethods.includes("card");
+  const acceptsFiat = input.acceptedMethods.some((method) =>
+    method === "fonbnk" || method === "card" || method === "ripio_spei"
+  );
   const expiresAtUnix = input.expiresAt
     ? BigInt(Math.floor(new Date(input.expiresAt).getTime() / 1000))
     : 0n;
