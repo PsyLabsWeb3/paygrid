@@ -8,6 +8,8 @@ import {
   handleGiftCreated,
   handlePaymentReceived,
 } from "./services/indexer-handler.js";
+import { expireOdeleitePaymentLinks } from "./services/partner-links.js";
+import { drainPartnerWebhookOutbox } from "./services/partner-webhooks.js";
 
 const env = loadEnv();
 const { publicClient } = createChainClients(env);
@@ -27,6 +29,7 @@ let lastScannedBlock = checkpoint?.block_number != null
     ? BigInt(env.INDEXER_START_BLOCK)
     : await publicClient.getBlockNumber();
 let scanning = false;
+let maintainingPartners = false;
 
 console.log("[indexer] starting from block", lastScannedBlock.toString());
 
@@ -66,6 +69,7 @@ async function scanPaymentReceived() {
         fee: args.fee,
         method: args.method,
         transactionHash: log.transactionHash,
+        blockNumber: log.blockNumber,
       });
     }
 
@@ -138,3 +142,20 @@ async function scanPaymentReceived() {
 setInterval(() => {
   void scanPaymentReceived();
 }, 5_000);
+
+async function maintainPartnerLinks() {
+  if (maintainingPartners || env.ODELEITE_PARTNER_ENABLED !== "true") return;
+  maintainingPartners = true;
+  try {
+    await expireOdeleitePaymentLinks(env);
+    await drainPartnerWebhookOutbox(env);
+  } catch (error) {
+    console.error("[indexer] partner maintenance error", error);
+  } finally {
+    maintainingPartners = false;
+  }
+}
+
+setInterval(() => {
+  void maintainPartnerLinks();
+}, 10_000);

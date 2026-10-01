@@ -2,9 +2,10 @@ import {
   createPublicClient,
   createWalletClient,
   http,
+  type Chain,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { celoSepolia } from "viem/chains";
+import { celo, celoSepolia } from "viem/chains";
 import type { Env } from "../config/env.js";
 import paygridLinkAbi from "./contracts/PaygridLink.json" with { type: "json" };
 import paygridRouterAbi from "./contracts/PaygridRouter.json" with { type: "json" };
@@ -14,8 +15,9 @@ export const paygridRouterAbiConst = paygridRouterAbi as readonly unknown[];
 
 export function createChainClients(env: Env, privateKey = env.BACKEND_WALLET_PRIVATE_KEY) {
   const account = privateKeyToAccount(privateKey);
-  const chain = {
-    ...celoSepolia,
+  const baseChain = env.CHAIN_ID === celo.id ? celo : celoSepolia;
+  const chain: Chain = {
+    ...baseChain,
     id: env.CHAIN_ID,
     rpcUrls: { default: { http: [env.CELO_RPC_URL] } },
   };

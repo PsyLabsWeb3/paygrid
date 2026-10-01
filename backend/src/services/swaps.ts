@@ -341,9 +341,17 @@ export async function buildPreparedCryptoPayTx(env: Env, link: PaymentLinkRow, i
     });
   }
 
+  const { publicClient } = createChainClients(env);
+  const feeBps = await publicClient.readContract({
+    address: env.PAYGRID_ROUTER_ADDRESS,
+    abi: paygridRouterAbiConst,
+    functionName: "feeBps",
+  }) as bigint;
+
   return {
     method: "crypto" as const,
     paymentMode: quote.paymentMode,
+    feeBps: Number(feeBps),
     approveTx: {
       to: tokenInAddress,
       data: approveData,

@@ -1,3 +1,4 @@
+import { decodeEventLog } from "viem";
 import type { Env } from "../config/env.js";
 import { getSupabase } from "../db/supabase.js";
 import { formatHumanAmount, getStablecoinByAddress } from "../lib/tokens.js";
@@ -14,6 +15,7 @@ export async function handlePaymentReceived(
     fee: bigint;
     method: number;
     transactionHash: `0x${string}`;
+    blockNumber?: bigint;
   },
 ) {
   const supabase = getSupabase(env);
@@ -25,17 +27,22 @@ export async function handlePaymentReceived(
 
   const { data: existing } = await supabase
     .from("payments")
-    .select("id")
+    .select("id,link_id")
     .eq("tx_hash", event.transactionHash)
     .maybeSingle();
 
   if (existing) {
+    const { error } = await supabase
+      .from("payment_links")
+      .update({ status: "paid", tx_hash: event.transactionHash })
+      .eq("id", existing.link_id);
+    if (error) throw new Error(`Existing payment link recovery failed: ${error.message}`);
     return;
   }
 
   const { data: link } = await supabase
     .from("payment_links")
-    .select("id, amount, token, accepted_methods")
+    .select("id, amount, token, accepted_methods, partner_name")
     .eq("on_chain_link_id", event.linkId.toString())
     .eq("paygrid_link_address", env.PAYGRID_LINK_ADDRESS.toLowerCase())
     .maybeSingle();
@@ -51,6 +58,37 @@ export async function handlePaymentReceived(
 
   const amountHuman = formatHumanAmount(event.amount, tokenSymbol);
   const feeHuman = formatHumanAmount(event.fee, tokenSymbol);
+  let payerToken = tokenSymbol;
+  let payerAmountAtomic = event.amount;
+  if (link.partner_name === "odeleite") {
+    const { publicClient } = createChainClients(env);
+    const receipt = await publicClient.getTransactionReceipt({ hash: event.transactionHash });
+    for (const log of receipt.logs) {
+      try {
+        const decoded = decodeEventLog({
+          abi: paygridRouterAbiConst,
+          data: log.data,
+          topics: log.topics,
+        });
+        if (
+          decoded.eventName === "SwapPayment"
+          && "linkId" in decoded.args
+          && decoded.args.linkId === event.linkId
+          && "tokenIn" in decoded.args
+          && "amountIn" in decoded.args
+        ) {
+          const symbol = getStablecoinByAddress(env, decoded.args.tokenIn as `0x${string}`);
+          if (symbol) {
+            payerToken = symbol;
+            payerAmountAtomic = decoded.args.amountIn as bigint;
+          }
+          break;
+        }
+      } catch {
+        // Ignore unrelated logs in the receipt.
+      }
+    }
+  }
   const paymentMethod = tokenSymbol === "wMXN" && link.accepted_methods?.includes("ripio_spei")
     ? "ripio_spei"
     : event.method === 2 ? "card" : event.method === 1 ? "fonbnk" : "crypto";
@@ -59,6 +97,7 @@ export async function handlePaymentReceived(
     address: env.PAYGRID_ROUTER_ADDRESS,
     abi: paygridRouterAbiConst,
     functionName: "feeBps",
+    ...(event.blockNumber === undefined ? {} : { blockNumber: event.blockNumber }),
   }) as bigint;
   const now = new Date().toISOString();
 
@@ -73,17 +112,26 @@ export async function handlePaymentReceived(
     tx_hash: event.transactionHash,
     status: "confirmed",
     confirmed_at: now,
+    payer_token: payerToken,
+    payer_amount_atomic: payerAmountAtomic.toString(),
+    gross_amount_atomic: event.amount.toString(),
+    fee_amount_atomic: event.fee.toString(),
+    net_amount_atomic: (event.amount - event.fee).toString(),
+    settlement_decimals: tokenSymbol === "USDm" ? 18 : 6,
+    block_number: event.blockNumber?.toString() ?? null,
   });
 
   if (payErr) {
-    console.error("[indexer] payment insert failed", payErr.message);
-    return;
+    throw new Error(`Payment insert failed: ${payErr.message}`);
   }
 
-  await supabase
+  const { error: linkUpdateError } = await supabase
     .from("payment_links")
     .update({ status: "paid", tx_hash: event.transactionHash })
     .eq("id", link.id);
+  if (linkUpdateError) {
+    throw new Error(`Payment link status update failed: ${linkUpdateError.message}`);
+  }
 
   notifyPaymentReceived({
     linkId: link.id,

@@ -1,6 +1,7 @@
 # Paygrid Backend
 
-REST API + on-chain event indexer for payment links on Celo Sepolia.
+REST API + on-chain event indexer for payment links on Celo. The Odeleite
+partner integration is Mainnet-only and remains disabled by default.
 
 ## Setup
 
@@ -44,6 +45,45 @@ npm run treasury:worker
 ```bash
 npm test
 ```
+
+## Odeleite partner links
+
+Private endpoints, protected with the dedicated bearer in
+`ODELEITE_PARTNER_API_KEY`:
+
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/partners/v1/payment-links` | Persist intent, sign, persist raw transaction, broadcast and activate |
+| GET | `/api/partners/v1/payment-links/:externalId` | Reconciliation state and exact confirmed payment |
+| POST | `/api/partners/v1/payment-links/:externalId/cancel` | Idempotent on-chain cancellation |
+
+POST requests require a UUID `Idempotency-Key`. A unique database constraint
+and request fingerprint return the same link for an identical retry and reject
+different data with `409`. The Odeleite relayer is exclusive and serialized;
+its signed transaction and hash are stored before broadcast so a process restart
+can resume without creating a second link.
+
+Migration `20260924000015_odeleite_partner_links.sql` creates the exact atomic
+columns and persistent webhook outbox. Database triggers enqueue link state and
+payment events in the same transaction as their source row. The indexer retries
+signed HMAC webhooks and remains the authority for `paid`.
+
+Production sequence:
+
+1. Keep `ODELEITE_PARTNER_ENABLED=false` and apply all migrations.
+2. Use a dedicated minimally funded `ODELEITE_RELAYER_PRIVATE_KEY`.
+3. During the internal pilot, run one API process for that relayer because its
+   nonce serializer is process-local.
+4. Run `npm run odeleite:preflight` against Celo Mainnet.
+5. Do not enable unless it reports a `feeBps` within the router's
+   `MAX_FEE_BPS` and validates both fixed contract addresses, tokens, routes,
+   fee currencies and the relayer.
+6. Enable the partner API and keep API plus indexer running.
+
+Odeleite does not impose a second fee target. The current router value is
+returned with every prepared payment, captured again at the payment block by
+the indexer, and included in the signed webhook so Odeleite can validate the
+exact gross, fee and net amounts.
 
 ## Fase 4 endpoints
 

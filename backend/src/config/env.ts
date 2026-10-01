@@ -76,6 +76,11 @@ const rawEnvSchema = z.object({
   RIPIO_CELO_NETWORK: z.string().trim().min(1).max(64).optional(),
   RIPIO_CANARY_MAX_MXN: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
   RIPIO_OPERATOR_PRIVY_IDS: optionalString(),
+  ODELEITE_PARTNER_ENABLED: z.enum(["true", "false"]).optional(),
+  ODELEITE_PARTNER_API_KEY: optionalString(),
+  ODELEITE_WEBHOOK_URL: optionalUrl(),
+  ODELEITE_WEBHOOK_SECRET: optionalString(),
+  ODELEITE_RELAYER_PRIVATE_KEY: optionalPrivateKey(),
   ROUTER_OWNER_PRIVATE_KEY: optionalString(),
   CELO_RPC_URL: optionalUrl(),
   CELO_SEPOLIA_RPC: optionalUrl(),
@@ -162,6 +167,7 @@ const rawEnvSchema = z.object({
   ),
   USDC_FEE_CURRENCY_ADDRESS: optionalAddress(),
   USDT_FEE_CURRENCY_ADDRESS: optionalAddress(),
+  CELO_FEE_CURRENCY_DIRECTORY_ADDRESS: optionalAddress(),
   BACKEND_WALLET_PRIVATE_KEY: z
     .string()
     .min(1)
@@ -254,6 +260,36 @@ const envSchema = rawEnvSchema.transform((env, ctx) => {
       });
     }
     if (requiredRipioConfig.some(([, value]) => !value) || env.CHAIN_ID !== 42220) {
+      return z.NEVER;
+    }
+  }
+  if (env.ODELEITE_PARTNER_ENABLED === "true") {
+    const requiredPartnerConfig = [
+      ["ODELEITE_PARTNER_API_KEY", env.ODELEITE_PARTNER_API_KEY],
+      ["ODELEITE_WEBHOOK_URL", env.ODELEITE_WEBHOOK_URL],
+      ["ODELEITE_WEBHOOK_SECRET", env.ODELEITE_WEBHOOK_SECRET],
+      ["ODELEITE_RELAYER_PRIVATE_KEY", env.ODELEITE_RELAYER_PRIVATE_KEY],
+      ["USDC_FEE_CURRENCY_ADDRESS", env.USDC_FEE_CURRENCY_ADDRESS],
+      ["USDT_FEE_CURRENCY_ADDRESS", env.USDT_FEE_CURRENCY_ADDRESS],
+      ["CELO_FEE_CURRENCY_DIRECTORY_ADDRESS", env.CELO_FEE_CURRENCY_DIRECTORY_ADDRESS],
+    ] as const;
+    for (const [name, value] of requiredPartnerConfig) {
+      if (!value) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [name],
+          message: `${name} is required when ODELEITE_PARTNER_ENABLED is true`,
+        });
+      }
+    }
+    if (env.CHAIN_ID !== 42220) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["CHAIN_ID"],
+        message: "Odeleite partner links are mainnet-only and require CHAIN_ID=42220",
+      });
+    }
+    if (requiredPartnerConfig.some(([, value]) => !value) || env.CHAIN_ID !== 42220) {
       return z.NEVER;
     }
   }

@@ -20,10 +20,27 @@ export type PaymentLinkRow = {
   token: "USDm" | "USDC" | "USDT" | "wMXN";
   description: string | null;
   accepted_methods: string[];
-  status: "active" | "paid" | "expired" | "cancelled";
+  status: "creating" | "active" | "paid" | "expired" | "canceling" | "cancelled" | "failed";
   tx_hash: string | null;
   created_at: string;
   expires_at: string | null;
+  partner_name?: string | null;
+  external_business_id?: string | null;
+  external_link_id?: string | null;
+  idempotency_key?: string | null;
+  request_fingerprint?: string | null;
+  cancellation_idempotency_key?: string | null;
+  merchant_display_name?: string | null;
+  brand?: string | null;
+  amount_atomic?: string | null;
+  settlement_decimals?: number | null;
+  accepted_payer_assets?: string[];
+  creation_tx_hash?: string | null;
+  signed_creation_tx?: string | null;
+  cancellation_tx_hash?: string | null;
+  signed_cancellation_tx?: string | null;
+  failure_code?: string | null;
+  failure_detail?: string | null;
 };
 
 
@@ -52,6 +69,28 @@ export type PaymentRow = {
   status: "pending" | "confirmed" | "failed";
   created_at: string;
   confirmed_at: string | null;
+  payer_token?: string | null;
+  payer_amount_atomic?: string | null;
+  gross_amount_atomic?: string | null;
+  fee_amount_atomic?: string | null;
+  net_amount_atomic?: string | null;
+  settlement_decimals?: number | null;
+  block_number?: string | null;
+};
+
+export type PartnerWebhookOutboxRow = {
+  id: string;
+  partner_name: string;
+  event_type: string;
+  payload: Record<string, unknown>;
+  status: "pending" | "delivered" | "failed";
+  attempt_count: number;
+  next_attempt_at: string;
+  delivered_at: string | null;
+  last_response_code: number | null;
+  last_error: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type OnrampSessionRow = {

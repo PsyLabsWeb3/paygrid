@@ -14,7 +14,8 @@
     "treasury:worker:start": "node dist/treasury-worker.js",
     "db:migrate": "tsx scripts/migrate.ts",
     "ripio:preflight": "tsx scripts/ripio-preflight.ts",
-    "ripio:mock-smoke": "tsx scripts/ripio-mock-smoke.ts"
+    "ripio:mock-smoke": "tsx scripts/ripio-mock-smoke.ts",
+    "odeleite:preflight": "tsx scripts/odeleite-preflight.ts"
   },
   "dependencies": {
     "@celo/attribution-tags": "^0.3.0",

@@ -14,7 +14,8 @@ Paygrid is a [MiniPay](https://docs.minipay.xyz) MiniApp that enables agent-to-a
 2. **Share** — send it via WhatsApp, email, or social media.
 3. **Pay with crypto** — the payer opens the link, connects their wallet, and pays in stablecoins.
 4. **Pay with fiat** — no crypto? The payer can use supported provider rails such as Fonbnk airtime flows today, with card-funded checkout prepared for a future provider integration.
-5. **Settle** — funds arrive instantly on Celo. Paygrid takes 0.5% fee.
+5. **Settle** — funds arrive instantly on Celo. The current protocol fee is
+   defined by `PaygridRouterV2.feeBps()`.
 
 ### For AI agents
 
