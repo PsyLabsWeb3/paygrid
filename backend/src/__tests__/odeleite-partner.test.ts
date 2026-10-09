@@ -3,6 +3,7 @@ import test from "node:test";
 import { createApp } from "../app.js";
 import type { Env } from "../config/env.js";
 import { isValidPartnerAuthorization } from "../middleware/partner-auth.js";
+import { odeleitePaymentLinkCreateSchema } from "../routes/partner-links.js";
 import {
   classifyCancellationRace,
   partnerRequestFingerprint,
@@ -53,6 +54,22 @@ test("partner request fingerprint is stable across object key order", () => {
   assert.notEqual(
     partnerRequestFingerprint(input),
     partnerRequestFingerprint({ ...input, amount_atomic: "2000000" }),
+  );
+});
+
+test("partner link creation accepts the ISO offset emitted by Django", () => {
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .replace("Z", "+00:00");
+  const parsed = odeleitePaymentLinkCreateSchema.safeParse({
+    ...input,
+    expires_at: expiresAt,
+  });
+
+  assert.equal(
+    parsed.success,
+    true,
+    parsed.success ? undefined : JSON.stringify(parsed.error.issues),
   );
 });
 

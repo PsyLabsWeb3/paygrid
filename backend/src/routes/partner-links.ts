@@ -16,7 +16,7 @@ const evmAddress = z.string().regex(/^0x[a-fA-F0-9]{40}$/).refine(
   (value) => value.toLowerCase() !== zeroAddress,
   "Zero address is not allowed",
 );
-const createSchema = z.object({
+export const odeleitePaymentLinkCreateSchema = z.object({
   external_business_id: uuid,
   external_link_id: uuid,
   recipient_address: evmAddress,
@@ -28,7 +28,9 @@ const createSchema = z.object({
   accepted_payer_assets: z.tuple([z.literal("USDC"), z.literal("USDT"), z.literal("USDm")]),
   description: z.string().max(200).default(""),
   merchant_display_name: z.string().trim().min(1).max(120),
-  expires_at: z.string().datetime(),
+  // Django serializes UTC datetimes with an explicit `+00:00` offset. Accept
+  // valid RFC 3339 offsets in addition to the `Z` form produced by browsers.
+  expires_at: z.string().datetime({ offset: true }),
   brand: z.literal("odeleite"),
 }).superRefine((value, ctx) => {
   const expiresAt = new Date(value.expires_at).getTime();
@@ -61,7 +63,7 @@ export function partnerLinksRoutes(env: Env) {
 
   app.post("/", async (c) => {
     const key = requireIdempotencyKey(c.req.header("Idempotency-Key"));
-    const body = createSchema.parse(await c.req.json());
+    const body = odeleitePaymentLinkCreateSchema.parse(await c.req.json());
     const result = await createOdeleitePaymentLink(env, {
       ...body,
       recipient_address: body.recipient_address as `0x${string}`,
