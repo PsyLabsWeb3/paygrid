@@ -4,7 +4,10 @@ import { createChainClients, paygridLinkAbiConst, paygridRouterAbiConst } from "
 import { getTokenAddress } from "../src/lib/tokens.js";
 import { quoteStablecoinAmount } from "../src/services/swaps.js";
 
-const adapterAbi = parseAbi(["function adaptedToken() view returns (address)"]);
+const adapterAbi = parseAbi([
+  "function adaptedToken() view returns (address)",
+  "function getAdaptedToken() view returns (address)",
+]);
 const feeCurrencyDirectoryAbi = parseAbi(["function getCurrencies() view returns (address[])"]);
 const expectedPaygridLink = "0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89";
 const expectedPaygridRouter = "0x8d290c97100f0e87e04Efd1a790F27004fA3f08B";
@@ -76,11 +79,25 @@ async function main() {
     functionName: "getCurrencies",
   });
   const allowed = new Set(currencies.map((address) => getAddress(address)));
-  for (const [symbol, adapter, token] of [
-    ["USDC", env.USDC_FEE_CURRENCY_ADDRESS!, getTokenAddress(env, "USDC")],
-    ["USDT", env.USDT_FEE_CURRENCY_ADDRESS!, getTokenAddress(env, "USDT")],
+  for (const [symbol, adapter, token, adaptedTokenGetter] of [
+    [
+      "USDC",
+      env.USDC_FEE_CURRENCY_ADDRESS!,
+      getTokenAddress(env, "USDC"),
+      "adaptedToken",
+    ],
+    [
+      "USDT",
+      env.USDT_FEE_CURRENCY_ADDRESS!,
+      getTokenAddress(env, "USDT"),
+      "getAdaptedToken",
+    ],
   ] as const) {
-    const adaptedToken = await publicClient.readContract({ address: adapter, abi: adapterAbi, functionName: "adaptedToken" });
+    const adaptedToken = await publicClient.readContract({
+      address: adapter,
+      abi: adapterAbi,
+      functionName: adaptedTokenGetter,
+    });
     if (getAddress(adaptedToken) !== getAddress(token)) throw new Error(`${symbol} fee adapter points to another token`);
     if (!allowed.has(getAddress(adapter))) throw new Error(`${symbol} fee adapter is not in the Celo fee-currency directory`);
   }
