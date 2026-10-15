@@ -9,6 +9,8 @@ import {
   partnerRequestFingerprint,
   type OdeleitePaymentLinkInput,
 } from "../services/partner-links.js";
+import { quoteCryptoPayment, quoteStablecoinAmount } from "../services/swaps.js";
+import type { PaymentLinkRow } from "../db/supabase.js";
 import { signPartnerWebhook } from "../services/partner-webhooks.js";
 
 const env = {
@@ -93,4 +95,27 @@ test("partner route rejects missing bearer before touching the database", async 
   );
   assert.equal(response.status, 401);
   assert.equal((await response.json()).error.code, "UNAUTHORIZED");
+});
+
+
+test("wMXN partner links preserve atomics above int64 and only accept exact wMXN", () => {
+  const wmxn = {...input, settlement_asset: "wMXN", accepted_payer_assets: ["wMXN"], amount_atomic: "10000000000000000000000", expires_at: new Date(Date.now()+7*86400000).toISOString()};
+  assert.equal(odeleitePaymentLinkCreateSchema.parse(wmxn).amount_atomic, wmxn.amount_atomic);
+  for (const amount of ["0", "1.2", "not-a-number", "999999999999999999", "10000000000000000000001", "1000000000000000001", (2n**256n).toString()]) {
+    assert.equal(odeleitePaymentLinkCreateSchema.safeParse({...wmxn, amount_atomic:amount}).success, false);
+  }
+  assert.equal(odeleitePaymentLinkCreateSchema.safeParse({...wmxn, accepted_payer_assets:["USDC"]}).success, false);
+  assert.notEqual(partnerRequestFingerprint(input), partnerRequestFingerprint({...input, settlement_asset:"wMXN", accepted_payer_assets:["wMXN"]}));
+});
+
+
+test("wMXN exact quote uses atomic TEXT instead of the human numeric column", async () => {
+  const link = {status:"active", partner_name:"odeleite", token:"wMXN", accepted_methods:["crypto"], accepted_payer_assets:["wMXN"], amount:"9.23", amount_atomic:"9230000000000000001", expires_at:new Date(Date.now()+86400000).toISOString()} as unknown as PaymentLinkRow;
+  const quote = await quoteCryptoPayment({...env,ODELEITE_WMXN_ENABLED:"true"},link,{payerToken:"wMXN"});
+  assert.equal(quote.amountOut,"9230000000000000001");
+  assert.equal(quote.amountInMax,quote.amountOut);
+  assert.equal(quote.paymentMode,"exact");
+  await assert.rejects(() => quoteCryptoPayment(env,link,{payerToken:"wMXN"}));
+  await assert.rejects(() => quoteStablecoinAmount(env,"USDC","wMXN",10n**18n));
+  await assert.rejects(() => quoteStablecoinAmount(env,"wMXN","USDC",1000000n));
 });

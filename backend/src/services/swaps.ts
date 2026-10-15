@@ -141,7 +141,9 @@ export function ensureCryptoPayable(link: PaymentLinkRow) {
 export async function quoteCryptoPayment(env: Env, link: PaymentLinkRow, input: SwapQuoteInput): Promise<CryptoQuote> {
   ensureCryptoPayable(link);
   const settlementToken = link.token as Stablecoin;
-  const amountOut = parseHumanAmount(link.amount, settlementToken);
+  if (link.partner_name === "odeleite" && settlementToken === "wMXN" && env.ODELEITE_WMXN_ENABLED !== "true") throw new ApiError(403, "UNSUPPORTED_METHOD", "wMXN is disabled");
+  if (link.partner_name === "odeleite" && link.accepted_payer_assets && !link.accepted_payer_assets.includes(input.payerToken)) throw new ApiError(400, "UNSUPPORTED_METHOD", "Unsupported payer asset");
+  const amountOut = link.partner_name === "odeleite" && link.amount_atomic ? BigInt(link.amount_atomic) : parseHumanAmount(link.amount, settlementToken);
   return quoteStablecoinAmount(env, input.payerToken, settlementToken, amountOut, input.slippageBps);
 }
 
@@ -170,6 +172,7 @@ export async function quoteStablecoinAmount(
     };
   }
 
+  if (payerToken === "wMXN" || settlementToken === "wMXN") throw new ApiError(400, "UNSUPPORTED_METHOD", "wMXN requires exact payment");
   const slippageBps = normalizeSlippage(env, slippageBpsInput);
 
   try {

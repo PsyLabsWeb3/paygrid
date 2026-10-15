@@ -13,15 +13,15 @@ import { getSupabase } from "../db/supabase.js";
 import { withServerAttribution } from "../lib/attribution.js";
 import { createChainClients, paygridLinkAbiConst } from "../lib/chain.js";
 import { ApiError } from "../lib/errors.js";
-import { formatHumanAmount, getTokenAddress } from "../lib/tokens.js";
+import { formatHumanAmount, getTokenAddress, TOKEN_DECIMALS, type Stablecoin } from "../lib/tokens.js";
 
 export type OdeleitePaymentLinkInput = {
   external_business_id: string;
   external_link_id: string;
   recipient_address: Address;
   amount_atomic: string;
-  settlement_asset: "USDC";
-  accepted_payer_assets: ["USDC", "USDT", "USDm"];
+  settlement_asset: "USDC" | "wMXN";
+  accepted_payer_assets: ("USDC" | "USDT" | "USDm" | "wMXN")[];
   description: string;
   merchant_display_name: string;
   expires_at: string;
@@ -107,7 +107,7 @@ function serializePartnerLink(row: PartnerPaymentLinkRow, payment?: PaymentRow |
           recipient_address: row.recipient_address,
           payer_address: payment.payer_address,
           payer_asset: payment.payer_token ?? payment.token,
-          payer_asset_decimals: payment.payer_token === "USDm" ? 18 : 6,
+          payer_asset_decimals: TOKEN_DECIMALS[(payment.payer_token ?? payment.token) as Stablecoin],
           payer_amount_atomic: payment.payer_amount_atomic,
           settlement_asset: row.token,
           settlement_decimals: row.settlement_decimals,
@@ -246,7 +246,7 @@ async function activatePartnerLink(env: Env, row: PartnerPaymentLinkRow) {
         args: [
           getAddress(row.recipient_address),
           BigInt(row.amount_atomic!),
-          getTokenAddress(env, "USDC"),
+          getTokenAddress(env, row.token as Stablecoin),
           row.description ?? "",
           false,
           BigInt(Math.floor(new Date(row.expires_at!).getTime() / 1000)),
@@ -344,10 +344,10 @@ export async function createOdeleitePaymentLink(
     on_chain_link_id: null,
     paygrid_link_address: env.PAYGRID_LINK_ADDRESS.toLowerCase(),
     recipient_address: input.recipient_address.toLowerCase(),
-    amount: formatHumanAmount(amountAtomic, "USDC"),
+    amount: formatHumanAmount(amountAtomic, input.settlement_asset),
     amount_atomic: input.amount_atomic,
-    token: "USDC",
-    settlement_decimals: 6,
+    token: input.settlement_asset,
+    settlement_decimals: TOKEN_DECIMALS[input.settlement_asset],
     description: input.description || null,
     accepted_methods: ["crypto"],
     accepted_payer_assets: input.accepted_payer_assets,

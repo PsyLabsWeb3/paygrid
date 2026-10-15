@@ -76,6 +76,9 @@ const rawEnvSchema = z.object({
   RIPIO_CELO_NETWORK: z.string().trim().min(1).max(64).optional(),
   RIPIO_CANARY_MAX_MXN: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
   RIPIO_OPERATOR_PRIVY_IDS: optionalString(),
+  ODELEITE_WMXN_MIN_ATOMIC: z.string().regex(/^[1-9]\d{0,77}$/).optional(),
+  ODELEITE_WMXN_MAX_ATOMIC: z.string().regex(/^[1-9]\d{0,77}$/).optional(),
+  ODELEITE_WMXN_ENABLED: z.enum(["true", "false"]).optional(),
   ODELEITE_PARTNER_ENABLED: z.enum(["true", "false"]).optional(),
   ODELEITE_PARTNER_API_KEY: optionalString(),
   ODELEITE_WEBHOOK_URL: optionalUrl(),
@@ -292,6 +295,9 @@ const envSchema = rawEnvSchema.transform((env, ctx) => {
     if (requiredPartnerConfig.some(([, value]) => !value) || env.CHAIN_ID !== 42220) {
       return z.NEVER;
     }
+  }
+  if (env.ODELEITE_WMXN_ENABLED === "true" && (env.CHAIN_ID !== 42220 || env.RIPIO_WMXN_ADDRESS?.toLowerCase() !== "0x337e7456b420bd3481e7fa61fa9850343d610d34")) {
+    ctx.addIssue({code: z.ZodIssueCode.custom, path: ["ODELEITE_WMXN_ENABLED"], message: "Odeleite wMXN requires Celo mainnet and the canonical wMXN token"});
   }
   if (env.TREASURY_FUNDS_ENABLED === "true" && !env.TREASURY_EXECUTOR_PRIVATE_KEY) {
     ctx.addIssue({

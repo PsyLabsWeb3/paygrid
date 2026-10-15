@@ -1,7 +1,7 @@
 import { decodeEventLog } from "viem";
 import type { Env } from "../config/env.js";
 import { getSupabase } from "../db/supabase.js";
-import { formatHumanAmount, getStablecoinByAddress } from "../lib/tokens.js";
+import { formatHumanAmount, getStablecoinByAddress, TOKEN_DECIMALS } from "../lib/tokens.js";
 import { createChainClients, paygridRouterAbiConst } from "../lib/chain.js";
 import { notifyPaymentReceived } from "./notifier.js";
 
@@ -117,7 +117,7 @@ export async function handlePaymentReceived(
     gross_amount_atomic: event.amount.toString(),
     fee_amount_atomic: event.fee.toString(),
     net_amount_atomic: (event.amount - event.fee).toString(),
-    settlement_decimals: tokenSymbol === "USDm" ? 18 : 6,
+    settlement_decimals: TOKEN_DECIMALS[tokenSymbol],
     block_number: event.blockNumber?.toString() ?? null,
   });
 
