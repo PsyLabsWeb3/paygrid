@@ -46,7 +46,7 @@ const fonbnkPaySchema = z.object({
   paymentChannel: z.enum(fonbnkPaymentChannels).optional(),
   carrierCode: z.string().min(1).optional(),
   email: z.string().email(),
-  userIp: z.string().ip().optional(),
+  userIp: z.union([z.ipv4(), z.ipv6()]).optional(),
   redirectUrl: z.string().url().optional(),
   extraFields: z.record(z.string(), z.unknown()).optional(),
 });

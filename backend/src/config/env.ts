@@ -2,22 +2,26 @@ import "dotenv/config";
 import { z } from "zod";
 
 const optionalString = () =>
-  z.preprocess((value) => (value === "" ? undefined : value), z.string().min(1).optional());
+  z
+    .preprocess((value) => (value === "" ? undefined : value), z.string().min(1).optional())
+    .optional();
 
 const optionalUrl = () =>
-  z.preprocess((value) => (value === "" ? undefined : value), z.string().url().optional());
+  z
+    .preprocess((value) => (value === "" ? undefined : value), z.string().url().optional())
+    .optional();
 
 const optionalDecimalString = () =>
   z.preprocess(
     (value) => (value === "" ? undefined : value),
     z.string().regex(/^\d+(\.\d+)?$/).optional(),
-  );
+  ).optional();
 
 const optionalPositiveInt = (max: number) =>
   z.preprocess(
     (value) => (value === "" ? undefined : value),
     z.coerce.number().int().min(1).max(max).optional(),
-  );
+  ).optional();
 
 const optionalAddress = () =>
   z.preprocess(
@@ -27,7 +31,7 @@ const optionalAddress = () =>
       .regex(/^0x[a-fA-F0-9]{40}$/)
       .optional()
       .transform((v) => (v ? (v as `0x${string}`) : undefined)),
-  );
+  ).optional();
 
 const requiredString = () => z.string().trim().min(1);
 
@@ -43,7 +47,7 @@ const optionalPrivateKey = () =>
       }
       return hex as `0x${string}`;
     }),
-  );
+  ).optional();
 
 const rawEnvSchema = z.object({
   SUPABASE_URL: z.string().url(),
@@ -108,7 +112,8 @@ const rawEnvSchema = z.object({
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/)
     .optional()
-    .transform((v) => (v ? (v as `0x${string}`) : undefined)),
+    .transform((v) => (v ? (v as `0x${string}`) : undefined))
+    .optional(),
   PAYGRID_GIFT_VAULT_ADDRESS: optionalAddress(),
   PAYGRID_GIFT_ROUTER_ADDRESS: optionalAddress(),
   GIFT_CLAIM_SIGNER_PRIVATE_KEY: optionalPrivateKey(),
