@@ -1,4 +1,4 @@
-FROM node:22-slim AS deps
+FROM node:22.23.5-slim AS deps
 
 WORKDIR /app
 COPY package*.json ./
@@ -10,7 +10,7 @@ COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build
 
-FROM node:22-slim AS runner
+FROM node:22.23.5-slim AS runner
 
 ENV NODE_ENV=production
 WORKDIR /app
