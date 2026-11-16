@@ -34,7 +34,7 @@ export function partnerLinkCreateSchema(minWmxn = 10n**18n, maxWmxn = 10_000n * 
     if (!/^[1-9]\d{0,77}$/.test(value.amount_atomic)) return;
     const amount = BigInt(value.amount_atomic);
     const wmxn = value.settlement_asset === "wMXN";
-    if (wmxn ? (amount < minWmxn || amount > maxWmxn || amount > 2n**256n - 1n || amount % 10n**16n !== 0n) : (amount < 10_000n || amount > 10_000_000n)) {
+    if (wmxn ? (amount < minWmxn || amount > maxWmxn || amount > 2n**256n - 1n || amount % 10n**16n !== 0n) : (amount < 10_000n || amount > 100_000_000n)) {
       ctx.addIssue({code: z.ZodIssueCode.custom, path: ["amount_atomic"], message: "Amount outside pilot limits"});
     }
     if (JSON.stringify(value.accepted_payer_assets) !== JSON.stringify(wmxn ? ["wMXN"] : ["USDC", "USDT", "USDm"])) {

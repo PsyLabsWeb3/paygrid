@@ -75,6 +75,20 @@ test("partner link creation accepts the ISO offset emitted by Django", () => {
   );
 });
 
+test("partner link creation accepts USDC amounts from 0.01 through 100", () => {
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const acceptsAmount = (amountAtomic: string) => odeleitePaymentLinkCreateSchema.safeParse({
+    ...input,
+    amount_atomic: amountAtomic,
+    expires_at: expiresAt,
+  }).success;
+
+  assert.equal(acceptsAmount("9999"), false);
+  assert.equal(acceptsAmount("10000"), true);
+  assert.equal(acceptsAmount("100000000"), true);
+  assert.equal(acceptsAmount("100000001"), false);
+});
+
 test("payment wins a concurrent payment/cancellation race", () => {
   assert.equal(classifyCancellationRace({ paid: true, cancelled: false }), "paid");
   assert.equal(classifyCancellationRace({ paid: false, cancelled: true }), "cancelled");
