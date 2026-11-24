@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { Env } from "../config/env.js";
 import { ApiError } from "../lib/errors.js";
-import { TOKEN_ADDRESSES, type Stablecoin } from "../lib/tokens.js";
+import { STABLECOINS, TOKEN_ADDRESSES, type Stablecoin } from "../lib/tokens.js";
 import { createOwnershipAuthMiddleware } from "../middleware/ownership-auth.js";
 import { getAuthAgent } from "../middleware/erc8004-auth.js";
 import { getAuthUser } from "../middleware/privy-auth.js";
@@ -30,13 +30,13 @@ const createLinkSchema = z.object({
 });
 
 const quoteSchema = z.object({
-  payerToken: z.enum(stablecoins),
+  payerToken: z.enum(STABLECOINS),
   slippageBps: z.number().int().positive().optional(),
 });
 
 const cryptoPaySchema = z.object({
   method: z.literal("crypto"),
-  payerToken: z.enum(stablecoins).optional(),
+  payerToken: z.enum(STABLECOINS).optional(),
   slippageBps: z.number().int().positive().optional(),
 });
 
