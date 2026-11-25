@@ -19,6 +19,9 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
+      X402_CANARY_EVIDENCE_DIR: /evidence
+    volumes:
+      - x402-backend-evidence:/evidence
     ports:
       - "127.0.0.1:3001:3001"
     healthcheck:
@@ -61,6 +64,9 @@ services:
       NODE_ENV: production
       BACKEND_URL: http://backend:3001
       MCP_HTTP_PORT: 3002
+      X402_CANARY_EVIDENCE_DIR: /evidence
+    volumes:
+      - x402-mcp-evidence:/evidence
     ports:
       - "127.0.0.1:3002:3002"
     depends_on:
@@ -93,3 +99,7 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+volumes:
+  x402-backend-evidence:
+  x402-mcp-evidence:

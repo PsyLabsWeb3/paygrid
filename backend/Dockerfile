@@ -22,6 +22,7 @@ COPY package*.json ./
 RUN npm ci --omit=peer --omit=dev && npm cache clean --force
 
 COPY --from=build /app/dist ./dist
+COPY scripts/x402-interrupted-canary.mjs ./operator/x402-interrupted-canary.mjs
 
 EXPOSE 3001
 

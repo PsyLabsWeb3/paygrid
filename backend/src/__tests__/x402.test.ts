@@ -622,3 +622,43 @@ test("request and response limits enforce the exact byte boundary", async () => 
     /1 MiB/,
   );
 });
+
+test("seller canary policy rejects other payers before verification or settlement", async () => {
+  const s = setup();
+  const payload = await s.protocol.sign(s.required, s.required.accepts[0]);
+  const rejected = structuredClone(payload);
+  (rejected.payload.authorization as any).from = payTo;
+  s.cfg.sellerAllowedPayers = [payer];
+  let verified = 0;
+  s.protocol.verify = async () => {
+    verified++;
+  };
+  await assert.rejects(
+    () => s.service.receive(encodePaymentSignatureHeader(rejected)),
+    /payer is not allowed/i,
+  );
+  assert.equal(verified, 0);
+  assert.equal(s.counters().settled, 0);
+  assert.equal(s.store.rows.size, 0);
+  const accepted = await s.service.receive(
+    encodePaymentSignatureHeader(payload),
+  );
+  assert.equal(accepted?.state, "settled");
+  assert.equal(verified, 1);
+  s.cfg.sellerAllowedPayers = [payTo];
+  const replay = await s.service.receive(encodePaymentSignatureHeader(payload));
+  assert.equal(replay?.id, accepted?.id);
+  assert.equal(replay?.state, "settled");
+  assert.equal(s.counters().settled, 1);
+});
+test("seller canary payer policy validates operator addresses", () => {
+  assert.throws(
+    () => config({ ...env, X402_SELLER_ALLOWED_PAYERS: "invalid" }),
+    /allowed payer/i,
+  );
+  assert.deepEqual(
+    config({ ...env, X402_SELLER_ALLOWED_PAYERS: payer + "," + payTo })
+      .sellerAllowedPayers,
+    [payer, payTo],
+  );
+});

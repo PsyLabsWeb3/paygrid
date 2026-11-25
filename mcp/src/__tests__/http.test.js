@@ -58,3 +58,45 @@ test("Streamable HTTP negotiates through the official client and keeps remote wr
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+test("a restricted x402 canary is not advertised as publicly available", async () => {
+  const { createServer } = await import("node:http");
+  let restricted = true;
+  const backend = createServer((_req, res) => {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({
+        ready: true,
+        sellerEnabled: true,
+        payerEnabled: true,
+        sellerRestricted: restricted,
+        assets: [],
+      }),
+    );
+  });
+  backend.listen(0, "127.0.0.1");
+  await once(backend, "listening");
+  const server = createHttpServer({
+    ...loadConfig(),
+    httpPort: 0,
+    backendUrl: "http://127.0.0.1:" + backend.address().port,
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const url = "http://127.0.0.1:" + server.address().port + "/metadata";
+  try {
+    const canary = await (await fetch(url)).json();
+    assert.equal(canary.x402Support, false);
+    assert.equal(canary.extensions.x402.sellerRestricted, true);
+    restricted = false;
+    const publicService = await (await fetch(url)).json();
+    assert.equal(publicService.x402Support, true);
+  } finally {
+    server.closeAllConnections();
+    backend.closeAllConnections();
+    await Promise.all([
+      new Promise((r) => server.close(r)),
+      new Promise((r) => backend.close(r)),
+    ]);
+  }
+});

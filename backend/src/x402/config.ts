@@ -71,6 +71,7 @@ export type Config = {
   facilitatorUrl: string;
   assets: Asset[];
   merchants: Merchant[];
+  sellerAllowedPayers: string[];
 };
 export function uint(value: unknown): string {
   if (
@@ -97,6 +98,12 @@ export function config(env: Env): Config {
   const publicApiUrl = (
     env.X402_PUBLIC_API_URL ?? "https://api.celopaygrid.xyz"
   ).replace(/\/$/, "");
+  const sellerAllowedPayers = (env.X402_SELLER_ALLOWED_PAYERS ?? "")
+    .split(",")
+    .map((payer) => payer.trim())
+    .filter(Boolean);
+  if (sellerAllowedPayers.some((payer) => !isAddress(payer)))
+    throw new Error("Invalid x402 seller allowed payer");
   const assets: Asset[] = (
     chainId === 11142220 ? ["USDC"] : ["USDC", "USDT", "wMXN"]
   ).map((token) => {
@@ -206,5 +213,6 @@ export function config(env: Env): Config {
         : "https://api.x402.celo.org",
     assets,
     merchants,
+    sellerAllowedPayers,
   };
 }

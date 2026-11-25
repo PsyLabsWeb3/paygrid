@@ -55,6 +55,7 @@ const rawEnvSchema = z.object({
   X402_SELLER_ENABLED: z.enum(["true", "false"]).optional(),
   X402_PAYER_ENABLED: z.enum(["true", "false"]).optional(),
   X402_PAY_TO: optionalAddress(),
+  X402_SELLER_ALLOWED_PAYERS: optionalString(),
   X402_PAYER_ADDRESS: optionalAddress(),
   X402_PAYER_PRIVATE_KEY: optionalPrivateKey(),
   X402_API_KEY: optionalString(),

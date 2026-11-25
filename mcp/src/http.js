@@ -12,6 +12,7 @@ async function publicAgentMetadata(config) {
   const x402 = await paygridRequest(config, "/api/x402/capabilities").catch(
     () => ({ ready: false, sellerEnabled: false, payerEnabled: false }),
   );
+  const publicX402 = !!x402.ready && !x402.sellerRestricted;
   const signer = createAgentSigner(config);
   const address = config.agentAddress || signer?.address || null;
   const agentId = config.agentId || null;
@@ -33,7 +34,7 @@ async function publicAgentMetadata(config) {
   };
   const supportedTrust = [
     "erc8004",
-    ...(x402.ready ? ["x402"] : []),
+    ...(publicX402 ? ["x402"] : []),
     ...(selfProtocol.status === "verified" ? ["self-agent-id"] : []),
   ];
 
@@ -46,7 +47,7 @@ async function publicAgentMetadata(config) {
     url: appUrl,
     version: "0.2.0",
     active: true,
-    x402Support: !!x402.ready,
+    x402Support: publicX402,
     provider: {
       organization: "Kilauea Tec Lab / Celo PayGrid",
       name: "Kilauea Tec Lab / Celo PayGrid",
@@ -299,7 +300,7 @@ async function publicAgentMetadata(config) {
       "celo",
       "stablecoins",
       "mcp",
-      ...(x402.ready ? ["x402"] : []),
+      ...(publicX402 ? ["x402"] : []),
       "erc-8004",
       "self-protocol",
       "agent-payments",

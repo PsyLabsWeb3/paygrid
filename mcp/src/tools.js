@@ -878,7 +878,7 @@ export async function callTool(config, name, args = {}) {
         capabilities: toolDefinitions.map((tool) => tool.name),
         supportedTrust: [
           ...getSupportedTrust(config),
-          ...(x402.ready ? ["x402"] : []),
+          ...(x402.ready && !x402.sellerRestricted ? ["x402"] : []),
         ],
       });
     }

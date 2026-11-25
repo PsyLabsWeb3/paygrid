@@ -59,6 +59,7 @@ export function x402Routes(env: Env, injected?: Payments) {
       ready,
       sellerEnabled: cfg.seller && ready,
       payerEnabled: cfg.payer && ready,
+      sellerRestricted: cfg.sellerAllowedPayers.length > 0,
       resource: cfg.publicApiUrl + "/api/x402/data",
       scheme: "exact",
       paymentFlow: "upfront",

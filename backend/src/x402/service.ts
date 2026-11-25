@@ -366,6 +366,19 @@ export class Payments {
         );
       return existing;
     }
+    // A restricted canary only spends facilitator credits for the configured payers.
+    // Previously accepted operations keep their receipt and result recovery path.
+    if (
+      this.cfg.sellerAllowedPayers.length &&
+      !this.cfg.sellerAllowedPayers.some(
+        (payer) => payer.toLowerCase() === auth.payer.toLowerCase(),
+      )
+    )
+      throw new X402Error(
+        403,
+        "PAYER_NOT_ALLOWED",
+        "This payer is not allowed by the seller policy",
+      );
     const required = await this.protocol.requirements();
     const requirement = required.accepts.find((r) =>
       sameTerms(r, payload.accepted),
