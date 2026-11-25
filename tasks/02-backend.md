@@ -8,7 +8,7 @@ Specs: [docs/api.md](../docs/api.md), [docs/data-model.md](../docs/data-model.md
 - Fase 1 completada
 - Fase 2 completada
 - Fase 3 completada
-- Fase 4 implementada; canarios reales x402 y despliegue pendientes
+- Fase 4 implementada y desplegada con flags apagados; credenciales y canarios reales x402 pendientes
 
 **Red de desarrollo:** Celo Sepolia (chainId `11142220`). Mainnet TBD.
 
