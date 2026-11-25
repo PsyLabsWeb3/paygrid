@@ -1,3 +1,4 @@
+try { process.loadEnvFile(process.env.X402_ENV_FILE??".env.x402"); } catch(error) { if(error.code!=="ENOENT")throw error; }
 export function loadConfig() {
   const optionalEnv = (name, fallback) => {
     const value = process.env[name]?.trim();
@@ -17,6 +18,7 @@ export function loadConfig() {
     selfVerificationUrl: process.env.SELF_VERIFICATION_URL,
     chainId: Number(process.env.CHAIN_ID ?? process.env.CELO_CHAIN_ID ?? "11142220"),
     celoRpcUrl: process.env.CELO_RPC_URL ?? "https://forno.celo-sepolia.celo-testnet.org",
+    x402ExecutorKey: process.env.X402_EXECUTOR_API_KEY,
     mcpApiKey: process.env.PAYGRID_MCP_API_KEY,
     treasuryAdminApiKey: process.env.TREASURY_ADMIN_API_KEY,
     httpPort: Number(process.env.MCP_HTTP_PORT ?? "3002"),

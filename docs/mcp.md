@@ -14,6 +14,10 @@ Paygrid MCP exposes Paygrid as agent spend infrastructure on Celo.
 
 `create_gift` returns a bearer claim URL. Agents must not log it publicly or expose it outside the intended delivery channel.
 
+## x402 executor tools
+
+Use get_x402_capabilities, pay_x402_endpoint and get_x402_payment_status. Payments require a stable idempotencyKey and use backend policy, never caller-provided paymentHeaders. See [x402 operations](x402.md).
+
 ## Transports
 
 - Local stdio: for builders and agents that keep their own ERC-8004 signing key locally.

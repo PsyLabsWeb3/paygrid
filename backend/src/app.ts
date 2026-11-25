@@ -62,6 +62,7 @@ export function createApp(env: Env) {
         return allowedOrigins.includes(origin) ? origin : undefined;
       },
       allowHeaders: [
+        "PAYMENT-SIGNATURE",
         "Authorization",
         "Idempotency-Key",
         "Content-Type",
@@ -76,6 +77,7 @@ export function createApp(env: Env) {
         "X-Treasury-Admin-Key",
         "X-Treasury-Signal-Secret",
       ],
+      exposeHeaders: ["PAYMENT-REQUIRED", "PAYMENT-RESPONSE", "Retry-After"],
       allowMethods: ["GET", "POST", "OPTIONS"],
       maxAge: 600,
     }),

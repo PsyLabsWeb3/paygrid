@@ -18,14 +18,14 @@ Test critical paths first. Priority: contracts > backend > agent > frontend.
 - Privy auth middleware
 - ERC-8004 auth middleware
 - Fonbnk webhook verification
-- x402 challenge + proof acceptance
+- x402 v2 challenge, real signature validation, upfront settlement and replay protection
 
 ### Agent
 
 - wallet bootstrap
 - backend API tool wrappers
 - balance / history formatters
-- x402 payer wrapper
+- x402 central executor client
 
 ### Frontend
 
@@ -62,7 +62,7 @@ Manual verification on Sepolia before Mainnet:
 Blockchain: Celo Sepolia (chainId: 11142220)
 RPC: https://forno.celo-sepolia.celo-testnet.org
 Faucet: https://faucet.celo.org/celo-sepolia
-Tokens: use real Sepolia token addresses (same as mainnet)
+Tokens: Sepolia USDC 0x01C5C0122039549AD1493B8220cABEdD739BC44E only; mainnet addresses differ
 Supabase: local dev or separate test project
 Fonbnk: mock or sandbox API
 ```
@@ -98,3 +98,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: cd agent && npm ci && npm test
+
+## x402 validation
+
+See [x402 validation](x402.md#validation-and-canaries). SQL tests use embedded PostgreSQL and do not access Supabase production. Fork checks exercise USDT and sponsored wMXN against real Celo contracts on Anvil; only canary evidence proves mainnet settlement.

@@ -50,7 +50,7 @@
             <tr><td><code>verify_payment</code></td><td>public</td><td>Verify whether a payment request is paid.</td></tr>
             <tr><td><code>list_agent_requests</code></td><td>API key</td><td>List requests owned by the configured ERC-8004 agent.</td></tr>
             <tr><td><code>create_card_checkout</code></td><td>API key</td><td>Create a card-funded checkout session for an existing request.</td></tr>
-            <tr><td><code>pay_x402_endpoint</code></td><td>API key</td><td>Call an x402-protected endpoint with caller-provided payment headers.</td></tr>
+            <tr><td><code>pay_x402_endpoint</code></td><td>API key</td><td>Call an x402-protected endpoint with the central executor and a stable idempotency key.</td></tr>
             <tr><td><code>get_supported_stablecoins</code></td><td>public</td><td>List supported Celo stablecoins and configured addresses.</td></tr>
             <tr><td><code>get_agent_capabilities</code></td><td>public</td><td>Return endpoints, auth model, current flows and guardrails.</td></tr>
             <tr><td><code>get_agent_connection_guide</code></td><td>public</td><td>Return MCP connection examples.</td></tr>

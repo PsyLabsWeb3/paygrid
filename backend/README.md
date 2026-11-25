@@ -85,16 +85,12 @@ returned with every prepared payment, captured again at the payment block by
 the indexer, and included in the signed webhook so Odeleite can validate the
 exact gross, fee and net amounts.
 
-## Fase 4 endpoints
+## x402 v2
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/x402/data` | x402 proof | Example pay-per-task endpoint |
-
-### x402 proof headers
-
-- `x-paygrid-x402-proof` with JSON proof payload
-- The backend validates `resource`, `chainId`, `token`, `amount`, `txHash`, and `payer`
+GET /api/x402/data uses PAYMENT-REQUIRED, PAYMENT-SIGNATURE and PAYMENT-RESPONSE.
+GET /api/x402/capabilities publishes live readiness; POST /api/x402/pay and GET /api/x402/payments/:operationId require the separate executor credential.
+USDC/USDT use EIP-3009; wMXN uses sponsored Permit2. The backend owns signing, atomic budgets and reconciliation.
+See [x402 operations](../docs/x402.md) before enabling either feature flag.
 
 ## Fase 3 endpoints
 

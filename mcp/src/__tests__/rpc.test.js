@@ -1,55 +1,133 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { loadConfig, isWriteAuthorized } from "../config.js";
-import { handleRpc } from "../rpc.js";
-
-test("lists Paygrid MCP tools", async () => {
-  const result = await handleRpc(loadConfig(), { jsonrpc: "2.0", id: 1, method: "tools/list" });
-  assert.equal(result.id, 1);
-  assert.ok(result.result.tools.some((tool) => tool.name === "create_payment_request"));
-  assert.ok(result.result.tools.some((tool) => tool.name === "verify_payment"));
-  assert.ok(result.result.tools.some((tool) => tool.name === "get_agent_capabilities"));
-  assert.ok(result.result.tools.some((tool) => tool.name === "get_celo_defi_context"));
-  assert.ok(result.result.tools.some((tool) => tool.name === "quote_payment_request"));
-  assert.ok(result.result.tools.some((tool) => tool.name === "pay_payment_request"));
-  assert.ok(result.result.tools.some((tool) => tool.name === "create_gift"));
-  assert.ok(result.result.tools.some((tool) => tool.name === "verify_gift_claim"));
-  assert.ok(result.result.tools.some((tool) => tool.name === "get_gift_leaderboard"));
-  assert.ok(result.result.tools.some((tool) => tool.name === "get_treasury_quant_status"));
-  assert.ok(result.result.tools.some((tool) => tool.name === "close_treasury_quant_position"));
-  assert.ok(result.result.tools.some((tool) => tool.name === "close_all_treasury_quant_positions"));
+import { createMcpServer } from "../rpc.js";
+async function connected(run, config = loadConfig(), options = {}) {
+  const [a, b] = InMemoryTransport.createLinkedPair(),
+    server = createMcpServer(config, options),
+    client = new Client({ name: "test", version: "1.0" });
+  await server.connect(b);
+  await client.connect(a);
+  try {
+    return await run(client);
+  } finally {
+    await client.close();
+    await server.close();
+  }
+}
+test("official MCP SDK negotiates and lists all existing and x402 tools", async () => {
+  await connected(async (client) => {
+    assert.equal(client.getServerVersion().version, "0.2.0");
+    const result = await client.listTools(),
+      names = result.tools.map((t) => t.name);
+    for (const name of [
+      "create_payment_request",
+      "verify_payment",
+      "get_agent_capabilities",
+      "get_celo_defi_context",
+      "quote_payment_request",
+      "pay_payment_request",
+      "create_gift",
+      "close_all_treasury_quant_positions",
+      "pay_x402_endpoint",
+      "get_x402_capabilities",
+      "get_x402_payment_status",
+    ])
+      assert.ok(names.includes(name), name);
+  });
 });
-
-test("blocks remote write tools without API key", async () => {
-  const result = await handleRpc(
-    { ...loadConfig(), mcpApiKey: "secret" },
-    {
-      jsonrpc: "2.0",
-      id: 2,
-      method: "tools/call",
-      params: { name: "create_payment_request", arguments: {} },
+test("remote write tools require an API key", async () => {
+  await connected(
+    async (client) => {
+      await assert.rejects(
+        () =>
+          client.callTool({ name: "create_payment_request", arguments: {} }),
+        /API key/,
+      );
     },
+    loadConfig(),
     { remote: true, writeAuthorized: false },
   );
-  assert.equal(result.error.code, -32001);
 });
-
-test("accepts bearer or x-api-key for remote write auth", () => {
-  const config = { mcpApiKey: "secret" };
-  assert.equal(isWriteAuthorized(config, { authorization: "Bearer secret" }), true);
-  assert.equal(isWriteAuthorized(config, { "x-api-key": "secret" }), true);
-  assert.equal(isWriteAuthorized(config, { authorization: "Bearer nope" }), false);
+test("remote bearer and x-api-key authentication remain compatible", () => {
+  const cfg = { mcpApiKey: "secret" };
+  assert.equal(
+    isWriteAuthorized(cfg, { authorization: "Bearer secret" }),
+    true,
+  );
+  assert.equal(isWriteAuthorized(cfg, { "x-api-key": "secret" }), true);
+  assert.equal(isWriteAuthorized(cfg, { authorization: "Bearer nope" }), false);
 });
-
-test("returns Celo agent spend context", async () => {
-  const result = await handleRpc(loadConfig(), {
-    jsonrpc: "2.0",
-    id: 3,
-    method: "tools/call",
-    params: { name: "get_celo_defi_context", arguments: {} },
+test("input schemas reject paymentHeaders and missing idempotency before executing", async () => {
+  await connected(async (client) => {
+    for (const args of [
+      { url: "https://example.com" },
+      {
+        url: "https://example.com",
+        idempotencyKey: "operation-key-0001",
+        paymentHeaders: { evil: "value" },
+      },
+    ])
+      await assert.rejects(
+        () => client.callTool({ name: "pay_x402_endpoint", arguments: args }),
+        /input schema/,
+      );
   });
-  const payload = JSON.parse(result.result.content[0].text);
-  assert.equal(payload.chainId, 42220);
-  assert.equal(payload.tokens.USDC.address, "0xcebA9300f2b948710d2653dD7B07f33A8B32118C");
-  assert.equal(payload.status.current, "Paygrid quotes USDC/USDT/USDm swaps with Mento first and falls back to Uniswap when configured");
+});
+test("Celo context remains available without authentication", async () => {
+  await connected(async (client) => {
+    const result = await client.callTool({
+      name: "get_celo_defi_context",
+      arguments: {},
+    });
+    const value = JSON.parse(result.content[0].text);
+    assert.equal(value.chainId, 42220);
+    assert.equal(
+      value.tokens.USDC.address,
+      "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
+    );
+  });
+});
+test("MCP delegates payments to the fixed backend without forwarding its service credential upstream", async () => {
+  const original = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, init) => {
+    calls.push({ url: String(url), init });
+    return new Response(
+      JSON.stringify({ operationId: "op", state: "unknown", error: null }),
+      { status: 202 },
+    );
+  };
+  try {
+    await connected(
+      async (client) => {
+        const result = await client.callTool({
+          name: "pay_x402_endpoint",
+          arguments: {
+            url: "https://merchant.example/api",
+            idempotencyKey: "operation-key-0001",
+            preferredToken: "wMXN",
+          },
+        });
+        assert.equal(JSON.parse(result.content[0].text).state, "unknown");
+      },
+      {
+        ...loadConfig(),
+        backendUrl: "https://backend.example",
+        x402ExecutorKey: "executor",
+      },
+      { remote: true, writeAuthorized: true },
+    );
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, "https://backend.example/api/x402/pay");
+    assert.equal(calls[0].init.headers.Authorization, "Bearer executor");
+    assert.equal(
+      JSON.parse(calls[0].init.body).url,
+      "https://merchant.example/api",
+    );
+  } finally {
+    globalThis.fetch = original;
+  }
 });

@@ -81,7 +81,7 @@ User opens link → selects "Pay with mobile" → Fonbnk widget loads
 | Event Indexer | backend/src/indexer.ts | Listen to on-chain events |
 | Agent Core | agent/src/agent.ts | Vercel AI SDK agent with tools |
 | Agent Wallet | agent/src/wallet.ts | ERC-8004 wallet setup and management |
-| x402 Handler | agent/src/x402.ts | Pay and serve x402 endpoints |
+| x402 executor | backend/src/x402/ | Sign, settle, reserve budgets and reconcile; agent/MCP are authenticated clients |
 | Create Link UI | minipay/ | Payment link creation flow |
 | Pay Link UI | minipay/ | Payment page with crypto/fiat tabs |
 | History UI | minipay/ | Payment history |

@@ -6,7 +6,6 @@ import type { Env } from "../config/env.js";
 import type { AgentRow } from "../db/supabase.js";
 import { ApiError } from "../lib/errors.js";
 import { createErc8004AuthMiddleware, createErc8004SignedMessage, getAuthAgent } from "../middleware/erc8004-auth.js";
-import { createX402Middleware, getX402Proof } from "../middleware/x402.js";
 
 const env = {
   SUPABASE_URL: "https://example.supabase.co",
@@ -127,54 +126,4 @@ test("erc8004 auth middleware accepts signed path when request has query params"
   const body = (await res.json()) as { agentId: string; limit: string };
   assert.equal(body.agentId, fakeAgent.agent_id);
   assert.equal(body.limit, "20");
-});
-
-test("x402 middleware returns a payment challenge without proof", async () => {
-  const app = makeApp();
-  app.get("/api/x402/data", createX402Middleware(env), (c) => c.json({ ok: true }));
-
-  const res = await app.request("http://localhost/api/x402/data");
-  assert.equal(res.status, 402);
-  const body = (await res.json()) as {
-    error: string;
-    details: {
-      challenge: {
-        error: {
-          code: string;
-          details: {
-            resource: string;
-            amount: string;
-          };
-        };
-      };
-    };
-  };
-  assert.equal(body.error, "PAYMENT_REQUIRED");
-  assert.equal(body.details.challenge.error.code, "PAYMENT_REQUIRED");
-  assert.equal(body.details.challenge.error.details.resource, "/api/x402/data");
-  assert.equal(body.details.challenge.error.details.amount, "0.10");
-});
-
-test("x402 middleware accepts a well-formed proof", async () => {
-  const app = makeApp();
-  app.get("/api/x402/data", createX402Middleware(env), (c) => c.json({ ok: true, proof: getX402Proof(c) }));
-
-  const res = await app.request("http://localhost/api/x402/data", {
-    headers: {
-      "x-paygrid-x402-proof": JSON.stringify({
-        resource: "/api/x402/data",
-        chainId: 11142220,
-        token: "USDC",
-        amount: "0.10",
-        txHash: "0x2222222222222222222222222222222222222222222222222222222222222222",
-        payer: "0x1111111111111111111111111111111111111111",
-      }),
-    },
-  });
-
-  assert.equal(res.status, 200);
-  const body = (await res.json()) as { ok: boolean; proof: { resource: string; token: string } };
-  assert.equal(body.ok, true);
-  assert.equal(body.proof.resource, "/api/x402/data");
-  assert.equal(body.proof.token, "USDC");
 });

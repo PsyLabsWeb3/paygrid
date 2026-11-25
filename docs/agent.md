@@ -1,6 +1,6 @@
 # Agent Spec
 
-The Paygrid agent is an autonomous AI agent with an ERC-8004 identity that can create payment links, inspect link/payment status, pay x402 endpoints, and generate treasury summaries. It is built with the Vercel AI SDK, viem, and thirdweb/x402.
+The Paygrid agent is an autonomous AI agent with an ERC-8004 identity that can create payment links, inspect link/payment status, pay x402 endpoints, and generate treasury summaries. It is built with the Vercel AI SDK, viem, and the backend x402 v2 executor.
 
 This document is the implementation-facing spec for the agent runtime. It assumes the backend API is the standalone service in `backend/`.
 
@@ -14,7 +14,7 @@ This document is the implementation-facing spec for the agent runtime. It assume
 │                                                              │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌────────────┐ │
 │  │ Vercel AI SDK    │  │ x402 payer/server│  │ ERC-8004   │ │
-│  │ agent + tools    │  │ thirdweb/x402    │  │ identity   │ │
+│  │ agent + tools    │  │ central executor    │  │ identity   │ │
 │  └─────────┬────────┘  └─────────┬────────┘  └─────┬──────┘ │
 │            │                     │                  │        │
 │            ▼                     ▼                  ▼        │
@@ -48,7 +48,8 @@ The agent has two wallet roles per ERC-8004:
 | Role | Address | Purpose | Stored |
 |------|---------|---------|--------|
 | Owner | `0xD4683314A013792fe8840E4171dC4692E317617B` | Register agent, set metadata, authorize payment wallet | `AGENT_OWNER_PRIVATE_KEY` |
-| Payment | Separate address | Pay gas + txs, create links, pay x402 endpoints | `AGENT_PRIVATE_KEY` |
+| Agent identity | Separate address | Authenticate ordinary Paygrid operations | `AGENT_PRIVATE_KEY` |
+| x402 payer | Backend-only dedicated address | Sign policy-limited x402 payments | `X402_PAYER_PRIVATE_KEY` (backend only) |
 
 ### Boot flow
 
@@ -149,22 +150,11 @@ Implementation: aggregate from `GET /api/payments` + `GET /api/links`.
 
 ## x402 Integration
 
-### Agent as payer
-
-The agent uses `wrapFetchWithPayment` for protected third-party endpoints.
-
-```typescript
-import { wrapFetchWithPayment } from "thirdweb/x402";
-```
-
-### Agent as payee
-
-The backend already exposes a pay-per-task example endpoint at `GET /api/x402/data` with x402 challenge + proof handling.
-The agent runtime can consume that endpoint today.
-
-The agent can expose its own x402 endpoint once the agent runtime is implemented. Until then, the agent-side x402 server shape remains a future task and should not be treated as production-ready.
-
----
+The agent delegates payments to POST /api/x402/pay using X402_EXECUTOR_API_KEY.
+It never receives the dedicated payer key. Use payX402Endpoint with a stable idempotencyKey and query x402PaymentStatus after uncertain outcomes.
+The backend enforces network/token/merchant policies, shared budgets and idempotent recovery.
+X402 currencies are USDC, USDT and wMXN on mainnet; Sepolia supports USDC only.
+See [x402 operations](x402.md). Agent task APIs and native paid MCP tools remain future work.
 
 ## Environment Variables
 
@@ -174,7 +164,7 @@ AGENT_OWNER_PRIVATE_KEY=0x...
 BACKEND_URL=https://api.celopaygrid.xyz
 AGENT_API_KEY=sk_...
 CELO_RPC_URL=https://forno.celo.org
-THIRDWEB_SECRET_KEY=...
+X402_EXECUTOR_API_KEY=...
 ERC8004_AGENT_ID=9113
 ```
 

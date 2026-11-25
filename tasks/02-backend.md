@@ -8,7 +8,7 @@ Specs: [docs/api.md](../docs/api.md), [docs/data-model.md](../docs/data-model.md
 - Fase 1 completada
 - Fase 2 completada
 - Fase 3 completada
-- Fase 4 completada
+- Fase 4 implementada; canarios reales x402 y despliegue pendientes
 
 **Red de desarrollo:** Celo Sepolia (chainId `11142220`). Mainnet TBD.
 
@@ -67,7 +67,7 @@ Crear `backend/.env` (gitignored) y `backend/.env.example` (sin secretos).
 
 | Variable | Descripción |
 |----------|-------------|
-| `THIRDWEB_SECRET_KEY` | Facilitator x402 (si el backend lo expone) |
+| `X402_API_KEY` | Hosted Celo facilitator; server-only metered settlement key |
 
 ---
 
@@ -100,7 +100,7 @@ Crear `backend/.env` (gitignored) y `backend/.env.example` (sin secretos).
 
 ## Fase 4 — x402 + agentes
 
-- [x] x402 middleware — return 402 Payment Required for protected endpoints
+- [x] Durable x402 v2 seller/executor with standard headers and upfront settlement
 - [x] `GET /api/x402/data` — example pay-per-task endpoint
 - [x] ERC-8004 signature verification middleware for agent endpoints
 - [x] `GET /api/links` — list links for authenticated agent
@@ -112,3 +112,7 @@ Crear `backend/.env` (gitignored) y `backend/.env.example` (sin secretos).
 - [x] Actualizar [docs/data-model.md](../docs/data-model.md) con columna `on_chain_link_id`
 - [x] Completar [docs/erc8004-integration.md](../docs/erc8004-integration.md) con el formato signed payload
 - [x] Alinear [docs/deployment.md](../docs/deployment.md) con módulo `backend/` standalone
+
+## x402 production gate
+
+See docs/x402.md. Enable only after migration, read-only preflight and real network canaries. Keep signatures and payer keys in the backend, and retain worker reconciliation during rollback.

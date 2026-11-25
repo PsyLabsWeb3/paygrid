@@ -1,61 +1,46 @@
 # Paygrid MCP
 
-Paygrid MCP exposes Paygrid as agent spend infrastructure for builders and agents on Celo.
+Paygrid exposes its existing payment, gift and treasury tools through the official MCP SDK.
+Both local stdio and stateless Streamable HTTP are supported.
 
-## Local stdio
-
-```bash
-cd mcp
-npm install
+```sh
+npm ci
 npm run start:stdio
+# or
+npm run start:http
 ```
 
-Write tools require:
+Local ordinary write tools use AGENT_PRIVATE_KEY and ERC8004_AGENT_ID for existing backend authentication.
+Remote write tools require Authorization: Bearer PAYGRID_MCP_API_KEY or X-API-Key.
+Treasury administration also requires TREASURY_ADMIN_API_KEY in the server environment.
+Read-only discovery remains public.
 
-```bash
-BACKEND_URL=http://localhost:3001
-AGENT_PRIVATE_KEY=0x...
-ERC8004_AGENT_ID=...
-CHAIN_ID=11142220
+## x402 APIs
+
+- get_x402_capabilities: live backend readiness, currencies and prices.
+- pay_x402_endpoint: central executor payment; requires url and a stable idempotencyKey.
+- get_x402_payment_status: inspect an existing operationId without authorizing another payment.
+
+The MCP server needs X402_EXECUTOR_API_KEY, not the payer private key or facilitator key.
+The operator setup command creates an ignored .env.x402 client file for local use.
+Payment headers and signing/policy overrides are forbidden. Pending/unknown operations must reuse their original key or be queried.
+x402 payment support is advertised only when backend capability checks succeed.
+
+```json
+{
+  "name": "pay_x402_endpoint",
+  "arguments": {
+    "url": "https://api.celopaygrid.xyz/api/x402/data",
+    "preferredToken": "wMXN",
+    "idempotencyKey": "a-stable-operation-0001"
+  }
+}
 ```
 
-## Remote HTTP
+Use an official MCP client, initialize the connection, then list/call tools.
+HTTP clients must accept application/json and text/event-stream and carry the negotiated MCP-Protocol-Version.
+Endpoint: https://mcp.celopaygrid.xyz/mcp.
+GET /health and the /metadata, /.well-known/agent.json and /.well-known/paygrid-agent.json cards remain available.
+Keep SELF_VERIFICATION_STATUS pending until the current wallet completes Self verification.
 
-```bash
-cd mcp
-npm install
-PAYGRID_MCP_API_KEY=sk_... npm run start:http
-```
-
-Remote write tools require `Authorization: Bearer <PAYGRID_MCP_API_KEY>` or `X-API-Key`.
-
-Read-only tools can be called without a key.
-
-Treasury Quant Agent tools include status, positions and signal inspection.
-Pause, resume and manual-close tools additionally require
-`TREASURY_ADMIN_API_KEY` in the MCP service environment.
-
-## Public metadata
-
-Hosted deployments expose:
-
-```text
-GET /health
-GET /metadata
-GET /.well-known/paygrid-agent.json
-GET /.well-known/agent.json
-POST /mcp
-```
-
-## Self Protocol Agent ID
-
-The MCP metadata supports optional Self Protocol fields:
-
-```bash
-SELF_AGENT_ID=
-SELF_AGENT_ADDRESS=
-SELF_VERIFICATION_STATUS=pending
-SELF_VERIFICATION_URL=
-```
-
-Set `SELF_VERIFICATION_STATUS=verified` only after the Self App verification flow is completed for the current Paygrid mainnet agent wallet. When verified, the public metadata and `get_agent_capabilities` include `self-agent-id` in `supportedTrust`.
+See ../docs/x402.md for prices, limits, setup, migration, canaries and recovery.

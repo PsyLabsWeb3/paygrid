@@ -1,4 +1,6 @@
 import "dotenv/config";
+import { config as loadX402Env } from "dotenv";
+loadX402Env({path:process.env.X402_ENV_FILE??".env.x402"});
 import { z } from "zod";
 
 const optionalString = () =>
@@ -50,6 +52,17 @@ const optionalPrivateKey = () =>
   ).optional();
 
 const rawEnvSchema = z.object({
+  X402_SELLER_ENABLED: z.enum(["true", "false"]).optional(),
+  X402_PAYER_ENABLED: z.enum(["true", "false"]).optional(),
+  X402_PAY_TO: optionalAddress(),
+  X402_PAYER_ADDRESS: optionalAddress(),
+  X402_PAYER_PRIVATE_KEY: optionalPrivateKey(),
+  X402_API_KEY: optionalString(),
+  X402_EXECUTOR_API_KEY: optionalString(),
+  X402_ENCRYPTION_KEY: optionalString(),
+  X402_PUBLIC_API_URL: optionalUrl(),
+  X402_ASSET_CONFIG: optionalString(),
+  X402_MERCHANTS: optionalString(),
   SUPABASE_URL: z.string().url(),
   SUPABASE_SERVICE_ROLE_KEY: requiredString(),
   SUPABASE_ANON_KEY: optionalString(),

@@ -1,20 +1,27 @@
 {
   "name": "@paygrid/mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start:stdio": "node src/stdio.js",
     "start:http": "node src/http.js",
-    "test": "node --test src/__tests__/*.test.js"
+    "test": "node --test src/__tests__/*.test.js",
+    "check": "node --check src/http.js && node --check src/rpc.js && node --check src/stdio.js && node --check src/tools.js",
+    "x402:canary": "node src/canary.js"
   },
   "dependencies": {
-    "viem": "^2.52.2"
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "viem": "^2.52.2",
+    "zod": "4.6.7"
   },
   "overrides": {
     "ws": "^8.21.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.3"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

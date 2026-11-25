@@ -57,7 +57,7 @@ paygrid/
 
 - contracts/ — Smart contracts: PaygridRouter.sol (receives payment, reads its configured fee, sends the fee to treasury and the remainder to the recipient) and PaygridLink.sol (creates and manages payment links on-chain). Built with Foundry.
 - backend/ — REST API for payment link generation and management, webhook system for payment confirmation (including Fonbnk onramp webhooks), on-chain event indexer via Viem watchContractEvent, x402 protected endpoints for pay-per-task. Uses Supabase for data persistence and Privy for authentication.
-- agent/ — Autonomous AI agent with dedicated ERC-8004 wallet, Vercel AI SDK for reasoning and tools, thirdweb/x402 for autonomous payments, @chaoschain/sdk for on-chain identity registration.
+- agent/ — Autonomous AI agent with dedicated ERC-8004 wallet, Vercel AI SDK for reasoning and tools, an authenticated backend x402 v2 executor for autonomous payments, @chaoschain/sdk for on-chain identity registration.
 - minipay/ — Next.js MiniApp: MiniPay auto-connect, create payment link UI, pay a received link UI (crypto + Fonbnk fiat), payment history, MiniPay deeplinks for receipts and deposits.
 - docs/ — Technical specifications (architecture, contracts, API, data model). Read-only reference for agents and devs.
 - tasks/ — Active work items per module. Check these before starting any work.
@@ -70,7 +70,7 @@ The agent has a dedicated wallet (not a user wallet). It is:
 - Generated via generatePrivateKey() from viem/accounts
 - Private key stored in .env as AGENT_PRIVATE_KEY — never committed
 - Registered on-chain in ERC-8004 Identity Registry with its address in the metadata endpoints
-- Funded with USDC or USDm on Celo Mainnet to pay for x402 requests and gas
+- Used for existing ERC-8004 authenticated operations. x402 uses a separate backend-only X402_PAYER_PRIVATE_KEY wallet funded with USDC, USDT or wMXN.
 
 ---
 
@@ -109,7 +109,7 @@ Payers without crypto can settle payment links with local currency via Fonbnk.
 - Styles: Tailwind CSS
 - Contracts: Foundry (Solidity)
 - Agent: Vercel AI SDK
-- Agent payments: thirdweb/x402
+- Agent payments: backend x402 v2 executor; official @x402/* packages, dedicated signer and shared budgets
 - Agent identity: @chaoschain/sdk (ERC-8004)
 - Database: Supabase (PostgreSQL)
 - Auth: Privy
@@ -172,3 +172,7 @@ npx skills add celo-org/celopedia-skills
 - docs/data-model.md — Supabase schema
 - tasks/ — active work items per module
 - .agents/skills/celopedia-skill/ — full Celo ecosystem context
+
+## x402 v2 operations
+
+Read docs/x402.md before changing API payments. Seller/payer flags default off. Only the backend holds X402_PAYER_PRIVATE_KEY; MCP and CLI use X402_EXECUTOR_API_KEY. Never accept the removed JSON proof header, log signatures, clear unknown reservations manually or replace an uncertain intent with a new idempotency key. Keep reconciliation active during rollback.

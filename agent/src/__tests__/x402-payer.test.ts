@@ -1,97 +1,67 @@
+import test from "node:test";
 import assert from "node:assert/strict";
-import test, { before } from "node:test";
-import { generatePrivateKey } from "viem/accounts";
-
-process.env.AGENT_PRIVATE_KEY = generatePrivateKey();
-process.env.ERC8004_AGENT_ID = "9113";
+import { fetchX402Endpoint } from "../x402-payer";
+process.env.X402_EXECUTOR_API_KEY = "executor-test";
 process.env.BACKEND_URL = "http://localhost:3001";
-process.env.CHAIN_ID = "11142220";
-
-let fetchX402Endpoint: typeof import("../x402-payer").fetchX402Endpoint;
-const testTxHash = `0x${"22".repeat(32)}` as `0x${string}`;
-
-before(async () => {
-  ({ fetchX402Endpoint } = await import("../x402-payer"));
-});
-
-function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
-test("fetchX402Endpoint completes challenge, proof, and retry flow", async () => {
+test("agent delegates x402 to the fixed backend and preserves idempotency", async () => {
   const calls: Array<{ url: string; init?: RequestInit }> = [];
-  const fetchImpl = (async (url: RequestInfo | URL, init?: RequestInit) => {
-    calls.push({ url: url.toString(), init });
-
-    if (calls.length === 1) {
-      return jsonResponse({
-        error: {
-          code: "PAYMENT_REQUIRED",
-          message: "Payment required",
-          details: {
-            challenge: {
-              error: {
-                code: "PAYMENT_REQUIRED",
-                details: {
-                  resource: "/api/x402/data",
-                  chainId: 11142220,
-                  token: "USDC",
-                  amount: "0.10",
-                  proofHeader: "x-paygrid-x402-proof",
-                },
-              },
-            },
-          },
-        },
-      }, 402);
-    }
-
-    const proof = JSON.parse((init?.headers as Record<string, string>)["x-paygrid-x402-proof"]);
-    return jsonResponse({ ok: true, proof });
+  const fetchImpl = (async (url, init) => {
+    calls.push({ url: String(url), init });
+    return new Response(
+      JSON.stringify({
+        operationId: "op",
+        state: "unknown",
+        paid: false,
+        payment: null,
+        result: null,
+        resultExpired: false,
+        error: null,
+      }),
+      { status: 202 },
+    );
   }) as typeof fetch;
-
-  const result = await fetchX402Endpoint({
+  const options = {
+    url: "https://merchant.example/data",
+    preferredToken: "wMXN" as const,
+    idempotencyKey: "stable-operation-0001",
     fetchImpl,
-    txHash: testTxHash,
-  });
-
+  };
+  const first = await fetchX402Endpoint(options);
+  await fetchX402Endpoint(options);
+  assert.equal(first.state, "unknown");
   assert.equal(calls.length, 2);
-  assert.equal(result.proof.resource, "/api/x402/data");
-  assert.equal(result.proof.chainId, 11142220);
-  assert.equal(result.proof.token, "USDC");
-  assert.equal(result.proof.amount, "0.10");
-  assert.equal(result.trace.txHash, testTxHash);
+  for (const call of calls) {
+    assert.equal(call.url, "http://localhost:3001/api/x402/pay");
+    const headers = new Headers(call.init?.headers);
+    assert.equal(headers.get("Authorization"), "Bearer executor-test");
+    assert.equal(headers.get("Idempotency-Key"), options.idempotencyKey);
+    const body = JSON.parse(String(call.init?.body));
+    assert.equal(body.url, options.url);
+    assert.equal(body.preferredToken, "wMXN");
+    assert.equal("paymentHeaders" in body, false);
+  }
 });
-
-test("fetchX402Endpoint reports invalid proof retries", async () => {
-  const fetchImpl = (async (_url: RequestInfo | URL, init?: RequestInit) => {
-    if (!init?.headers) {
-      return jsonResponse({
-        error: {
-          details: {
-            challenge: {
-              error: {
-                details: {
-                  resource: "/api/x402/data",
-                  chainId: 11142220,
-                  token: "USDC",
-                  amount: "0.10",
-                },
-              },
-            },
-          },
-        },
-      }, 402);
-    }
-
-    return jsonResponse({ error: { code: "FORBIDDEN", message: "x402 proof resource mismatch" } }, 403);
-  }) as typeof fetch;
-
+test("executor failures are surfaced without automatic payment retries", async () => {
+  let calls = 0;
   await assert.rejects(
-    () => fetchX402Endpoint({ fetchImpl, maxRetries: 0 }),
-    /x402 proof rejected with 403/,
+    () =>
+      fetchX402Endpoint({
+        idempotencyKey: "stable-operation-0001",
+        fetchImpl: (async () => {
+          calls++;
+          return new Response(
+            JSON.stringify({ error: { message: "Budget exceeded" } }),
+            { status: 409 },
+          );
+        }) as typeof fetch,
+      }),
+    /Budget exceeded/,
+  );
+  assert.equal(calls, 1);
+});
+test("agent rejects missing idempotency before network access", async () => {
+  await assert.rejects(
+    () => fetchX402Endpoint({ idempotencyKey: "" }),
+    /stable Idempotency/,
   );
 });

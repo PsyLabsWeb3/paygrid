@@ -41,7 +41,7 @@ X-API-Key: <PAYGRID_MCP_API_KEY>
 | `verify_payment` | public | Verify whether a payment request is paid. |
 | `list_agent_requests` | API key | List requests owned by the configured ERC-8004 agent. |
 | `create_card_checkout` | API key | Create a card-funded checkout session for an existing request. |
-| `pay_x402_endpoint` | API key | Call an x402-protected endpoint with caller-provided payment headers. |
+| `pay_x402_endpoint` | API key | Pay an authorized HTTP API through the central executor; requires url and a stable idempotencyKey. |
 | `get_supported_stablecoins` | public | List supported Celo stablecoins and configured addresses. |
 | `get_agent_capabilities` | public | Return endpoints, auth model, current flows and guardrails. |
 | `get_agent_connection_guide` | public | Return MCP connection examples for remote HTTP and local stdio adapters. |
@@ -140,3 +140,5 @@ curl -X POST https://mcp.celopaygrid.xyz/mcp \
 ```
 
 Use the returned config as the starting point for remote MCP-capable agent runtimes.
+
+The get_x402_capabilities tool reports enabled currencies and prices. get_x402_payment_status inspects an existing operation without signing again. Native paid MCP tools are not enabled.

@@ -145,6 +145,8 @@ server {
     location / {
         proxy_pass http://127.0.0.1:3001;
         proxy_http_version 1.1;
+        proxy_buffering off;
+        proxy_read_timeout 180s;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -163,6 +165,8 @@ server {
     location / {
         proxy_pass http://127.0.0.1:3002;
         proxy_http_version 1.1;
+        proxy_buffering off;
+        proxy_read_timeout 180s;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -351,3 +355,7 @@ Mainnet payment:
 4. Create or reuse a link requesting USDC and quote payment with USDT.
 5. Confirm `protocol = mento` and complete the swap-enabled payment.
 4. Confirm MCP `verify_payment` returns `paid: true`.
+
+## x402 deployment
+
+Follow [x402 operations](x402.md). Apply the new migration before enabling seller/payer flags. Deploy backend, mcp-http and x402-worker; only backend receives the dedicated payer key. Keep the worker active during rollback. Real Sepolia and mainnet canaries are mandatory before announcing production readiness.

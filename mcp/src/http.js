@@ -1,11 +1,17 @@
 import http from "node:http";
+import { pathToFileURL } from "node:url";
+import { toolDefinitions } from "./tools.js";
 import { loadConfig, isWriteAuthorized } from "./config.js";
-import { handleRpc } from "./rpc.js";
+import { createMcpServer } from "./rpc.js";
+import { LATEST_PROTOCOL_VERSION } from "@modelcontextprotocol/sdk/types.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { paygridRequest } from "./paygrid-client.js";
 import { createAgentSigner } from "./paygrid-client.js";
 
-const config = loadConfig();
-
-function publicAgentMetadata() {
+async function publicAgentMetadata(config) {
+  const x402 = await paygridRequest(config, "/api/x402/capabilities").catch(
+    () => ({ ready: false, sellerEnabled: false, payerEnabled: false }),
+  );
   const signer = createAgentSigner(config);
   const address = config.agentAddress || signer?.address || null;
   const agentId = config.agentId || null;
@@ -18,32 +24,7 @@ function publicAgentMetadata() {
   const appUrl = "https://www.celopaygrid.xyz";
   const docsUrl = "https://web.celopaygrid.xyz/docs/overview.html";
   const iconUrl = "https://web.celopaygrid.xyz/PaygridIconLime.png";
-  const mcpTools = [
-    "get_treasury_quant_status",
-    "list_treasury_quant_positions",
-    "list_treasury_quant_signals",
-    "pause_treasury_quant_agent",
-    "resume_treasury_quant_agent",
-    "close_treasury_quant_position",
-    "close_all_treasury_quant_positions",
-    "create_gift",
-    "quote_gift_funding",
-    "prepare_gift_funding",
-    "get_gift",
-    "verify_gift_claim",
-    "prepare_gift_refund",
-    "get_gift_leaderboard",
-    "create_payment_request",
-    "verify_payment",
-    "list_agent_requests",
-    "create_card_checkout",
-    "pay_x402_endpoint",
-    "get_supported_stablecoins",
-    "get_agent_capabilities",
-    "get_agent_connection_guide",
-    "get_celo_defi_context",
-    "treasury_report",
-  ];
+  const mcpTools = toolDefinitions.map((t) => t.name);
   const selfProtocol = {
     status: config.selfVerificationStatus || "pending",
     agentId: config.selfAgentId || null,
@@ -52,7 +33,7 @@ function publicAgentMetadata() {
   };
   const supportedTrust = [
     "erc8004",
-    "x402",
+    ...(x402.ready ? ["x402"] : []),
     ...(selfProtocol.status === "verified" ? ["self-agent-id"] : []),
   ];
 
@@ -63,9 +44,9 @@ function publicAgentMetadata() {
       "Celo PayGrid is a payment execution, settlement verification and business workflow layer for AI agents on Celo Mainnet. Through a remote MCP endpoint, agents can create payment requests, coordinate stablecoin payment workflows, track activity, verify settlement with onchain evidence, and connect payments to agentic collections, ERP/CRM reconciliation and x402-ready commerce flows.",
     image: iconUrl,
     url: appUrl,
-    version: "0.1.0",
+    version: "0.2.0",
     active: true,
-    x402Support: true,
+    x402Support: !!x402.ready,
     provider: {
       organization: "Kilauea Tec Lab / Celo PayGrid",
       name: "Kilauea Tec Lab / Celo PayGrid",
@@ -104,7 +85,7 @@ function publicAgentMetadata() {
         name: "MCP",
         type: "mcp",
         endpoint: mcpEndpoint,
-        version: "2025-06-18",
+        version: LATEST_PROTOCOL_VERSION,
         transport: "Streamable HTTP",
         mcpTools,
       },
@@ -116,73 +97,109 @@ function publicAgentMetadata() {
         description: "Live MCP health and Celo chain status.",
       },
       { name: "docs", type: "docs", endpoint: docsUrl },
-      ...(address ? [{ name: "DID", type: "did", endpoint: `did:pkh:${chainRef}:${address}`, version: "v1" }] : []),
+      ...(address
+        ? [
+            {
+              name: "DID",
+              type: "did",
+              endpoint: `did:pkh:${chainRef}:${address}`,
+              version: "v1",
+            },
+          ]
+        : []),
     ],
     skills: [
       {
         id: "treasury_quant_agent",
         name: "Treasury Quant Agent",
-        description: "Consumes TradingView LONG signals, routes guarded CELO, XAUt0, ETH, BTC and EURm swaps, and closes positions through verifiable TP/SL policies.",
+        description:
+          "Consumes TradingView LONG signals, routes guarded CELO, XAUt0, ETH, BTC and EURm swaps, and closes positions through verifiable TP/SL policies.",
         tags: ["defai", "treasury", "tradingview", "risk-controls", "celo"],
       },
       {
         id: "claimable_gifts",
         name: "Claimable Stablecoin Gifts",
-        description: "Create personal gifts, route funding through supported stablecoins and verify claims on Celo.",
-        tags: ["gifts", "referrals", "stablecoins", "agent-to-human", "minipay"],
+        description:
+          "Create personal gifts, route funding through supported stablecoins and verify claims on Celo.",
+        tags: [
+          "gifts",
+          "referrals",
+          "stablecoins",
+          "agent-to-human",
+          "minipay",
+        ],
       },
       {
         id: "digital_payments",
         name: "Digital Payments",
-        description: "Create and verify stablecoin payment requests on Celo for agent-to-human and business workflows.",
-        tags: ["finance-and-business", "finance", "digital-payments", "stablecoins", "celo"],
+        description:
+          "Create and verify stablecoin payment requests on Celo for agent-to-human and business workflows.",
+        tags: [
+          "finance-and-business",
+          "finance",
+          "digital-payments",
+          "stablecoins",
+          "celo",
+        ],
       },
       {
         id: "tool_interaction_automation_workflow_automation",
         name: "Workflow Automation",
-        description: "Coordinate payment request creation, activity tracking and settlement verification through MCP.",
+        description:
+          "Coordinate payment request creation, activity tracking and settlement verification through MCP.",
         tags: ["tool-interaction", "automation", "workflow-automation", "mcp"],
       },
       {
         id: "business_collections",
         name: "Agentic Collections",
-        description: "Generate and track payment requests for invoices, customer balances and ERP/CRM collections workflows.",
+        description:
+          "Generate and track payment requests for invoices, customer balances and ERP/CRM collections workflows.",
         tags: ["finance", "collections", "erp", "crm", "business-automation"],
       },
       {
         id: "business_reconciliation",
         name: "Payment Reconciliation",
-        description: "Connect verified payments to invoices, orders, customers and business records.",
+        description:
+          "Connect verified payments to invoices, orders, customers and business records.",
         tags: ["finance", "accounting", "reconciliation", "erp"],
       },
       {
         id: "smart_contracts",
         name: "Smart Contracts",
-        description: "Uses Celo Mainnet contracts and ERC-8004 identity for verifiable agent payment workflows.",
+        description:
+          "Uses Celo Mainnet contracts and ERC-8004 identity for verifiable agent payment workflows.",
         tags: ["technology", "blockchain", "smart-contracts", "erc-8004"],
       },
       {
         id: "x402_ready_commerce",
         name: "x402-ready Commerce",
-        description: "Prepare payment flows for HTTP-native paid APIs and agent commerce.",
+        description:
+          "Prepare payment flows for HTTP-native paid APIs and agent commerce.",
         tags: ["x402", "api-monetization", "agent-commerce"],
       },
       {
         id: "question_answering",
         name: "Question Answering",
-        description: "Answer questions about payment status, supported stablecoins, agent capabilities and settlement evidence.",
-        tags: ["natural-language-processing", "information-retrieval-and-synthesis", "question-answering"],
+        description:
+          "Answer questions about payment status, supported stablecoins, agent capabilities and settlement evidence.",
+        tags: [
+          "natural-language-processing",
+          "information-retrieval-and-synthesis",
+          "question-answering",
+        ],
       },
       {
         id: "problem_solving",
         name: "Problem Solving",
-        description: "Resolve payment status, token support, checkout preparation and verification issues.",
+        description:
+          "Resolve payment status, token support, checkout preparation and verification issues.",
         tags: ["analytical-and-logical-reasoning", "problem-solving"],
       },
       {
         id: "agent_commerce",
         name: "Agent Commerce",
-        description: "Enable agents to transact with freelancers, service providers, businesses and agent-enabled systems.",
+        description:
+          "Enable agents to transact with freelancers, service providers, businesses and agent-enabled systems.",
         tags: ["agent-commerce", "agent-to-human", "payments", "celo"],
       },
     ],
@@ -190,7 +207,9 @@ function publicAgentMetadata() {
       ...(agentId
         ? [
             {
-              agentId: Number.isNaN(Number(agentId)) ? agentId : Number(agentId),
+              agentId: Number.isNaN(Number(agentId))
+                ? agentId
+                : Number(agentId),
               agentRegistry: `${chainRef}:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`,
             },
           ]
@@ -208,18 +227,29 @@ function publicAgentMetadata() {
         : []),
       {
         type: "settlement-verification",
-        description: "Payment requests and receipts are verified against Celo Mainnet transaction evidence.",
+        description:
+          "Payment requests and receipts are verified against Celo Mainnet transaction evidence.",
       },
-      { type: "x402", description: "x402-ready payment workflows for agent commerce and paid API interactions." },
+      {
+        type: "x402",
+        description:
+          "x402-ready payment workflows for agent commerce and paid API interactions.",
+      },
     ],
     contracts: {
       "paygridLink.celoMainnet": "0x31Aa9Ba23e4CAC3f41d88fb1C904067c0b3dda89",
-      "paygridRouterV2.celoMainnet": "0x8d290c97100f0e87e04Efd1a790F27004fA3f08B",
+      "paygridRouterV2.celoMainnet":
+        "0x8d290c97100f0e87e04Efd1a790F27004fA3f08B",
       "treasurySafe.celoMainnet": "0xc0C019DCeCE7a3a235Ab520F394A57c132F90cD6",
-      ...(config.giftVaultAddress ? { "paygridGiftVault.celoMainnet": config.giftVaultAddress } : {}),
-      ...(config.giftRouterAddress ? { "paygridGiftRouter.celoMainnet": config.giftRouterAddress } : {}),
+      ...(config.giftVaultAddress
+        ? { "paygridGiftVault.celoMainnet": config.giftVaultAddress }
+        : {}),
+      ...(config.giftRouterAddress
+        ? { "paygridGiftRouter.celoMainnet": config.giftRouterAddress }
+        : {}),
     },
-    framework: "Node.js MCP HTTP server, Hono/TypeScript backend, Foundry smart contracts, Supabase indexer, Next.js MiniPay checkout",
+    framework:
+      "Node.js MCP HTTP server, Hono/TypeScript backend, Foundry smart contracts, Supabase indexer, Next.js MiniPay checkout",
     capabilities: [
       "stablecoin-payment-requests",
       "claimable-stablecoin-gifts",
@@ -238,17 +268,20 @@ function publicAgentMetadata() {
     tools: mcpTools,
     extensions: {
       x402: {
-        spec: "https://github.com/coinbase/x402",
-        currency: "USDC",
+        ...x402,
+        spec: "https://github.com/x402-foundation/x402",
+        currencies: x402.assets?.map((a) => a.token) ?? [],
         chain: "Celo",
-        network: "celo",
-        description: "Paygrid supports x402-ready payment workflows for agent commerce and paid API interactions.",
+        network: chainRef,
+        description:
+          "Paygrid supports x402-ready payment workflows for agent commerce and paid API interactions.",
       },
       mcp: {
         endpoint: mcpEndpoint,
         discovery: metadataEndpoint,
         transport: "Streamable HTTP",
-        description: "Remote MCP endpoint for payment request creation, activity tracking and settlement verification.",
+        description:
+          "Remote MCP endpoint for payment request creation, activity tracking and settlement verification.",
       },
       erc8004: {
         chainId,
@@ -266,7 +299,7 @@ function publicAgentMetadata() {
       "celo",
       "stablecoins",
       "mcp",
-      "x402",
+      ...(x402.ready ? ["x402"] : []),
       "erc-8004",
       "self-protocol",
       "agent-payments",
@@ -296,55 +329,92 @@ function readBody(req) {
   });
 }
 
-const server = http.createServer(async (req, res) => {
-  res.setHeader("access-control-allow-origin", "*");
-  res.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
-  res.setHeader("access-control-allow-headers", "content-type,authorization,x-api-key");
+export function createHttpServer(config = loadConfig()) {
+  return http.createServer(async (req, res) => {
+    res.setHeader("access-control-allow-origin", "*");
+    res.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
+    res.setHeader(
+      "access-control-allow-headers",
+      "content-type,authorization,x-api-key,mcp-protocol-version,mcp-session-id",
+    );
 
-  if (req.method === "OPTIONS") {
-    res.writeHead(204);
-    res.end();
-    return;
-  }
+    if (req.method === "OPTIONS") {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
 
-  if (req.method === "GET" && req.url === "/health") {
-    res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ ok: true, service: "paygrid-mcp", chainId: config.chainId }));
-    return;
-  }
+    if (req.method === "GET" && req.url === "/health") {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(
+        JSON.stringify({
+          ok: true,
+          service: "paygrid-mcp",
+          chainId: config.chainId,
+        }),
+      );
+      return;
+    }
 
-  if (
-    req.method === "GET" &&
-    (req.url === "/metadata" ||
-      req.url === "/.well-known/paygrid-agent.json" ||
-      req.url === "/.well-known/agent.json")
-  ) {
-    res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify(publicAgentMetadata()));
-    return;
-  }
+    if (
+      req.method === "GET" &&
+      (req.url === "/metadata" ||
+        req.url === "/.well-known/paygrid-agent.json" ||
+        req.url === "/.well-known/agent.json")
+    ) {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify(await publicAgentMetadata(config)));
+      return;
+    }
 
-  if (req.method !== "POST" || req.url !== "/mcp") {
-    res.writeHead(404, { "content-type": "application/json" });
-    res.end(JSON.stringify({ error: "not_found" }));
-    return;
-  }
+    if (req.url !== "/mcp") {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "not_found" }));
+      return;
+    }
 
-  try {
-    const body = await readBody(req);
-    const message = JSON.parse(body);
-    const result = await handleRpc(config, message, {
+    if (req.headers.origin && req.headers.origin !== config.publicBaseUrl) {
+      res.writeHead(403);
+      res.end();
+      return;
+    }
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+      enableJsonResponse: true,
+    });
+    const mcp = createMcpServer(config, {
       remote: true,
       writeAuthorized: isWriteAuthorized(config, req.headers),
     });
-    res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify(result));
-  } catch (error) {
-    res.writeHead(400, { "content-type": "application/json" });
-    res.end(JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }));
-  }
-});
-
-server.listen(config.httpPort, "0.0.0.0", () => {
-  console.log(`Paygrid MCP HTTP listening on http://0.0.0.0:${config.httpPort}`);
-});
+    res.on("close", () => {
+      void transport.close();
+      void mcp.close();
+    });
+    try {
+      await mcp.connect(transport);
+      const body =
+        req.method === "POST" ? JSON.parse(await readBody(req)) : undefined;
+      await transport.handleRequest(req, res, body);
+    } catch {
+      if (!res.headersSent) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(
+          JSON.stringify({
+            jsonrpc: "2.0",
+            id: null,
+            error: { code: -32700, message: "Invalid MCP request" },
+          }),
+        );
+      }
+    }
+  });
+}
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  const config = loadConfig();
+  createHttpServer(config).listen(config.httpPort, "0.0.0.0", () =>
+    console.log(`Paygrid MCP HTTP listening on port ${config.httpPort}`),
+  );
+}

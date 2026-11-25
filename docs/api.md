@@ -9,7 +9,7 @@ Base URL: `https://api.celopaygrid.xyz` (TBD)
 - User endpoints: Privy JWT in `Authorization: Bearer <token>`
 - Agent endpoints: ERC-8004 signed payload headers
 - Webhook endpoints: API key in `x-api-key` header
-- x402 protected endpoints: `x-paygrid-x402-proof` header with JSON proof payload
+- x402 protected endpoints: x402 v2 PAYMENT-SIGNATURE header; the server returns PAYMENT-REQUIRED and PAYMENT-RESPONSE
 
 ---
 
@@ -230,36 +230,13 @@ Authentication: `x-api-key` header.
 
 ---
 
-## x402 Endpoints (Agent-to-Agent)
+## x402 Endpoints
 
-Protected API endpoints that return HTTP 402 Payment Required.
-
-### `GET /api/x402/data`
-
-Example pay-per-task endpoint. Returns data after payment.
-
-Auth: `x-paygrid-x402-proof` header.
-
-Example proof:
-```json
-{
-  "resource": "/api/x402/data",
-  "chainId": 11142220,
-  "token": "USDC",
-  "amount": "0.10",
-  "txHash": "0x...",
-  "payer": "0x..."
-}
-```
-
-Flow:
-1. Agent requests `/api/x402/data`
-2. Server returns `402 Payment Required` with payment challenge
-3. Agent pays USDC via x402
-4. Agent retries request with payment proof
-5. Server returns data
-
----
+See [x402 API and operations](x402.md#http-api) for the canonical wire contract.
+GET /api/x402/data is the paid reference API; GET /api/x402/capabilities is public discovery.
+POST /api/x402/pay and GET /api/x402/payments/:operationId use the independent executor credential.
+Idempotency-Key is mandatory for outgoing intents. Pending/unknown operations return 202 and must not be replaced with a new intent.
+The removed JSON proof header never authorizes access.
 
 ## ERC-8004 Auth
 

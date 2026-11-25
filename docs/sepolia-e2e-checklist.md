@@ -76,7 +76,7 @@ Record every real transaction or externally visible result.
 | Agent lists owned links | | | | |
 | Agent lists payment history | | | | |
 | Agent pays x402 endpoint | | | | |
-| x402 proof verified by backend | | | | |
+| x402 v2 settlement and exact transfer verified by backend | | | | |
 | Fonbnk config fetch | | | | |
 | Fonbnk sandbox webhook | | Provider/session ID: | | |
 | `payWithFiat` settlement | | | | |
@@ -293,7 +293,9 @@ Optional but recommended:
 
 | Gap | Owner | Target date | Status |
 |-----|-------|-------------|--------|
-| x402 proof does not yet verify payment on-chain | | | |
+| x402 real canary requires facilitator key and funded dedicated payer | | | |
 | MiniPay frontend is not implemented | | | |
 | Fonbnk needs sandbox/full settlement validation | | | |
 | Mainnet deployment scripts need separate config | | | |
+
+For current x402 v2 setup and three-asset validation, follow [x402 operations](x402.md). Sepolia only offers USDC; USDT and wMXN require fork tests and mainnet canaries.

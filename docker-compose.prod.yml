@@ -14,6 +14,8 @@ services:
     restart: unless-stopped
     env_file:
       - ./backend/.env
+      - path: ./backend/.env.x402
+        required: false
     environment:
       NODE_ENV: production
       PORT: 3001
@@ -53,6 +55,8 @@ services:
     restart: unless-stopped
     env_file:
       - ./mcp/.env
+      - path: ./mcp/.env.x402
+        required: false
     environment:
       NODE_ENV: production
       BACKEND_URL: http://backend:3001
@@ -72,3 +76,20 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+
+  x402-worker:
+    <<: *backend-image
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+      - path: ./backend/.env.x402.worker
+        required: false
+    environment:
+      NODE_ENV: production
+      X402_SELLER_ENABLED: "false"
+      X402_PAYER_ENABLED: "false"
+      X402_ENV_FILE: /nonexistent-x402-env
+    command: ["npm", "run", "x402:worker:start"]
+    depends_on:
+      backend:
+        condition: service_healthy

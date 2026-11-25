@@ -51,6 +51,8 @@ export async function paygridRequest(config, path, init = {}, options = {}) {
 
   const response = await fetch(url.toString(), {
     ...init,
+    redirect: "error",
+    signal: AbortSignal.timeout(120_000),
     method,
     headers,
   });

@@ -75,3 +75,8 @@ contracts/broadcast/
 contracts/out/
 contracts/cache/
 contracts/deploy_output.txt
+
+# Dedicated x402 secrets (examples remain tracked)
+.env.x402
+.env.x402.worker
+x402-canary-evidence*.json

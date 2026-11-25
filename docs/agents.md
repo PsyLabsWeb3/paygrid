@@ -233,3 +233,7 @@ Planned:
 - Token allowlists.
 - Merchant/request allowlists.
 - Max slippage and max transaction size.
+
+## x402 v2 payments
+
+API payments are executed centrally with X402_EXECUTOR_API_KEY. Read capabilities before paying and reuse each intent idempotency key during recovery. No x402 payer key is present in MCP or the CLI agent. See [operations](x402.md).

@@ -6,20 +6,27 @@
   "scripts": {
     "start": "ts-node src/index.ts",
     "dev": "ts-node src/index.ts",
-    "test": "node --test -r ts-node/register src/__tests__/*.test.ts"
+    "test": "node --test -r ts-node/register src/__tests__/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.65",
+    "@ai-sdk/openai": "3.0.145",
     "@selfxyz/agent-sdk": "^0.2.1",
-    "ai": "^6.0.191",
+    "ai": "6.0.336",
     "dotenv": "^16.4.5",
-    "thirdweb": "^5.120.0",
-    "viem": "^2.50.4",
-    "zod": "^4.4.3"
+    "viem": "2.52.2",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.5"
+    "typescript": "5.9.3"
+  },
+  "overrides": {
+    "ws": "^8.21.1"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

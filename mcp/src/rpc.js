@@ -1,48 +1,61 @@
-import { callTool, getToolDefinition, listTools } from "./tools.js";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  McpError,
+  ErrorCode,
+} from "@modelcontextprotocol/sdk/types.js";
+import { AjvJsonSchemaValidator } from "@modelcontextprotocol/sdk/validation/ajv";
+import {
+  callTool,
+  getToolDefinition,
+  listTools,
+  toolDefinitions,
+} from "./tools.js";
 
-function response(id, result) {
-  return { jsonrpc: "2.0", id, result };
-}
-
-function errorResponse(id, code, message) {
-  return { jsonrpc: "2.0", id, error: { code, message } };
-}
-
-export async function handleRpc(config, message, options = {}) {
-  if (!message || typeof message !== "object") {
-    return errorResponse(null, -32600, "Invalid request");
-  }
-
-  const { id, method, params } = message;
-  if (id === undefined && method?.startsWith("notifications/")) {
-    return null;
-  }
-
-  try {
-    if (method === "initialize") {
-      return response(id, {
-        protocolVersion: "2024-11-05",
-        capabilities: { tools: {} },
-        serverInfo: { name: "paygrid-mcp", version: "0.1.0" },
-      });
+const validator = new AjvJsonSchemaValidator();
+const inputs = new Map(
+  toolDefinitions.map((tool) => [
+    tool.name,
+    validator.getValidator(tool.inputSchema),
+  ]),
+);
+export function createMcpServer(config, options = {}) {
+  const server = new Server(
+    { name: "paygrid-mcp", version: "0.2.0" },
+    { capabilities: { tools: {} } },
+  );
+  server.setRequestHandler(ListToolsRequestSchema, async () => listTools());
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const tool = getToolDefinition(request.params.name);
+    if (!tool) throw new McpError(ErrorCode.InvalidParams, "Unknown tool");
+    if (tool.write && options.remote && !options.writeAuthorized)
+      throw new McpError(
+        -32001,
+        "Write tool requires a valid Paygrid MCP API key",
+      );
+    const args = request.params.arguments ?? {},
+      checked = inputs.get(tool.name)(args);
+    if (!checked.valid)
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        "Tool arguments do not match the published input schema",
+      );
+    try {
+      const result = await callTool(config, tool.name, args);
+      return result;
+    } catch (error) {
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text:
+              error instanceof Error ? error.message : "Tool execution failed",
+          },
+        ],
+      };
     }
-
-    if (method === "tools/list") {
-      return response(id, listTools());
-    }
-
-    if (method === "tools/call") {
-      const name = params?.name;
-      const tool = getToolDefinition(name);
-      if (!tool) return errorResponse(id, -32602, `Unknown tool: ${name}`);
-      if (tool.write && options.remote && !options.writeAuthorized) {
-        return errorResponse(id, -32001, "Write tool requires a valid Paygrid MCP API key");
-      }
-      return response(id, await callTool(config, name, params?.arguments ?? {}));
-    }
-
-    return errorResponse(id, -32601, `Method not found: ${method}`);
-  } catch (error) {
-    return errorResponse(id, -32000, error instanceof Error ? error.message : "Unexpected MCP error");
-  }
+  });
+  return server;
 }

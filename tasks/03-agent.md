@@ -13,7 +13,7 @@ Fuente de verdad de integración:
 - Fase 1 completada: wallets + identidad ERC-8004.
 - Fase 2 completada: runtime base del agente.
 - Fase 3 completada: tools para backend actual.
-- Fase 4 completada: x402 payer para el endpoint backend de ejemplo.
+- Fase 4 implementada: ejecutor x402 v2; canarios reales pendientes de credenciales y fondos.
 - Fase 5 pendiente: x402 server propio / agent exposure.
 
 **Resumen:** el backend ya expone las APIs que el agente consume. El agente ya tiene cliente x402 payer para el endpoint de ejemplo; lo pendiente es exponer un endpoint x402 propio, observabilidad completa y validación operativa.
@@ -112,38 +112,15 @@ Construir un runtime de agente que:
 
 ---
 
-## Fase 4 — x402 payer
+## Fase 4 — x402 v2 payer
 
-**Meta:** permitir que el agente pague endpoints protegidos.
+- [x] Replace thirdweb and simulated proof generation with an authenticated client of the backend executor.
+- [x] Stable idempotency keys and payment status/capability tools.
+- [x] Backend policy, shared per-token budgets, encrypted authorizations and recovery worker.
+- [x] Official MCP transports and input validation.
+- [ ] Real Sepolia USDC canary and mainnet USDC/USDT/wMXN canaries with recorded evidence.
 
-- [x] Integrar `thirdweb/x402` como payer.
-- [x] Consumir el ejemplo backend `GET /api/x402/data`.
-- [x] Manejar el flujo completo:
-  1. request inicial al endpoint,
-  2. recepción de `402 Payment Required`,
-  3. construcción del proof,
-  4. reintento con `x-paygrid-x402-proof`,
-  5. retorno del payload final.
-- [x] Registrar trazas mínimas de pagos x402 para debugging:
-  - endpoint solicitado,
-  - chainId,
-  - token,
-  - amount,
-  - txHash,
-  - payer.
-- [x] Definir retry con backoff y error handling para:
-  - proof inválido,
-  - amount o token incompatibles,
-  - timeout del endpoint,
-  - RPC inestable.
-
-**Done when**
-
-- el agente puede pagar un endpoint x402 de prueba,
-- el flujo challenge → proof → success queda automatizado,
-- los errores dejan una traza mínima que permita reproducir el fallo.
-
----
+See docs/x402.md. Unit/fork checks do not imply mainnet readiness.
 
 ## Fase 5 — x402 payee / agent exposure
 
@@ -215,4 +192,4 @@ Construir un runtime de agente que:
 - No hardcodear addresses de prueba en el runtime salvo que vengan de `contracts/deployments.*.json`.
 - Variables adicionales a documentar si el runtime las usa:
   - `AGENT_API_KEY`
-  - `THIRDWEB_SECRET_KEY`
+  - `X402_EXECUTOR_API_KEY` (backend executor credential; no payment key in agent)

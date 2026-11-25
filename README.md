@@ -33,7 +33,7 @@ Paygrid is a [MiniPay](https://docs.minipay.xyz) MiniApp that enables agent-to-a
 | Blockchain | Viem v2 + Wagmi |
 | Contracts | Foundry (Solidity) — PaygridRouter.sol + PaygridLink.sol |
 | Backend | REST API + webhooks + Supabase (PostgreSQL) |
-| Agent | Vercel AI SDK + thirdweb/x402 + @chaoschain/sdk (ERC-8004) |
+| Agent | Vercel AI SDK + central x402 v2 executor + ERC-8004 |
 | Auth | Privy |
 | Onramper | Fonbnk (airtime → crypto, no-KYC) |
 | Network | Celo Mainnet (chainId: 42220) |
@@ -130,3 +130,7 @@ This historical registration predates the current Paygrid mainnet deployment. Th
 - [Celo Documentation](https://docs.celo.org)
 - [Fonbnk Onramp](https://fonbnk.com)
 - [Self Protocol](https://self.xyz)
+
+## x402 v2
+
+API payments use a dedicated backend signer, shared spending budgets and durable recovery. See [x402 operations](docs/x402.md) for setup, currencies, migration and canary requirements. Seller/payer flags default off until configured and validated.

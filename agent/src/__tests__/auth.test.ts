@@ -12,19 +12,19 @@ process.env.CHAIN_ID = "11142220";
 let fetchWithAgentAuth: typeof import("../utils/auth").fetchWithAgentAuth;
 
 before(async () => {
-  ({ fetchWithAgentAuth } = await import("../utils/auth"));
+  ({ fetchWithAgentAuth } = require("../utils/auth"));
 });
 
 test("fetchWithAgentAuth signs pathname while preserving query in request URL", async () => {
   const originalFetch = globalThis.fetch;
   const account = privateKeyToAccount(privateKey);
-  let captured: { url: string; headers: Headers } | null = null;
+  const captures: Array<{ url: string; headers: Headers }> = [];
 
   globalThis.fetch = (async (url: RequestInfo | URL, init?: RequestInit) => {
-    captured = {
+    captures.push({
       url: url.toString(),
       headers: new Headers(init?.headers),
-    };
+    });
     return new Response(JSON.stringify({ ok: true }), { status: 200 });
   }) as typeof fetch;
 
@@ -35,7 +35,8 @@ test("fetchWithAgentAuth signs pathname while preserving query in request URL", 
     globalThis.fetch = originalFetch;
   }
 
-  assert.ok(captured);
+  assert.equal(captures.length, 1);
+  const captured = captures[0];
   assert.equal(captured.url, "http://localhost:3001/api/payments?limit=20&status=confirmed");
 
   const timestamp = captured.headers.get("x-erc8004-timestamp");
