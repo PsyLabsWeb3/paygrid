@@ -11,7 +11,7 @@ const paymentsQuerySchema = z.object({
   cursor: z.string().datetime().optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
   status: z.enum(["pending", "confirmed", "failed"] as const).optional(),
-  token: z.enum(["USDm", "USDC", "USDT"] as const).optional(),
+  token: z.enum(["USDm", "USDC", "USDT", "wMXN"] as const).optional(),
   from: z.string().datetime().optional(),
   to: z.string().datetime().optional(),
 });

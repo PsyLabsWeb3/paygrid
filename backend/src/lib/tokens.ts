@@ -1,6 +1,8 @@
 import { zeroAddress, type Address } from "viem";
 import type { Env } from "../config/env.js";
 
+export const WMXN_ADDRESS = "0x337E7456B420bD3481e7FA61fA9850343d610d34" as const;
+
 export type CoreStablecoin = "USDm" | "USDC" | "USDT";
 export type Stablecoin = CoreStablecoin | "wMXN";
 export const STABLECOINS = ["USDm", "USDC", "USDT", "wMXN"] as const;
@@ -61,6 +63,7 @@ export function parseHumanAmount(amount: string | number, token: Stablecoin): bi
   }
   const [whole, frac = ""] = trimmed.split(".");
   const decimals = TOKEN_DECIMALS[token];
+  if (frac.length > decimals) throw new Error("Amount exceeds token precision");
   const padded = (frac + "0".repeat(decimals)).slice(0, decimals);
   return BigInt(whole + padded);
 }

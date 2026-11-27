@@ -1,4 +1,6 @@
-import { decodeEventLog, encodeFunctionData } from "viem";
+import { decodeEventLog, encodeFunctionData, zeroAddress } from "viem";
+import { linkAmount, linkAmountAtomic } from "../lib/link-amount.js";
+import { hasAtomicLinkStorage, wmxnLinkAvailability } from "./link-config.js";
 import type { Env } from "../config/env.js";
 import type { PaymentLinkRow } from "../db/supabase.js";
 import { getSupabase } from "../db/supabase.js";
@@ -12,6 +14,7 @@ import { withServerAttribution } from "../lib/attribution.js";
 import {
   formatHumanAmount,
   getTokenAddress,
+  TOKEN_DECIMALS,
   parseHumanAmount,
   type Stablecoin,
 } from "../lib/tokens.js";
@@ -50,7 +53,9 @@ function serializeLink(row: PaymentLinkRow) {
     creatorId: row.creator_id,
     creatorType: row.creator_type,
     recipientAddress: row.recipient_address,
-    amount: String(row.amount),
+    amount: linkAmount(row),
+    amountAtomic: row.amount_atomic ?? undefined,
+    settlementDecimals: row.settlement_decimals ?? TOKEN_DECIMALS[row.token],
     token: row.token,
     description: row.description,
     acceptedMethods: row.accepted_methods,
@@ -62,11 +67,27 @@ function serializeLink(row: PaymentLinkRow) {
 }
 
 export async function createPaymentLink(env: Env, input: CreateLinkInput) {
-  if (parseFloat(input.amount) <= 0) {
-    throw new ApiError(400, "INVALID_AMOUNT", "Amount must be greater than zero");
+  let amountWei: bigint;
+  try {
+    amountWei = parseHumanAmount(input.amount, input.token);
+    if (amountWei <= 0n || input.amount.trim().split(".")[0].replace(/^0+/, "").length > 18)
+      throw new Error("Amount outside storage range");
+  } catch {
+    throw new ApiError(400, "INVALID_AMOUNT", "Enter a positive amount within the token precision and supported range");
   }
-
-  const amountWei = parseHumanAmount(input.amount, input.token);
+  if (input.recipientAddress.toLowerCase() === zeroAddress)
+    throw new ApiError(400, "INVALID_RECIPIENT", "Recipient is required");
+  if (input.expiresAt && (!Number.isFinite(Date.parse(input.expiresAt)) || Date.parse(input.expiresAt) <= Date.now()))
+    throw new ApiError(400, "INVALID_EXPIRATION", "Expiration must be in the future");
+  if (input.token === "wMXN") {
+    const ripio = input.acceptedMethods.length === 1 && input.acceptedMethods[0] === "ripio_spei";
+    if (!ripio && (input.acceptedMethods.length !== 1 || input.acceptedMethods[0] !== "crypto"))
+      throw new ApiError(400, "UNSUPPORTED_METHOD", "wMXN links accept direct wallet payments");
+    const state = await wmxnLinkAvailability(ripio && env.RIPIO_CANARY_ENABLED === "true"
+      ? { ...env, WMXN_LINKS_ENABLED: "true" } : env, true);
+    if (!state.enabled) throw new ApiError(403, "WMXN_UNAVAILABLE", "wMXN payment requests are not available");
+  }
+  const atomicStorage = await hasAtomicLinkStorage(env);
   const tokenAddress = getTokenAddress(env, input.token);
   const acceptsFiat = input.acceptedMethods.some((method) =>
     method === "fonbnk" || method === "card" || method === "ripio_spei"
@@ -112,8 +133,10 @@ export async function createPaymentLink(env: Env, input: CreateLinkInput) {
   });
   const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
+  if (receipt.status !== "success") throw new ApiError(502, "INTERNAL_ERROR", "Link creation transaction failed");
   let onChainLinkId: bigint | null = null;
   for (const log of receipt.logs) {
+    if (log.address.toLowerCase() !== env.PAYGRID_LINK_ADDRESS.toLowerCase()) continue;
     try {
       const decoded = decodeEventLog({
         abi: paygridLinkAbiConst,
@@ -140,7 +163,12 @@ export async function createPaymentLink(env: Env, input: CreateLinkInput) {
       on_chain_link_id: onChainLinkId.toString(),
       paygrid_link_address: env.PAYGRID_LINK_ADDRESS.toLowerCase(),
       recipient_address: input.recipientAddress.toLowerCase(),
-      amount: input.amount,
+      amount: formatHumanAmount(amountWei, input.token),
+      ...(atomicStorage ? {
+        amount_atomic: amountWei.toString(),
+        settlement_decimals: TOKEN_DECIMALS[input.token],
+        accepted_payer_assets: input.token === "wMXN" ? ["wMXN"] : ["USDC", "USDT", "USDm"],
+      } : {}),
       token: input.token,
       description: input.description ?? null,
       accepted_methods: input.acceptedMethods,
@@ -163,7 +191,8 @@ export async function createPaymentLink(env: Env, input: CreateLinkInput) {
     id: row.id,
     onChainLinkId: onChainLinkId.toString(),
     url: `${env.PUBLIC_APP_URL.replace(/\/$/, "")}/pay/${row.id}`,
-    amount: String(input.amount),
+    amount: formatHumanAmount(amountWei, input.token),
+    amountAtomic: amountWei.toString(),
     token: input.token,
     status: row.status,
     createdAt: row.created_at,
@@ -214,6 +243,8 @@ async function getPayableLink(env: Env, linkId: string) {
 
   const paymentLink = link as PaymentLinkRow;
   ensureCryptoPayable(paymentLink);
+  if (paymentLink.paygrid_link_address.toLowerCase() !== env.PAYGRID_LINK_ADDRESS.toLowerCase())
+    throw new ApiError(409, "CONTRACT_MISMATCH", "This payment request belongs to another contract");
   return paymentLink;
 }
 
@@ -230,7 +261,7 @@ export async function buildPreparedPayTx(env: Env, linkId: string, input: SwapQu
 export async function buildCryptoPayTx(env: Env, linkId: string) {
   const paymentLink = await getPayableLink(env, linkId);
   const token = paymentLink.token as Stablecoin;
-  const amountWei = parseHumanAmount(paymentLink.amount, token);
+  const amountWei = linkAmountAtomic(paymentLink);
   const tokenAddress = getTokenAddress(env, token);
 
   const data = encodeFunctionData({
@@ -241,6 +272,7 @@ export async function buildCryptoPayTx(env: Env, linkId: string) {
 
   return {
     method: "crypto" as const,
+    chainId: env.CHAIN_ID,
     tx: {
       to: env.PAYGRID_ROUTER_ADDRESS,
       data,
@@ -249,7 +281,7 @@ export async function buildCryptoPayTx(env: Env, linkId: string) {
     link: {
       id: paymentLink.id,
       onChainLinkId: String(paymentLink.on_chain_link_id),
-      amount: String(paymentLink.amount),
+      amount: linkAmount(paymentLink),
       token: paymentLink.token,
     },
   };

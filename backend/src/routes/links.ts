@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { Env } from "../config/env.js";
 import { ApiError } from "../lib/errors.js";
-import { STABLECOINS, TOKEN_ADDRESSES, type Stablecoin } from "../lib/tokens.js";
+import { STABLECOINS, TOKEN_ADDRESSES, getTokenAddress, TOKEN_DECIMALS, formatHumanAmount, type Stablecoin } from "../lib/tokens.js";
 import { createOwnershipAuthMiddleware } from "../middleware/ownership-auth.js";
 import { getAuthAgent } from "../middleware/erc8004-auth.js";
 import { getAuthUser } from "../middleware/privy-auth.js";
@@ -16,17 +16,22 @@ import {
 } from "../services/links.js";
 import { createFonbnkPaySession } from "../services/fonbnk.js";
 import { createRampPaySession } from "../services/ramp.js";
+import { getPaymentLinkConfig } from "../services/link-config.js";
+import { linkAmount } from "../lib/link-amount.js";
 
-const stablecoins = ["USDm", "USDC", "USDT"] as const;
+const stablecoins = STABLECOINS;
 const fonbnkPaymentChannels = ["bank", "mobile_money", "airtime"] as const;
 
 const createLinkSchema = z.object({
-  amount: z.string(),
+  amount: z.string().trim().min(1).max(80),
   token: z.enum(stablecoins),
   description: z.string().optional(),
   acceptedMethods: z.array(z.enum(["crypto", "fonbnk", "card"])).min(1).default(["crypto"]),
   recipientAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   expiresAt: z.string().datetime().optional(),
+}).superRefine((body, ctx) => {
+  if (body.token === "wMXN" && (body.acceptedMethods.length !== 1 || body.acceptedMethods[0] !== "crypto"))
+    ctx.addIssue({ code: "custom", path: ["acceptedMethods"], message: "wMXN links accept direct wallet payments only" });
 });
 
 const quoteSchema = z.object({
@@ -126,14 +131,25 @@ export function linksRoutes(env: Env) {
     return c.json(result, 201);
   });
 
+  app.get("/config", async (c) => {
+    c.header("Cache-Control", "no-store");
+    return c.json(await getPaymentLinkConfig(env));
+  });
+
   app.get("/:id", async (c) => {
+    c.header("Cache-Control", "no-store");
     const { link, payments } = await getPaymentLink(env, c.req.param("id"));
     return c.json({
       id: link.id,
       onChainLinkId: String(link.on_chain_link_id),
       paygridLinkAddress: link.paygrid_link_address,
       recipientAddress: link.recipient_address,
-      amount: String(link.amount),
+      amount: linkAmount(link),
+      amountAtomic: link.amount_atomic ?? undefined,
+      tokenAddress: getTokenAddress(env, link.token),
+      chainId: env.CHAIN_ID,
+      settlementDecimals: link.settlement_decimals ?? TOKEN_DECIMALS[link.token],
+      acceptedPayerAssets: link.partner_name || link.amount_atomic ? link.accepted_payer_assets : undefined,
       token: link.token,
       description: link.description,
       acceptedMethods: link.accepted_methods,
@@ -143,8 +159,8 @@ export function linksRoutes(env: Env) {
       expiresAt: link.expires_at,
       payments: payments.map((payment) => ({
         ...payment,
-        amount: String(payment.amount),
-        fee_amount: String(payment.fee_amount),
+        amount: payment.gross_amount_atomic ? formatHumanAmount(BigInt(payment.gross_amount_atomic), payment.token) : String(payment.amount),
+        fee_amount: payment.fee_amount_atomic ? formatHumanAmount(BigInt(payment.fee_amount_atomic), payment.token) : String(payment.fee_amount),
       })),
     });
   });

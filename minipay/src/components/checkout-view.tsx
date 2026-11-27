@@ -5,11 +5,14 @@ import { ArrowDownToLine, CheckCircle2, CreditCard, Loader2, ShieldCheck } from 
 import { toast } from "sonner";
 import { erc20Abi, formatUnits, parseUnits } from "viem";
 import { useAccount, usePublicClient, useSendTransaction, useWriteContract } from "wagmi";
+import { WalletConnection } from "@/components/wallet-connection";
 import { StatusPill } from "@/components/status-pill";
 import { buildPayTx, createRampSession, getPaymentLink, quotePaymentLink, type PaymentLink, type SwapQuote } from "@/lib/api";
 import { redirectToMiniPayDeposit } from "@/lib/minipay";
-import { paymentTokens, tokenDecimals, tokenAddresses, type Stablecoin } from "@/lib/tokens";
+import { tokenDecimals, tokenAddresses, type SupportedPaymentToken } from "@/lib/tokens";
 import { useQuery } from "@tanstack/react-query";
+import { appConfig } from "@/lib/env";
+import { linkPayerTokens } from "@/lib/payment-links";
 import { withAttribution } from "@/lib/attribution";
 
 function getPaymentErrorMessage(error: unknown): string {
@@ -28,15 +31,15 @@ function getPaymentErrorMessage(error: unknown): string {
 }
 
 export function CheckoutView({ id }: { id: string }) {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
   const { sendTransactionAsync } = useSendTransaction();
   const [isPaying, setIsPaying] = useState(false);
   const [isStartingCard, setIsStartingCard] = useState(false);
-  const [balances, setBalances] = useState<Partial<Record<Stablecoin, bigint>>>({});
-  const [selectedToken, setSelectedToken] = useState<Stablecoin>("USDC");
-  const [quote, setQuote] = useState<SwapQuote | null>(null);
+  const [balances, setBalances] = useState<Partial<Record<SupportedPaymentToken, bigint>>>({});
+  const [selectedToken, setSelectedToken] = useState<SupportedPaymentToken>("USDC");
+  const [quote, setQuote] = useState<SwapQuote<SupportedPaymentToken> | null>(null);
 
   const query = useQuery({
     queryKey: ["payment-link", id],
@@ -46,62 +49,49 @@ export function CheckoutView({ id }: { id: string }) {
   });
 
   const link = query.data;
-  const payable = link?.status === "active";
+  const expectedChainId = link?.chainId ?? appConfig.chainId;
+  const correctNetwork = chainId === expectedChainId && publicClient?.chain.id === expectedChainId;
+  const payable = link?.status === "active" && (!link.expiresAt || Date.parse(link.expiresAt) > Date.now());
+  const payerKey = linkPayerTokens(link?.token ?? "USDC", link?.acceptedPayerAssets).join(",");
+  const payerTokens = useMemo(() => payerKey.split(",").filter(Boolean) as SupportedPaymentToken[], [payerKey]);
   const amountWei = useMemo(() => {
     if (!link) return 0n;
-    return parseUnits(link.amount, tokenDecimals[link.token]);
-  }, [link]);
+    return link.amountAtomic ? BigInt(link.amountAtomic) : parseUnits(link.amount, tokenDecimals[link.token]);
+  }, [link?.amount, link?.amountAtomic, link?.token]);
+  const settlementToken = link?.token;
+  const settlementAddress = link?.tokenAddress;
 
   useEffect(() => {
-    if (!link) return;
-    setSelectedToken(link.token);
-  }, [link]);
+    if (settlementToken) setSelectedToken(settlementToken);
+  }, [id, settlementToken]);
 
   useEffect(() => {
     let cancelled = false;
+    setBalances({});
     async function loadBalances() {
-      if (!address || !isConnected || !publicClient) {
-        setBalances({});
-        return;
-      }
-
-      const entries = await Promise.all(
-        paymentTokens.map(async (token) => {
-          const balance = await publicClient.readContract({
-            address: tokenAddresses[token],
-            abi: erc20Abi,
-            functionName: "balanceOf",
-            args: [address],
-          });
-          return [token, balance] as const;
-        }),
-      );
-
+      if (!address || !isConnected || !publicClient || !correctNetwork) return;
+      const results = await Promise.allSettled(payerTokens.map(async (token) => {
+        const balance = await publicClient.readContract({
+          address: token === settlementToken && settlementAddress ? settlementAddress : tokenAddresses[token],
+          abi: erc20Abi,
+          functionName: "balanceOf",
+          args: [address],
+        });
+        return [token, balance] as const;
+      }));
       if (!cancelled) {
-        const nextBalances = Object.fromEntries(entries) as Partial<Record<Stablecoin, bigint>>;
-        setBalances(nextBalances);
-        if (link) {
-          const exactBalance = nextBalances[link.token] ?? 0n;
-          if (exactBalance >= amountWei) {
-            setSelectedToken(link.token);
-          } else {
-            const funded = paymentTokens.find((token) => (nextBalances[token] ?? 0n) > 0n);
-            if (funded) setSelectedToken(funded);
-          }
-        }
+        setBalances(Object.fromEntries(results.flatMap((result) => result.status === "fulfilled" ? [result.value] : [])));
       }
     }
     loadBalances().catch((error) => toast.error(getPaymentErrorMessage(error)));
-    return () => {
-      cancelled = true;
-    };
-  }, [address, amountWei, isConnected, link, publicClient]);
+    return () => { cancelled = true; };
+  }, [address, correctNetwork, isConnected, payerTokens, publicClient, settlementToken, settlementAddress]);
 
   useEffect(() => {
     setQuote(null);
   }, [selectedToken, link?.id]);
 
-  async function previewQuote(linkData: PaymentLink, payerToken: Stablecoin) {
+  async function previewQuote(linkData: PaymentLink, payerToken: SupportedPaymentToken) {
     setSelectedToken(payerToken);
     if (payerToken === linkData.token) {
       setQuote(null);
@@ -112,8 +102,8 @@ export function CheckoutView({ id }: { id: string }) {
   }
 
   async function pay(linkData: PaymentLink) {
-    if (!address || !isConnected || !publicClient) {
-      toast.error("MiniPay account unavailable");
+    if (!address || !isConnected || !publicClient || !correctNetwork) {
+      toast.error("Connect an account on the payment network");
       return;
     }
 
@@ -123,23 +113,23 @@ export function CheckoutView({ id }: { id: string }) {
         payerToken: selectedToken,
         slippageBps: 100,
       });
+      if (prepared.chainId !== expectedChainId || !payerTokens.includes(selectedToken))
+        throw new Error("Payment network or token does not match this request");
       const payTx = prepared.payTx ?? prepared.tx;
       const amountToApprove = prepared.approveTx ? BigInt(prepared.approveTx.amount) : amountWei;
-      const tokenAddress = tokenAddresses[selectedToken];
-      const balance =
-        balances[selectedToken] ??
-        (await publicClient.readContract({
-          address: tokenAddress,
-          abi: erc20Abi,
-          functionName: "balanceOf",
-          args: [address],
-        }));
+      const tokenAddress = prepared.approveTx?.to ?? (selectedToken === linkData.token && linkData.tokenAddress ? linkData.tokenAddress : tokenAddresses[selectedToken]);
+      const balance = await publicClient.readContract({
+        address: tokenAddress,
+        abi: erc20Abi,
+        functionName: "balanceOf",
+        args: [address],
+      });
 
       if (!payTx) {
         throw new Error("Payment transaction unavailable");
       }
       if (balance < amountToApprove) {
-        toast.error(`Insufficient ${selectedToken} balance. Deposit and try again.`);
+        toast.error(`Insufficient ${selectedToken} balance. Add ${selectedToken} to your wallet and try again.`);
         return;
       }
 
@@ -154,28 +144,33 @@ export function CheckoutView({ id }: { id: string }) {
         toast.message("Approval requested");
         const approvalHash = prepared.approveTx
           ? await sendTransactionAsync({
+              chainId: expectedChainId,
               to: prepared.approveTx.to,
               data: withAttribution(prepared.approveTx.data),
               value: BigInt(prepared.approveTx.value),
             })
           : await writeContractAsync({
+              chainId: expectedChainId,
               address: tokenAddress,
               abi: erc20Abi,
               functionName: "approve",
               args: [payTx.to, amountToApprove],
             });
         toast.message("Confirming approval");
-        await publicClient.waitForTransactionReceipt({ hash: approvalHash });
+        const approvalReceipt = await publicClient.waitForTransactionReceipt({ hash: approvalHash });
+        if (approvalReceipt.status !== "success") throw new Error("Token approval failed");
       }
 
       toast.message("Sending payment");
       const paymentHash = await sendTransactionAsync({
+        chainId: expectedChainId,
         to: payTx.to,
         data: withAttribution(payTx.data),
         value: BigInt(payTx.value),
       });
       toast.message("Confirming payment");
-      await publicClient.waitForTransactionReceipt({ hash: paymentHash });
+      const paymentReceipt = await publicClient.waitForTransactionReceipt({ hash: paymentHash });
+      if (paymentReceipt.status !== "success") throw new Error("Payment transaction failed");
       toast.success("Payment sent");
       await query.refetch();
     } catch (error) {
@@ -229,7 +224,7 @@ export function CheckoutView({ id }: { id: string }) {
           <StatusPill status={link.status} />
         </div>
         <p className="fine">Payment request</p>
-        <h2 className="checkout-amount">
+        <h2 className={`checkout-amount${link.amount.length > 12 ? " precise-amount" : ""}`}>
           {link.amount} {link.token}
         </h2>
       </section>
@@ -239,7 +234,7 @@ export function CheckoutView({ id }: { id: string }) {
           <div className="split-row">
             <div>
               <p className="fine muted">Memo</p>
-              <h2 className="top-title">{link.description || "Digital dollar payment"}</h2>
+              <h2 className="top-title">{link.description || "Payment request"}</h2>
             </div>
             <span className="token-chip">
               <span className="token-mark">$</span>
@@ -254,7 +249,7 @@ export function CheckoutView({ id }: { id: string }) {
             <strong>{selectedToken}</strong>
           </div>
           <div className="token-row" style={{ marginTop: 14 }}>
-            {paymentTokens.map((token) => (
+            {payerTokens.map((token) => (
               <button
                 key={token}
                 type="button"
@@ -269,12 +264,12 @@ export function CheckoutView({ id }: { id: string }) {
           <div className="split-row" style={{ marginTop: 14 }}>
             <span className="fine muted">Balance</span>
             <strong>
-              {formatUnits(balances[selectedToken] ?? 0n, tokenDecimals[selectedToken])} {selectedToken}
+              {balances[selectedToken] === undefined ? "—" : formatUnits(balances[selectedToken], tokenDecimals[selectedToken])} {selectedToken}
             </strong>
           </div>
           <div className="split-row" style={{ marginTop: 14 }}>
             <span className="fine muted">Network fee</span>
-            <strong>Stablecoin</strong>
+            <strong>Shown in wallet</strong>
           </div>
           {selectedToken !== link.token && (
             <p className="fine muted" style={{ marginTop: 14 }}>
@@ -284,17 +279,21 @@ export function CheckoutView({ id }: { id: string }) {
           )}
         </section>
 
-        <button
+        <WalletConnection chainId={expectedChainId} />
+        {isConnected && !correctNetwork ? <p className="fine muted">Connect your account to the payment network to continue.</p> : null}
+        {link.token === "wMXN" ? <p className="fine muted">Pay directly in wMXN from your wallet.</p> : null}
+
+        {link.acceptedMethods.includes("crypto") ? <button
           className="primary-button"
-          disabled={!payable || isPaying}
+          disabled={!payable || isPaying || !isConnected || !correctNetwork || !payerTokens.includes(selectedToken)}
           onClick={() => pay(link)}
           type="button"
         >
           {isPaying ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle2 size={20} />}
-          Pay with stablecoin
-        </button>
+          Pay with {selectedToken}
+        </button> : null}
 
-        <button
+        {link.token !== "wMXN" && link.acceptedMethods.includes("card") ? <button
           className="secondary-button"
           disabled={!payable || isStartingCard}
           onClick={() => payWithCard(link)}
@@ -302,12 +301,12 @@ export function CheckoutView({ id }: { id: string }) {
         >
           {isStartingCard ? <Loader2 size={20} className="animate-spin" /> : <CreditCard size={20} />}
           Pay with card
-        </button>
+        </button> : null}
 
-        <button className="secondary-button" type="button" onClick={redirectToMiniPayDeposit}>
+        {link.token !== "wMXN" && link.acceptedMethods.includes("crypto") ? <button className="secondary-button" type="button" onClick={redirectToMiniPayDeposit}>
           <ArrowDownToLine size={20} />
           Deposit
-        </button>
+        </button> : null}
       </div>
     </>
   );

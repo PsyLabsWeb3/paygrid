@@ -15,6 +15,8 @@ Base URL: `https://api.celopaygrid.xyz` (TBD)
 
 ## Payment Links
 
+Public Web and MiniPay support direct wMXN requests when enabled. See [wMXN setup and rollout](./wmxn-links.md). `GET /api/links/config` returns the network and currently available creation tokens. `POST /api/links/minipay` uses the same request body as the authenticated endpoint and the connected wallet as recipient. wMXN requires `acceptedMethods: ["crypto"]` and an exact decimal string with at most 18 fractional digits.
+
 ### `POST /api/links`
 
 Create a new payment link.

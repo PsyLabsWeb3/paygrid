@@ -317,6 +317,12 @@ a {
   font-size: clamp(2.6rem, 17vw, 4.8rem);
   line-height: 0.95;
   font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.checkout-amount.precise-amount {
+  font-size: clamp(1.2rem, 4vw, 1.5rem);
+  line-height: 1.2;
 }
 
 .campaign-title {

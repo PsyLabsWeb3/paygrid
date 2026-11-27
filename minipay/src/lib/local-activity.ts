@@ -1,12 +1,12 @@
 import type { LinkStatus } from "@/lib/api";
-import type { Stablecoin } from "@/lib/tokens";
+import type { SupportedPaymentToken } from "@/lib/tokens";
 
 const STORAGE_KEY = "paygrid.localActivity";
 
 export type LocalActivityItem = {
   id: string;
   amount: string;
-  token: Stablecoin;
+  token: SupportedPaymentToken;
   description?: string;
   status: LinkStatus;
   createdAt: string;

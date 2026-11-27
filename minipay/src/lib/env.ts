@@ -1,7 +1,19 @@
 import { isAddress, type Address } from "viem";
 
+// Next.js only inlines public environment values accessed with literal keys.
+const publicValues: Record<string, string | undefined> = {
+  NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
+  NEXT_PUBLIC_PAYGRID_ROUTER_ADDRESS: process.env.NEXT_PUBLIC_PAYGRID_ROUTER_ADDRESS,
+  NEXT_PUBLIC_PAYGRID_LINK_ADDRESS: process.env.NEXT_PUBLIC_PAYGRID_LINK_ADDRESS,
+  NEXT_PUBLIC_PAYGRID_GIFT_VAULT_ADDRESS: process.env.NEXT_PUBLIC_PAYGRID_GIFT_VAULT_ADDRESS,
+  NEXT_PUBLIC_PAYGRID_GIFT_ROUTER_ADDRESS: process.env.NEXT_PUBLIC_PAYGRID_GIFT_ROUTER_ADDRESS,
+  NEXT_PUBLIC_USDC_ADDRESS: process.env.NEXT_PUBLIC_USDC_ADDRESS,
+  NEXT_PUBLIC_USDT_ADDRESS: process.env.NEXT_PUBLIC_USDT_ADDRESS,
+  NEXT_PUBLIC_USDM_ADDRESS: process.env.NEXT_PUBLIC_USDM_ADDRESS,
+};
+
 function publicEnv(name: string, fallback: string) {
-  const value = process.env[name] ?? fallback;
+  const value = publicValues[name] ?? fallback;
   if (!value) {
     throw new Error(`${name} is required`);
   }
@@ -17,7 +29,7 @@ function publicAddress(name: string, fallback: Address): Address {
 }
 
 function optionalPublicAddress(name: string): Address | undefined {
-  const value = process.env[name];
+  const value = publicValues[name];
   if (!value) return undefined;
   if (!isAddress(value)) throw new Error(`${name} must be an EVM address`);
   return value;
@@ -38,7 +50,7 @@ export const appConfig = {
   paygridRouterAddress: publicAddress(
     "NEXT_PUBLIC_PAYGRID_ROUTER_ADDRESS",
     isProductionEnv
-      ? "0x2924FEf3eF7c3ADBFF22b286C42764a96c53f9f4"
+      ? "0x8d290c97100f0e87e04Efd1a790F27004fA3f08B"
       : "0x6c3363D33eCD912576051316AF0A1c95F77EAD73",
   ),
   paygridLinkAddress: publicAddress(
@@ -53,6 +65,7 @@ export const appConfig = {
   privyAppId: process.env.NEXT_PUBLIC_PRIVY_APP_ID,
   miniPayDeepLinkEnabled: process.env.NEXT_PUBLIC_MINIPAY_DEEPLINK_ENABLED === "true",
   attributionCode: process.env.NEXT_PUBLIC_CELO_ATTRIBUTION_CODE,
+  wmxnAddress: "0x337E7456B420bD3481e7FA61fA9850343d610d34" as Address,
   usdcAddress: publicAddress(
     "NEXT_PUBLIC_USDC_ADDRESS",
     isProductionEnv

@@ -221,3 +221,31 @@ test("pay continues supporting requests without payerToken", async () => {
   assert.deepEqual(payment.args, [84n, getTokenAddress(env, "USDC"), 3000000n]);
   assert.equal(rpcReads, 0);
 });
+
+
+for (const endpoint of ["quote", "pay"] as const) {
+  test(`${endpoint} pays an existing public wMXN request after creation is disabled`, async () => {
+    link.partner_name = null;
+    link.amount = "9.23";
+    link.amount_atomic = "9230000000000000001";
+    const response = await request(endpoint, "wMXN", { ODELEITE_WMXN_ENABLED: "false", WMXN_LINKS_ENABLED: "false" });
+    const body = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(body));
+    const quote = endpoint === "pay" ? body.quote : body;
+    assert.equal(quote.amountInMax, "9230000000000000001");
+    assert.equal(quote.paymentMode, "exact");
+    if (endpoint === "pay") {
+      assert.equal(body.link.amount, "9.230000000000000001");
+      assert.equal(body.chainId, 42220);
+      assertPreparedPayment(body, "wMXN");
+    }
+  });
+  test(`${endpoint} rejects expired public requests before preparing a payment`, async () => {
+    link.partner_name = null;
+    link.expires_at = new Date(Date.now() - 1000).toISOString();
+    const response = await request(endpoint, "wMXN");
+    assert.equal(response.status, 410);
+    assert.equal((await response.json()).error.code, "EXPIRED");
+    assert.equal(rpcReads, 0);
+  });
+}

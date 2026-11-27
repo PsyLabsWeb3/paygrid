@@ -13,3 +13,10 @@ test("formatHumanAmount trims trailing zeros", () => {
   assert.equal(formatHumanAmount(10_500_000n, "USDC"), "10.5");
   assert.equal(formatHumanAmount(1_000_000_000_000_000_000n, "USDm"), "1");
 });
+
+
+test("wMXN is parsed exactly and excess decimal places are rejected before signing", () => {
+  assert.equal(parseHumanAmount("9.230000000000000001", "wMXN"), 9230000000000000001n);
+  assert.throws(() => parseHumanAmount("1.0000000000000000001", "wMXN"));
+  assert.throws(() => parseHumanAmount("1.0000001", "USDC"));
+});

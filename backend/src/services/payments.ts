@@ -1,7 +1,7 @@
 import type { Env } from "../config/env.js";
 import { getSupabase, type PaymentLinkRow, type PaymentRow } from "../db/supabase.js";
 import { ApiError } from "../lib/errors.js";
-import type { Stablecoin } from "../lib/tokens.js";
+import { formatHumanAmount, type Stablecoin } from "../lib/tokens.js";
 
 export type ListPaymentsOptions = {
   cursor?: string;
@@ -22,9 +22,10 @@ function serializePayment(row: PaymentRow) {
     id: row.id,
     linkId: row.link_id,
     payerAddress: row.payer_address,
-    amount: String(row.amount),
+    amount: row.gross_amount_atomic ? formatHumanAmount(BigInt(row.gross_amount_atomic), row.token) : String(row.amount),
+    amountAtomic: row.gross_amount_atomic ?? undefined,
     token: row.token,
-    feeAmount: String(row.fee_amount),
+    feeAmount: row.fee_amount_atomic ? formatHumanAmount(BigInt(row.fee_amount_atomic), row.token) : String(row.fee_amount),
     paymentMethod: row.payment_method,
     onrampSessionId: row.onramp_session_id,
     onrampTxId: row.onramp_tx_id,

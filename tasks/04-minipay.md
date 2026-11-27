@@ -331,3 +331,13 @@ No implementar API routes co-localizadas en Next.js salvo proxy minimo si Vercel
 - No hardcodear amounts sin validar decimales.
 - No presentar CELO como asset principal.
 - Para Mainnet, esperar direcciones finales de `contracts/deployments.mainnet.json` o equivalente.
+
+
+## wMXN links — 2026-11-27
+
+- [x] Web wallet connection and MiniPay request creation with backend-gated wMXN selection.
+- [x] Exact 18-decimal persistence, API display and approval/payment calldata.
+- [x] wMXN-only checkout with network and receipt validation; no dollar swaps or fiat.
+- [x] Read-only mainnet readiness preflight and offline regression tests.
+- [ ] Deploy backend/indexer and frontend, enable public creation flag.
+- [ ] Validate on a physical MiniPay device and a web wallet with an approved mainnet payment.

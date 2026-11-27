@@ -1,6 +1,6 @@
 import type { Address, Hex } from "viem";
 import { appConfig } from "@/lib/env";
-import type { Stablecoin } from "@/lib/tokens";
+import type { Stablecoin, SupportedPaymentToken } from "@/lib/tokens";
 
 export type LinkStatus = "active" | "paid" | "expired" | "cancelled";
 export type GiftStatus = "draft" | "funding" | "active" | "claimed" | "cancelled" | "expired" | "refunded";
@@ -8,9 +8,13 @@ export type GiftStatus = "draft" | "funding" | "active" | "claimed" | "cancelled
 export type PaymentLink = {
   id: string;
   onChainLinkId: string;
+  amountAtomic?: string;
+  tokenAddress?: Address;
+  chainId?: number;
+  acceptedPayerAssets?: SupportedPaymentToken[];
   recipientAddress: Address;
   amount: string;
-  token: Stablecoin;
+  token: SupportedPaymentToken;
   description: string | null;
   acceptedMethods: string[];
   status: LinkStatus;
@@ -21,7 +25,7 @@ export type PaymentLink = {
 
 export type CreateMiniPayLinkInput = {
   amount: string;
-  token: Stablecoin;
+  token: SupportedPaymentToken;
   description?: string;
   recipientAddress: Address;
   acceptedMethods: Array<"crypto" | "fonbnk" | "card">;
@@ -32,16 +36,16 @@ type CreateMiniPayLinkResponse = {
   onChainLinkId: string;
   url: string;
   amount: string;
-  token: Stablecoin;
+  token: SupportedPaymentToken;
   status: LinkStatus;
   createdAt: string;
   txHash: Hex;
 };
 
-export type SwapQuote = {
+export type SwapQuote<T extends SupportedPaymentToken = Stablecoin> = {
   paymentMode: "exact" | "swap";
-  payerToken: Stablecoin;
-  settlementToken: Stablecoin;
+  payerToken: T;
+  settlementToken: T;
   amountOut: string;
   amountIn: string;
   amountInMax: string;
@@ -54,6 +58,7 @@ export type SwapQuote = {
 
 type PayTxResponse = {
   method: "crypto";
+  chainId: number;
   paymentMode?: "exact" | "swap";
   tx?: {
     to: Address;
@@ -65,19 +70,19 @@ type PayTxResponse = {
     data: Hex;
     value: string;
     amount: string;
-    token: Stablecoin;
+    token: SupportedPaymentToken;
   };
   payTx?: {
     to: Address;
     data: Hex;
     value: string;
   };
-  quote?: SwapQuote;
+  quote?: SwapQuote<SupportedPaymentToken>;
   link: {
     id: string;
     onChainLinkId: string;
     amount: string;
-    token: Stablecoin;
+    token: SupportedPaymentToken;
   };
 };
 
@@ -123,6 +128,10 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
+export function getPaymentLinkConfig() {
+  return requestJson<{ chainId: number; tokens: SupportedPaymentToken[]; wMXN: { enabled: boolean; reason?: string } }>("/api/links/config");
+}
+
 export function createMiniPayLink(input: CreateMiniPayLinkInput) {
   return requestJson<CreateMiniPayLinkResponse>("/api/links/minipay", {
     method: "POST",
@@ -134,14 +143,14 @@ export function getPaymentLink(id: string) {
   return requestJson<PaymentLink>(`/api/links/${id}`);
 }
 
-export function quotePaymentLink(id: string, input: { payerToken: Stablecoin; slippageBps?: number }) {
-  return requestJson<SwapQuote>(`/api/links/${id}/quote`, {
+export function quotePaymentLink(id: string, input: { payerToken: SupportedPaymentToken; slippageBps?: number }) {
+  return requestJson<SwapQuote<SupportedPaymentToken>>(`/api/links/${id}/quote`, {
     method: "POST",
     body: JSON.stringify(input),
   });
 }
 
-export function buildPayTx(id: string, input?: { payerToken?: Stablecoin; slippageBps?: number }) {
+export function buildPayTx(id: string, input?: { payerToken?: SupportedPaymentToken; slippageBps?: number }) {
   return requestJson<PayTxResponse>(`/api/links/${id}/pay`, {
     method: "POST",
     body: JSON.stringify({ method: "crypto", ...input }),

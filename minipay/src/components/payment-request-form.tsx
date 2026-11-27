@@ -1,30 +1,39 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import { Copy, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
-import { createMiniPayLink } from "@/lib/api";
+import { createMiniPayLink, getPaymentLinkConfig } from "@/lib/api";
+import { WalletConnection } from "@/components/wallet-connection";
 import { addLocalActivity } from "@/lib/local-activity";
-import { paymentTokens, type SupportedPaymentToken } from "@/lib/tokens";
+import type { SupportedPaymentToken } from "@/lib/tokens";
+import { useQuery } from "@tanstack/react-query";
+import { availableLinkTokens, isValidLinkAmount, linkPaymentMethods } from "@/lib/payment-links";
+import { appConfig } from "@/lib/env";
 
 export function PaymentRequestForm() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
   const [amount, setAmount] = useState("1.00");
   const [token, setToken] = useState<SupportedPaymentToken>("USDC");
   const [description, setDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState("");
 
-  const canSubmit = useMemo(() => {
-    return isConnected && address && isAddress(address) && Number(amount) > 0;
-  }, [address, amount, isConnected]);
+  const config = useQuery({
+    queryKey: ["payment-link-config"],
+    queryFn: getPaymentLinkConfig,
+    refetchInterval: 30_000,
+  });
+  const tokens = availableLinkTokens(config.data, appConfig.chainId);
+  const canSubmit = Boolean(isConnected && address && isAddress(address) &&
+    chainId === appConfig.chainId && tokens.includes(token) && isValidLinkAmount(amount, token));
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!address || !canSubmit) {
-      toast.error("MiniPay account unavailable");
+      toast.error("Connect an account on the payment network and enter a valid amount");
       return;
     }
 
@@ -35,7 +44,7 @@ export function PaymentRequestForm() {
         token,
         description: description.trim() || undefined,
         recipientAddress: address,
-        acceptedMethods: ["crypto", "fonbnk", "card"],
+        acceptedMethods: linkPaymentMethods(token),
       });
       const url = `${window.location.origin}/pay/${link.id}`;
       setCheckoutUrl(url);
@@ -63,6 +72,7 @@ export function PaymentRequestForm() {
 
   return (
     <section className="panel panel-pad">
+      <WalletConnection />
       <form className="stack" onSubmit={onSubmit}>
         <div className="field-grid">
           <label>
@@ -70,8 +80,7 @@ export function PaymentRequestForm() {
             <input
               className="input amount-input"
               inputMode="decimal"
-              min="0"
-              step="0.01"
+              maxLength={80}
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
             />
@@ -83,7 +92,8 @@ export function PaymentRequestForm() {
               value={token}
               onChange={(event) => setToken(event.target.value as SupportedPaymentToken)}
             >
-              {paymentTokens.map((value) => (
+              {!tokens.includes(token) ? <option value={token} disabled>{token} (unavailable)</option> : null}
+              {tokens.map((value) => (
                 <option value={value} key={value}>
                   {value}
                 </option>
@@ -108,6 +118,8 @@ export function PaymentRequestForm() {
           Request payment
         </button>
       </form>
+
+      {token === "wMXN" ? <p className="fine muted" style={{ marginTop: 12 }}>Mexican pesos on Celo. The payer needs wMXN in their wallet.</p> : null}
 
       {checkoutUrl ? (
         <div className="stack" style={{ marginTop: 16 }}>

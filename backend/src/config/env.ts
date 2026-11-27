@@ -59,6 +59,7 @@ const rawEnvSchema = z.object({
   X402_PAYER_ADDRESS: optionalAddress(),
   X402_PAYER_PRIVATE_KEY: optionalPrivateKey(),
   X402_API_KEY: optionalString(),
+  WMXN_LINKS_ENABLED: z.enum(["true", "false"]).optional(),
   X402_EXECUTOR_API_KEY: optionalString(),
   X402_ENCRYPTION_KEY: optionalString(),
   X402_PUBLIC_API_URL: optionalUrl(),

@@ -23,7 +23,8 @@
     "x402:setup": "node --import tsx src/x402-setup.ts",
     "x402:fork": "node --import tsx src/x402-fork-check.ts",
     "x402:canary": "node --import tsx src/x402-canary.ts",
-    "x402:db-check": "node scripts/x402-db-check.mjs"
+    "x402:db-check": "node scripts/x402-db-check.mjs",
+    "links:preflight": "node --import tsx src/payment-links-preflight.ts"
   },
   "dependencies": {
     "@celo/attribution-tags": "^0.3.0",

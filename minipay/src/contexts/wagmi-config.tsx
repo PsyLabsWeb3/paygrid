@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { http, createConfig, useAccount, useConnect, useSwitchChain } from "wagmi";
-import { celo, celoAlfajores } from "wagmi/chains";
+import { celo } from "wagmi/chains";
 import { defineChain } from "viem";
 import { injected, walletConnect } from "wagmi/connectors";
 import { appConfig } from "@/lib/env";
@@ -30,11 +30,11 @@ export const celoSepolia = defineChain({
   testnet: true,
 });
 
-const isProduction = appConfig.appEnv === "production";
+const isProduction = appConfig.chainId === celo.id;
 export const primaryChain = isProduction ? celo : celoSepolia;
 const chains = isProduction
   ? ([primaryChain] as const)
-  : ([celoSepolia, celoAlfajores, celo] as const);
+  : ([celoSepolia, celo] as const);
 
 export const wagmiConfig = createConfig({
   chains,
@@ -55,9 +55,8 @@ export const wagmiConfig = createConfig({
   ],
   ssr: true,
   transports: {
-    [celo.id]: http(appConfig.rpcUrl),
-    [celoAlfajores.id]: http(),
-    [celoSepolia.id]: http(appConfig.rpcUrl),
+    [celo.id]: http(isProduction ? appConfig.rpcUrl : "https://forno.celo.org"),
+    [celoSepolia.id]: http(isProduction ? "https://forno.celo-sepolia.celo-testnet.org" : appConfig.rpcUrl),
   },
 });
 

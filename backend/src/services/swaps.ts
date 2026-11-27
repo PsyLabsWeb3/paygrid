@@ -5,7 +5,8 @@ import type { Env } from "../config/env.js";
 import type { PaymentLinkRow } from "../db/supabase.js";
 import { createChainClients, paygridRouterAbiConst } from "../lib/chain.js";
 import { ApiError } from "../lib/errors.js";
-import { getTokenAddress, parseHumanAmount, TOKEN_DECIMALS, type Stablecoin } from "../lib/tokens.js";
+import { linkAmount, linkAmountAtomic } from "../lib/link-amount.js";
+import { getTokenAddress, TOKEN_DECIMALS, type Stablecoin } from "../lib/tokens.js";
 
 const require = createRequire(import.meta.url);
 const { Mento, deadlineFromMinutes } = require("@mento-protocol/mento-sdk") as typeof MentoSdk;
@@ -133,6 +134,8 @@ function getExactOutputPath(env: Env, payerToken: Stablecoin, settlementToken: S
 export function ensureCryptoPayable(link: PaymentLinkRow) {
   if (link.status === "paid") throw new ApiError(409, "ALREADY_PAID", "Link already settled");
   if (link.status !== "active") throw new ApiError(410, "EXPIRED", `Link is ${link.status}`);
+  if (link.expires_at && Date.parse(link.expires_at) <= Date.now())
+    throw new ApiError(410, "EXPIRED", "Link has expired");
   if (!link.accepted_methods.includes("crypto")) {
     throw new ApiError(400, "UNSUPPORTED_METHOD", "Crypto payments not accepted for this link");
   }
@@ -142,8 +145,8 @@ export async function quoteCryptoPayment(env: Env, link: PaymentLinkRow, input: 
   ensureCryptoPayable(link);
   const settlementToken = link.token as Stablecoin;
   if (link.partner_name === "odeleite" && settlementToken === "wMXN" && env.ODELEITE_WMXN_ENABLED !== "true") throw new ApiError(403, "UNSUPPORTED_METHOD", "wMXN is disabled");
-  if (link.partner_name === "odeleite" && link.accepted_payer_assets && !link.accepted_payer_assets.includes(input.payerToken)) throw new ApiError(400, "UNSUPPORTED_METHOD", "Unsupported payer asset");
-  const amountOut = link.partner_name === "odeleite" && link.amount_atomic ? BigInt(link.amount_atomic) : parseHumanAmount(link.amount, settlementToken);
+  if ((link.partner_name || link.amount_atomic) && link.accepted_payer_assets && !link.accepted_payer_assets.includes(input.payerToken)) throw new ApiError(400, "UNSUPPORTED_METHOD", "Unsupported payer asset");
+  const amountOut = linkAmountAtomic(link);
   return quoteStablecoinAmount(env, input.payerToken, settlementToken, amountOut, input.slippageBps);
 }
 
@@ -353,6 +356,7 @@ export async function buildPreparedCryptoPayTx(env: Env, link: PaymentLinkRow, i
 
   return {
     method: "crypto" as const,
+    chainId: env.CHAIN_ID,
     paymentMode: quote.paymentMode,
     feeBps: Number(feeBps),
     approveTx: {
@@ -371,7 +375,7 @@ export async function buildPreparedCryptoPayTx(env: Env, link: PaymentLinkRow, i
     link: {
       id: link.id,
       onChainLinkId: String(link.on_chain_link_id),
-      amount: String(link.amount),
+      amount: linkAmount(link),
       token: settlementToken,
     },
   };
