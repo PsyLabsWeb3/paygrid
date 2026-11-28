@@ -80,3 +80,7 @@ contracts/deploy_output.txt
 .env.x402
 .env.x402.worker
 x402-canary-evidence*.json
+
+# Python operator tools
+__pycache__/
+*.py[cod]

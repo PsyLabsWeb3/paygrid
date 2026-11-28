@@ -125,6 +125,8 @@ See docs/x402.md. Enable only after migration, read-only preflight and real netw
 - [x] Ledger compartido: 0.20 USDC, 0.20 USDT y 4 wMXN consumidos; cero reservas retenidas y cero operaciones recuperables al verificar.
 - [x] Backend activo con `sellerRestricted: true` para la pagadora del canario.
 - [x] Auditor concurrente preparado para reutilizar exclusivamente operaciones ya liquidadas.
-- [ ] Ejecutar el auditor concurrente en el VPS y comprobar que no cambia el ledger ni los saldos.
+- [x] Auditor concurrente en el VPS: nueve clientes con los mismos recibos; ledger y saldos sin cambios.
+- [x] Auditor de configuración del worker preparado, con pruebas de redacción de secretos.
+- [ ] Ejecutar el auditor del worker en el VPS y revisar el resultado.
 - [ ] Completar las pruebas de operaciones nuevas simultáneas y de reinicio durante una liquidación incierta antes de abrir el servicio.
 - [ ] USDC real en Sepolia, diferido por la decisión del operador de priorizar mainnet.

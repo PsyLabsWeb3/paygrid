@@ -120,7 +120,8 @@ Construir un runtime de agente que:
 - [x] Official MCP transports and input validation.
 - [x] Mainnet USDC/USDT/wMXN CLI and MCP canaries with recorded receipts, transfers and shared-budget accounting.
 - [x] USDC/USDT client-interruption recovery with the original operation and no second transfer.
-- [ ] VPS concurrent replay audit and remaining first-operation/restart recovery validation.
+- [x] VPS concurrent replay audit: nine clients recover the original receipts with unchanged balances and ledger.
+- [ ] Worker deployment audit and remaining first-operation/restart recovery validation.
 - [ ] Real Sepolia USDC canary (operator prioritized mainnet).
 
 See docs/x402.md. Unit/fork checks do not imply mainnet readiness.
