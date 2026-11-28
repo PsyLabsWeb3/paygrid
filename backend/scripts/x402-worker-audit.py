@@ -23,7 +23,9 @@ def audit(backend, worker):
         "encryptionKeyMatches": len(b.get("X402_ENCRYPTION_KEY", "")) == 64 and b.get("X402_ENCRYPTION_KEY") == w.get("X402_ENCRYPTION_KEY"),
         "databaseMatches": bool(b.get("SUPABASE_URL")) and b.get("SUPABASE_URL") == w.get("SUPABASE_URL") and bool(b.get("SUPABASE_SERVICE_ROLE_KEY")) and b.get("SUPABASE_SERVICE_ROLE_KEY") == w.get("SUPABASE_SERVICE_ROLE_KEY"),
     }
-    return {"ok": all(checks.values()), "checks": checks, "workerRestartCount": worker.get("RestartCount")}
+    return {"ok": all(checks.values()), "checks": checks, "workerRestartCount": worker.get("RestartCount"),
+            "backendStartedAt": backend.get("State", {}).get("StartedAt"),
+            "workerStartedAt": worker.get("State", {}).get("StartedAt")}
 
 
 def inspect_service(service):

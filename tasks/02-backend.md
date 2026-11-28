@@ -127,6 +127,7 @@ See docs/x402.md. Enable only after migration, read-only preflight and real netw
 - [x] Auditor concurrente preparado para reutilizar exclusivamente operaciones ya liquidadas.
 - [x] Auditor concurrente en el VPS: nueve clientes con los mismos recibos; ledger y saldos sin cambios.
 - [x] Auditor de configuración del worker preparado, con pruebas de redacción de secretos.
-- [ ] Ejecutar el auditor del worker en el VPS y revisar el resultado.
+- [x] Auditor del worker ejecutado en el VPS: diez comprobaciones correctas, sin clave pagadora y sin reinicios registrados.
+- [x] Operadores de primera autorización concurrente y recuperación del worker preparados, con 12 pruebas locales y claves fijas; todavía no ejecutados en mainnet.
 - [ ] Completar las pruebas de operaciones nuevas simultáneas y de reinicio durante una liquidación incierta antes de abrir el servicio.
 - [ ] USDC real en Sepolia, diferido por la decisión del operador de priorizar mainnet.

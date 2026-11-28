@@ -18,7 +18,7 @@ def fixtures():
     backend_env = {**common, "X402_SELLER_ENABLED": "true", "X402_PAYER_ENABLED": "true", "X402_PAYER_PRIVATE_KEY": "payer-test-secret"}
     worker_env = {**common, "X402_SELLER_ENABLED": "false", "X402_PAYER_ENABLED": "false"}
     def container(env):
-        return {"State": {"Running": True}, "RestartCount": 0,
+        return {"State": {"Running": True, "StartedAt": "2026-11-28T01:00:00Z"}, "RestartCount": 0,
                 "Config": {"Env": [f"{k}={v}" for k, v in env.items()], "Cmd": ["npm", "run", "x402:worker:start"]}}
     return container(backend_env), container(worker_env)
 
@@ -33,6 +33,14 @@ class WorkerAuditTests(unittest.TestCase):
             if "secret" in value or value == "e" * 64:
                 self.assertNotIn(value, output)
         self.assertTrue(all(isinstance(value, bool) for value in report["checks"].values()))
+
+    def test_public_start_times_prove_manual_restarts(self):
+        b, w = fixtures()
+        w["State"]["StartedAt"] = "2026-11-28T02:00:00Z"
+        report = module.audit(b, w)
+        self.assertEqual(report["backendStartedAt"], "2026-11-28T01:00:00Z")
+        self.assertEqual(report["workerStartedAt"], "2026-11-28T02:00:00Z")
+        self.assertEqual(report["workerRestartCount"], 0)
 
     def test_inconsistent_credentials_and_network_fail(self):
         for key in ("CHAIN_ID", "X402_PAYER_ADDRESS", "X402_API_KEY", "X402_ENCRYPTION_KEY", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"):
