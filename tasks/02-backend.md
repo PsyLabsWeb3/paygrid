@@ -8,9 +8,9 @@ Specs: [docs/api.md](../docs/api.md), [docs/data-model.md](../docs/data-model.md
 - Fase 1 completada
 - Fase 2 completada
 - Fase 3 completada
-- Fase 4 implementada y desplegada con flags apagados; credenciales y canarios reales x402 pendientes
+- Fase 4 desplegada en mainnet con canarios USDC/USDT/wMXN desde CLI y MCP verificados; servicio restringido a la pagadora y validación operativa adicional pendiente
 
-**Red de desarrollo:** Celo Sepolia (chainId `11142220`). Mainnet TBD.
+**Red de desarrollo:** Celo Sepolia (chainId `11142220`). Canarios x402 de producción verificados en Celo mainnet (`42220`).
 
 **Contratos Sepolia** (fuente de verdad: [contracts/deployments.sepolia.json](../contracts/deployments.sepolia.json)):
 
@@ -116,3 +116,15 @@ Crear `backend/.env` (gitignored) y `backend/.env.example` (sin secretos).
 ## x402 production gate
 
 See docs/x402.md. Enable only after migration, read-only preflight and real network canaries. Keep signatures and payer keys in the backend, and retain worker reconciliation during rollback.
+
+
+## Validación x402 mainnet — 2026-11-27
+
+- [x] Seis pagos reales: CLI y MCP con USDC, USDT y wMXN; recibos y transferencias verificados.
+- [x] Recuperación de USDC y USDT tras interrupción del cliente, con el mismo hash y sin otra transferencia.
+- [x] Ledger compartido: 0.20 USDC, 0.20 USDT y 4 wMXN consumidos; cero reservas retenidas y cero operaciones recuperables al verificar.
+- [x] Backend activo con `sellerRestricted: true` para la pagadora del canario.
+- [x] Auditor concurrente preparado para reutilizar exclusivamente operaciones ya liquidadas.
+- [ ] Ejecutar el auditor concurrente en el VPS y comprobar que no cambia el ledger ni los saldos.
+- [ ] Completar las pruebas de operaciones nuevas simultáneas y de reinicio durante una liquidación incierta antes de abrir el servicio.
+- [ ] USDC real en Sepolia, diferido por la decisión del operador de priorizar mainnet.

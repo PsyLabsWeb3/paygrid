@@ -13,7 +13,7 @@ Fuente de verdad de integración:
 - Fase 1 completada: wallets + identidad ERC-8004.
 - Fase 2 completada: runtime base del agente.
 - Fase 3 completada: tools para backend actual.
-- Fase 4 implementada: ejecutor x402 v2; canarios reales pendientes de credenciales y fondos.
+- Fase 4 implementada: ejecutor x402 v2; canarios mainnet CLI/MCP con las tres monedas verificados, validación operativa adicional pendiente.
 - Fase 5 pendiente: x402 server propio / agent exposure.
 
 **Resumen:** el backend ya expone las APIs que el agente consume. El agente ya tiene cliente x402 payer para el endpoint de ejemplo; lo pendiente es exponer un endpoint x402 propio, observabilidad completa y validación operativa.
@@ -118,7 +118,10 @@ Construir un runtime de agente que:
 - [x] Stable idempotency keys and payment status/capability tools.
 - [x] Backend policy, shared per-token budgets, encrypted authorizations and recovery worker.
 - [x] Official MCP transports and input validation.
-- [ ] Real Sepolia USDC canary and mainnet USDC/USDT/wMXN canaries with recorded evidence.
+- [x] Mainnet USDC/USDT/wMXN CLI and MCP canaries with recorded receipts, transfers and shared-budget accounting.
+- [x] USDC/USDT client-interruption recovery with the original operation and no second transfer.
+- [ ] VPS concurrent replay audit and remaining first-operation/restart recovery validation.
+- [ ] Real Sepolia USDC canary (operator prioritized mainnet).
 
 See docs/x402.md. Unit/fork checks do not imply mainnet readiness.
 
